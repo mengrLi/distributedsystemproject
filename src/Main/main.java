@@ -21,6 +21,10 @@ public class main{
             Thread thread2 = new Thread(westmount);
             Thread thread3 = new Thread(kirkland);
 
+            thread1.start();
+            thread2.start();
+            thread3.start();
+
             new UserTerminal();
 
             try(BufferedReader br = new BufferedReader(new InputStreamReader(System.in))){

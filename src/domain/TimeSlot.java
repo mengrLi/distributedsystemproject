@@ -1,21 +1,25 @@
 package domain;
 
-public class TimeSlot{
-    private int startTime;
-    private int end;
+import java.io.Serializable;
+import java.util.Calendar;
+
+
+public class TimeSlot implements Serializable{
+    private Calendar startTime;
+    private Calendar end;
     private Integer studentID;
 
-    public TimeSlot(int start, int end, Integer id){
+    public TimeSlot(Calendar start, Calendar end, Integer id){
         this.startTime = start;
         this.end = end;
         this.studentID = id;
     }
 
-    public int getStartTime(){
+    public Calendar getStartTime(){
         return startTime;
     }
 
-    public int getEnd(){
+    public Calendar getEnd(){
         return end;
     }
 

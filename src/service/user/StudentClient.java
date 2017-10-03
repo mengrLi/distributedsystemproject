@@ -3,7 +3,7 @@ package service.user;
 import domain.CampusName;
 import domain.TimeSlot;
 
-import java.util.Date;
+import java.util.Calendar;
 
 public class StudentClient extends Client implements UserInterface{
 
@@ -13,11 +13,11 @@ public class StudentClient extends Client implements UserInterface{
     }
 
 
-    public boolean bookRoom(CampusName campusName, int roomNumber, Date date, TimeSlot timeSlot){
+    public boolean bookRoom(CampusName campusName, String roomNumber, Calendar date, TimeSlot timeSlot){
         return false;
     }
 
-    public String getAvailableTimesSlot(Date date){
+    public String getAvailableTimesSlot(Calendar date){
         return null;
     }
 
@@ -25,8 +25,4 @@ public class StudentClient extends Client implements UserInterface{
         return null;
     }
 
-
-    private void writeToFile(){
-
-    }
 }

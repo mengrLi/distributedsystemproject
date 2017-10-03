@@ -1,7 +1,7 @@
 package service.server;
 
 import domain.CampusName;
-import domain.RoomRecord;
+import domain.Rooms;
 import domain.TimeSlot;
 
 import java.rmi.AlreadyBoundException;
@@ -9,52 +9,60 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 
 public class CampusServer extends UnicastRemoteObject implements ServerInterface, Runnable{
 
-    RoomRecord roomRecord;
+    private final CampusName campusName;
+    private Map<Date, Rooms> roomRecord;
     private boolean serverStatus = false;
-    private CampusName campusName;
+    private Object roomLock = new Object();
 
     public CampusServer(CampusName name) throws RemoteException{
         super(name.port);
         campusName = name;
-        roomRecord = new RoomRecord();
+        roomRecord = new HashMap<>();
     }
 
     @Override
-    public boolean createRoom(int roomNumber, Date date, List<TimeSlot> list) throws RemoteException{
-
-
-        return false;
+    public void createRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
+//        try{
+//            DatagramSocket socket = new DatagramSocket(campusName.port);
+//
+//            byte[] in = new byte[10000];
+//
+//
+//        }catch(SocketException e){
+//            e.printStackTrace();
+//        }
+        byte[] v = new byte[1000];
+        String s = String.valueOf(v);
+        System.out.println(campusName.name);
+        for(TimeSlot slot : list){
+            System.out.println(slot.getStartTime().getTime() + " " + slot.getEnd().getTime());
+        }
     }
 
     @Override
-    public boolean deleteRoom(int roomNumber, Date date, List<TimeSlot> list) throws RemoteException{
-        return false;
+    public void deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
     }
 
     @Override
-    public boolean bookRoom(CampusName campusName, int roomNumber, Date date, TimeSlot timeSlot) throws RemoteException{
-        return false;
+    public void bookRoom(CampusName campusName, String roomNumber, Calendar date, TimeSlot timeSlot) throws RemoteException{
+
     }
 
     @Override
-    public String getAvailableTimesSlot(Date date) throws RemoteException{
-        return null;
+    public void getAvailableTimesSlot(Calendar date) throws RemoteException{
     }
 
     @Override
-    public String cancelBooking(String booking) throws RemoteException{
-        return null;
+    public void cancelBooking(String booking) throws RemoteException{
     }
 
     @Override
-    public boolean getServerStatus() throws RemoteException{
-        return serverStatus;
+    public void getServerStatus() throws RemoteException{
     }
 
     public void turnOffServer() throws RemoteException{
@@ -68,11 +76,11 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         serverStatus = true;
         try{
             Registry registry = LocateRegistry.createRegistry(campusName.port);
-            registry.bind("CampusServer", this);
+            registry.bind(campusName.serverName, this);
+            System.out.println(campusName.name + " server has been started");
         }catch(RemoteException | AlreadyBoundException e){
             e.printStackTrace();
         }
-        System.out.println("Server is started");
         while(serverStatus){
         }
     }
