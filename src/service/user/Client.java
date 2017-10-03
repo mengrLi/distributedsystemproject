@@ -1,4 +1,4 @@
-package service;
+package service.user;
 
 import domain.CampusName;
 
@@ -6,7 +6,9 @@ public abstract class Client{
     protected CampusName campusName;
     protected int id;
 
-    public Client(CampusName campusName, int id){
-
+    Client(CampusName campusName, int id){
+        this.campusName = campusName;
+        this.id = id;
     }
+
 }

@@ -1,9 +1,9 @@
 package domain;
 
 public enum CampusName{
-    DORVAL("Droval Campus", "DVL", 1101),
-    KIRKLAND("Kirkland Campus", "KKL", 1101),
-    WESTMOUNT("Westmount Campus", "WST", 1102);
+    DORVAL("Droval Campus", "DVL", 5858),
+    KIRKLAND("Kirkland Campus", "KKL", 5859),
+    WESTMOUNT("Westmount Campus", "WST", 5860);
 
     public String name;
     public String abrev;

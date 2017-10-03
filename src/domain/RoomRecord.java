@@ -1,14 +1,20 @@
 package domain;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RoomRecord{
-    String recordID;
-    Date date;
-    int roomNumber;
-    List<TimeSlot> availability;
-    long bookedBy;
+    private Map<Date, Rooms> roomRecords;
+
+    public RoomRecord(){
+        roomRecords = new HashMap<>();
+    }
+
+    public void addRoom(Date date, int roomNumber, List<TimeSlot> timeSlots){
+        Rooms room = roomRecords.getOrDefault(date, new Rooms(roomNumber));
+    }
 
 
 }
