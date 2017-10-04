@@ -16,24 +16,51 @@ import java.util.List;
 import java.util.Map;
 
 @Log4j2
-public class UserTerminal{
+public class UserTerminal implements Runnable{
+    /**
+     * Client interface, student or admin
+     */
     private UserInterface client;
 
+    /**
+     * boolean is admin
+     */
     private boolean admin;
 
+    /**
+     * the campus at which student or admin is bound to
+     */
     private CampusName campusOfTheID = null;
+    /**
+     * the campus that the student is trying to connect to
+     */
     private CampusName campusOfInterest = null;
 
+    /**
+     * student or admin id
+     */
     private int id;
 
+    /**
+     * global exit boolean
+     */
     private boolean exit;
 
+    /**
+     * constructor
+     */
     public UserTerminal(){
-        init();
     }
 
     public static void main(String[] args){
-        new UserTerminal();
+        UserTerminal ui = new UserTerminal();
+        Thread thread = new Thread(ui);
+        thread.start();
+        try{
+            thread.join();
+        }catch(InterruptedException e){
+            e.printStackTrace();
+        }
     }
 
     private void init(){
@@ -55,8 +82,6 @@ public class UserTerminal{
                 String input = bufferedReader.readLine();
                 parseInput(input.toLowerCase(), bufferedReader);
             }while(!exit);
-            System.out.println("You are logged out");
-
         }catch(IOException e){
             System.err.println(e.getMessage());
         }
@@ -92,6 +117,13 @@ public class UserTerminal{
         return false;
     }
 
+    /**
+     * parsing the input, decide which action to take
+     *
+     * @param input  console input
+     * @param reader buffered reader
+     * @throws IOException io exception
+     */
     private void parseInput(String input, BufferedReader reader) throws IOException{
         if(admin){
             switch(input){
@@ -135,16 +167,18 @@ public class UserTerminal{
     }
 
     /**
-     * @param reader
-     * @throws IOException
+     * create room function
+     * @param reader buffered reader
+     * @throws IOException io exception
      */
     private void createRoom(BufferedReader reader) throws IOException{
         modifyRoom(reader, true);
     }
 
     /**
-     * @param reader
-     * @throws IOException
+     * delete room function
+     * @param reader buffered reader
+     * @throws IOException io exception
      */
     private void deleteRoom(BufferedReader reader) throws IOException{
         modifyRoom(reader, false);
@@ -152,9 +186,9 @@ public class UserTerminal{
 
     /**
      * private helper function to modify room by administrator
-     * @param reader
-     * @param toAdd
-     * @throws IOException
+     * @param reader buffered reader
+     * @param toAdd true -> add room, false -> delete room
+     * @throws IOException io exception
      */
     private void modifyRoom(BufferedReader reader, boolean toAdd) throws IOException{
         boolean complete = false;
@@ -188,7 +222,7 @@ public class UserTerminal{
                 if(input.equals("y")){
                     println("Data send to " + campusOfTheID.name + " server...");
                     complete = true;
-                    /**
+                    /*
                      * Connect to server
                      */
                     if(toAdd) client.createRoom(roomNumber, calendar, list);
@@ -351,7 +385,7 @@ public class UserTerminal{
     /**
      * @param reader buffered reader
      * @return all available rooms with its info
-     * @throws IOException
+     * @throws IOException io exception
      */
     @Nullable
     private Map<String, Room> checkAvailability(BufferedReader reader) throws IOException{
@@ -365,8 +399,8 @@ public class UserTerminal{
 
     /**
      * Student book room
-     * @param reader
-     * @throws IOException
+     * @param reader buffered reader
+     * @throws IOException io exception
      */
     private void bookRoom(BufferedReader reader) throws IOException{
         //select campus
@@ -386,13 +420,17 @@ public class UserTerminal{
         if(room != null){
             slot = selectSlot(reader, room);
         }else return;
-
+        if(slot == null) return;
         println(client.bookRoom(campusOfInterest, room.getRoomNumber(), calendar, slot, campusOfTheID, id));
 
         campusOfInterest = null;//reset campusOfInterest after use
     }
 
-
+    /**
+     * cancel room booking function
+     * @param reader buffered reader
+     * @throws IOException io exception
+     */
     private void cancelRoom(BufferedReader reader) throws IOException{
         println("Please enter your reservation code");
         String input = reader.readLine();
@@ -434,6 +472,11 @@ public class UserTerminal{
         return null;
     }
 
+    /**
+     * get all available rooms
+     * @param calendar Date of interest
+     * @return Map of rooms that are available
+     */
     @Nullable
     private Map<String, Room> getAvailableRooms(Calendar calendar){
         Map<String, Room> availableRooms = client.getAvailableTimesSlot(calendar);
@@ -458,10 +501,12 @@ public class UserTerminal{
     }
 
     /**
+     * helper function
+     * Select room from the available ones
      * @param reader        buffered reader
      * @param availableRoom available room list
-     * @return
-     * @throws IOException
+     * @return selected Room
+     * @throws IOException io exception
      */
     @Nullable
     private Room selectRoom(BufferedReader reader, Map<String, Room> availableRoom) throws IOException{
@@ -502,9 +547,9 @@ public class UserTerminal{
      * private helper function to select the time slot
      *
      * @param reader buffered reader
-     * @param room
-     * @return
-     * @throws IOException
+     * @param room the room containing all the slot
+     * @return Time slot of interest
+     * @throws IOException io exception
      */
     @Nullable
     private TimeSlot selectSlot(BufferedReader reader, Room room) throws IOException{
@@ -549,6 +594,12 @@ public class UserTerminal{
 
     private void printErr(String s){
         System.err.print(s);
+    }
+
+    @Override
+    public void run(){
+        init();
+        System.out.println("You are logged out");
     }
 }
 

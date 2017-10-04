@@ -31,7 +31,11 @@ public class main{
             thread2.start();
             thread3.start();
 
-            new UserTerminal();
+            UserTerminal ui = new UserTerminal();
+            Thread threadUI = new Thread(ui);
+
+            threadUI.start();
+            threadUI.join();
 
             try(BufferedReader br = new BufferedReader(new InputStreamReader(System.in))){
                 System.out.println("TURN OFF ALL SERVERS? y/n");
@@ -55,7 +59,6 @@ public class main{
             }catch(IOException e){
                 System.err.println(e.getMessage());
             }
-
         }catch(Exception e){
             System.err.println(e.getMessage());
         }
