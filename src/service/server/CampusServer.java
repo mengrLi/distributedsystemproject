@@ -31,17 +31,32 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
     }
 
     @Override
-    public void createRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
+    public List<List<TimeSlot>> createRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
+        return modifyRoom(roomNumber, date, list, true);
+    }
+
+    @Override
+    public List<List<TimeSlot>> deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
+        return modifyRoom(roomNumber, date, list, false);
+    }
+
+    private List<List<TimeSlot>> modifyRoom(String roomNumber, Calendar date, List<TimeSlot> list, boolean toAdd){
+        List<List<TimeSlot>> ret;
         synchronized(this.roomLock){
             Map<String, Room> getMap = this.roomRecord.getOrDefault(date, new HashMap<>());
             Room room = getMap.getOrDefault(roomNumber, new Room(roomNumber));
 
-            room.addTimeSlots(list);
 
+            if(toAdd) ret = room.addTimeSlots(list);
+            else ret = room.removeTimeSlots(list);
             getMap.put(roomNumber, room);
             this.roomRecord.put(date, getMap);
         }
+        printRoomRecord();
+        return ret;
+    }
 
+    private void printRoomRecord(){
         for(Map.Entry<Calendar, Map<String, Room>> entry : roomRecord.entrySet()){
             System.out.println("\nServer Terminal Output : " + Format.formatDate(entry.getKey()) + ":");
             for(Map.Entry<String, Room> entry1 : entry.getValue().entrySet()){
@@ -51,10 +66,6 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
                 }
             }
         }
-    }
-
-    @Override
-    public void deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
     }
 
     @Override

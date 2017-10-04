@@ -11,11 +11,11 @@ import java.util.List;
 
 public interface ServerInterface extends Remote{
 
-    default void createRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
+    default List<List<TimeSlot>> createRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
         throw new NotImplementedException();
     }
 
-    default void deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
+    default List<List<TimeSlot>> deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
         throw new NotImplementedException();
     }
 

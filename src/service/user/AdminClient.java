@@ -16,8 +16,14 @@ public class AdminClient extends Client implements UserInterface{
 
     public boolean createRoom(String roomNumber, Calendar date, List<TimeSlot> list){
         try{
-            connect().createRoom(roomNumber, date, list);
-            return true;
+            List<List<TimeSlot>> response = connect().createRoom(roomNumber, date, list);
+            if(response.get(0).size() == 0){
+                return true;
+            }else{
+                System.err.println("The following time slot was not successfully created");
+                for(TimeSlot slot : response.get(0)) System.err.println(slot.toString());
+                return false;
+            }
         }catch(RemoteException | NotBoundException e){
             System.err.println(e.getMessage());
             return false;
@@ -26,8 +32,14 @@ public class AdminClient extends Client implements UserInterface{
 
     public boolean deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list){
         try{
-            connect().deleteRoom(roomNumber, date, list);
-            return true;
+            List<List<TimeSlot>> response = connect().deleteRoom(roomNumber, date, list);
+            if(response.get(0).size() == 0){
+                return true;
+            }else{
+                System.err.println("The following time slot was not successfully deleted");
+                for(TimeSlot slot : response.get(0)) System.err.println(slot.toString());
+                return false;
+            }
         }catch(RemoteException | NotBoundException e){
             System.err.println(e.getMessage());
             return false;

@@ -40,6 +40,35 @@ public class Room{
         return ret;
     }
 
+    public List<List<TimeSlot>> removeTimeSlots(List<TimeSlot> list){
+        if(list.size() == 0) return null;
+        int index = -1;
+        List<List<TimeSlot>> ret = new LinkedList<>();
+        List<TimeSlot> deletedSlots = new LinkedList<>();
+        List<TimeSlot> notDeletedSlots = new LinkedList<>();
+        synchronized(timeSlotLock){
+
+            for(TimeSlot delSlot : list){
+                for(TimeSlot currSlot : timeSlots){
+                    if(currSlot.getStartMilli() == delSlot.getStartMilli()
+                            && currSlot.getEndMilli() == delSlot.getEndMilli()){
+                        index = timeSlots.indexOf(currSlot);
+                    }
+                }
+                if(index != -1){
+                    deletedSlots.add(timeSlots.remove(index));
+                    System.err.println(delSlot.toString() + " has been deleted");
+                }else notDeletedSlots.add(delSlot);
+                index = -1;
+            }
+        }
+        Collections.sort(timeSlots);
+
+        ret.add(notDeletedSlots);
+        ret.add(deletedSlots);
+        return ret;
+    }
+
     /**
      * start before
      * end before start -> add and return
@@ -96,7 +125,8 @@ public class Room{
                             return true;
                         }
                     }
-                }else{
+                }else if(slot.getStartMilli() >= get.getStartMilli() &&
+                        slot.getEndMilli() <= get.getStartMilli()){
                     //do nothing, this new slot is in the current one
                     return true;
                 }
@@ -120,4 +150,6 @@ public class Room{
             return timeSlots;
         }
     }
+
+
 }

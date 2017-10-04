@@ -96,7 +96,7 @@ public class UserTerminal{
         }
     }
 
-    private void createRoom(BufferedReader reader) throws IOException{
+    private void modifyRoom(BufferedReader reader, boolean toAdd) throws IOException{
         boolean complete = false;
         while(!complete){
             //choose date
@@ -131,7 +131,8 @@ public class UserTerminal{
                     /**
                      * Connect to server
                      */
-                    client.createRoom(roomNumber, calendar, list);
+                    if(toAdd) client.createRoom(roomNumber, calendar, list);
+                    else client.deleteRoom(roomNumber, calendar, list);
                 }else println("Data not sent, restart ...");
             }while(!input.equals("y") && !input.equals("n"));
         }
@@ -203,8 +204,12 @@ public class UserTerminal{
 
     }
 
+    private void createRoom(BufferedReader reader) throws IOException{
+        modifyRoom(reader, true);
+    }
+
     private void deleteRoom(BufferedReader reader) throws IOException{
-        Calendar calendar = inputDate(reader);
+        modifyRoom(reader, false);
     }
 
 
@@ -251,7 +256,6 @@ public class UserTerminal{
         String[] delim;
         boolean validDate;
         Calendar calendar = Calendar.getInstance();
-
 
         do{
             println("Please enter the date (yyyy/mm/dd) :");
