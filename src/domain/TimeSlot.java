@@ -12,6 +12,8 @@ public class TimeSlot implements Serializable, Comparable<TimeSlot>{
     private Calendar endTime;
     private Integer studentID = null;
     private CampusName studentCampus = null;
+    private String bookingID = null;
+
 
     @Expose
     private String start;
@@ -51,24 +53,38 @@ public class TimeSlot implements Serializable, Comparable<TimeSlot>{
         return endTime.getTimeInMillis();
     }
 
+    public CampusName getStudentCampus(){
+        return studentCampus;
+    }
+
     public void setStartTime(Calendar startTime){
         this.startTime = startTime;
         this.start = Format.formatTime(startTime);
     }
 
-    public void setStudentID(Integer studentID){
+    public void setStudentID(CampusName campusOfID, Integer studentID, String bookingID){
         this.studentID = studentID;
+        this.studentCampus = campusOfID;
+        this.bookingID = bookingID;
     }
 
     public void cancelBooking(){
         //TODO reduce student booking count
         this.studentID = null;
+        this.bookingID = null;
+        this.studentCampus = null;
     }
 
 
     @Override
     public int compareTo(TimeSlot o){
         return (int) (this.startTime.getTimeInMillis() - o.startTime.getTimeInMillis());
+    }
+
+    @Override
+    public boolean equals(Object obj){
+        return this.startTime.equals(((TimeSlot) obj).startTime)
+                && this.endTime.equals(((TimeSlot) obj).endTime);
     }
 
     public String toString(){

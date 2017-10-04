@@ -22,6 +22,7 @@ public abstract class Client{
         return (ServerInterface) registry.lookup(campusName.serverName);
     }
 
+
     protected void send(byte[] data){
 
     }

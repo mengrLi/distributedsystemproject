@@ -1,14 +1,15 @@
 package domain;
 
+import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Room{
+public class Room implements Serializable{
     private final String roomNumber;
     private final List<TimeSlot> timeSlots;
-    private final Object timeSlotLock = new Object();
+    private final Lock timeSlotLock = new Lock();
 
     public Room(String roomNumber){
         this.roomNumber = roomNumber;
@@ -16,19 +17,19 @@ public class Room{
     }
 
     /**
-     * return Json string
+     * public function of slot insertion,
+     * current list is sorted upon insertion completion
      *
-     * @param list
-     * @return
+     * @param list list of time slot to be inserted
+     * @return two lists , 0 failed list, 1 success list
      */
     public List<List<TimeSlot>> addTimeSlots(List<TimeSlot> list){
         List<TimeSlot> failedInsertion = new LinkedList<>();
         List<TimeSlot> sucessInsertion = new LinkedList<>();
         synchronized(timeSlotLock){
-            for(TimeSlot slot : list){
+            for(TimeSlot slot : list)
                 if(!insert(slot)) failedInsertion.add(slot);
                 else sucessInsertion.add(slot);
-            }
         }
 
         List<List<TimeSlot>> ret = new LinkedList<>();
@@ -40,6 +41,12 @@ public class Room{
         return ret;
     }
 
+    /**
+     * remove slot
+     *
+     * @param list list of slots to be deleted
+     * @return two lists, 0 failed list ,1 success list
+     */
     public List<List<TimeSlot>> removeTimeSlots(List<TimeSlot> list){
         if(list.size() == 0) return null;
         int index = -1;
@@ -47,12 +54,15 @@ public class Room{
         List<TimeSlot> deletedSlots = new LinkedList<>();
         List<TimeSlot> notDeletedSlots = new LinkedList<>();
         synchronized(timeSlotLock){
-
             for(TimeSlot delSlot : list){
                 for(TimeSlot currSlot : timeSlots){
                     if(currSlot.getStartMilli() == delSlot.getStartMilli()
                             && currSlot.getEndMilli() == delSlot.getEndMilli()){
                         index = timeSlots.indexOf(currSlot);
+                        /*
+                         * if student has booked this room, it will be deleted
+                         */
+                        if(currSlot.getStudentID() != null) currSlot.cancelBooking();
                     }
                 }
                 if(index != -1){
@@ -63,7 +73,6 @@ public class Room{
             }
         }
         Collections.sort(timeSlots);
-
         ret.add(notDeletedSlots);
         ret.add(deletedSlots);
         return ret;
@@ -71,20 +80,20 @@ public class Room{
 
     /**
      * start before
-     * end before start -> add and return
-     * end after start -> combine and ignore the new end time and return
+     * - end before start -> add and return
+     * - end after start -> combine and ignore the new end time and return
      * start within
-     * end before end -> ignored, current one is bigger and return
-     * end after end -> check with the next one
-     * if last one , update end time and return
-     * start before the next one, combine and ignore the new start and return
-     * start after the next one, use the next start as end and return
+     * - end before end -> ignored, current one is bigger and return
+     * - end after end -> check with the next one
+     * ---if last one , update end time and return
+     * ---start before the next one, combine and ignore the new start and return
+     * ---start after the next one, use the next start as end and return
      * start after
-     * last one -> add
-     * not last one -> check with the next
+     * -last one -> add
+     * -not last one -> check with the next
      *
-     * @param slot
-     * @return
+     * @param slot new time slot to be inserted
+     * @return boolean, whether or not insertion was successful
      */
     private boolean insert(TimeSlot slot){
         if(timeSlots.size() == 0){

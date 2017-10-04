@@ -1,6 +1,7 @@
 package service.server;
 
 import domain.CampusName;
+import domain.Room;
 import domain.TimeSlot;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -8,6 +9,7 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 
 public interface ServerInterface extends Remote{
 
@@ -19,20 +21,15 @@ public interface ServerInterface extends Remote{
         throw new NotImplementedException();
     }
 
-    default void bookRoom(CampusName campusName, String roomNumber, Calendar date, TimeSlot timeSlot) throws RemoteException{
+    default String bookRoom(CampusName campusOfInterest, String roomNumber, Calendar date, TimeSlot timeSlot, CampusName campusOfID, int id) throws RemoteException{
         throw new NotImplementedException();
     }
 
-    default void getAvailableTimesSlot(Calendar date) throws RemoteException{
+    default Map<String, Room> getAvailableTimesSlot(Calendar date) throws RemoteException{
         throw new NotImplementedException();
     }
 
-    default void cancelBooking(String booking) throws RemoteException{
+    default boolean cancelBooking(String booking) throws RemoteException{
         throw new NotImplementedException();
     }
-
-    default void getServerStatus() throws RemoteException{
-        throw new NotImplementedException();
-    }
-
 }

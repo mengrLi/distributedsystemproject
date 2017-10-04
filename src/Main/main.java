@@ -9,16 +9,19 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 
 public class main{
 
     public static void main(String[] args){
         try{
-            Registry registry = LocateRegistry.createRegistry(1099);
+            LocateRegistry.createRegistry(1099);
             CampusServer dorval = new CampusServer(CampusName.DORVAL);
             CampusServer westmount = new CampusServer(CampusName.WESTMOUNT);
             CampusServer kirkland = new CampusServer(CampusName.KIRKLAND);
+
+            dorval.initServer();
+            westmount.initServer();
+            kirkland.initServer();
 
             Thread thread1 = new Thread(dorval);
             Thread thread2 = new Thread(westmount);
