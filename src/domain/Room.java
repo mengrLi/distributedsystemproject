@@ -1,0 +1,123 @@
+package domain;
+
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
+public class Room{
+    private final String roomNumber;
+    private final List<TimeSlot> timeSlots;
+    private final Object timeSlotLock = new Object();
+
+    public Room(String roomNumber){
+        this.roomNumber = roomNumber;
+        timeSlots = new LinkedList<>();
+    }
+
+    /**
+     * return Json string
+     *
+     * @param list
+     * @return
+     */
+    public List<List<TimeSlot>> addTimeSlots(List<TimeSlot> list){
+        List<TimeSlot> failedInsertion = new LinkedList<>();
+        List<TimeSlot> sucessInsertion = new LinkedList<>();
+        synchronized(timeSlotLock){
+            for(TimeSlot slot : list){
+                if(!insert(slot)) failedInsertion.add(slot);
+                else sucessInsertion.add(slot);
+            }
+        }
+
+        List<List<TimeSlot>> ret = new LinkedList<>();
+        ret.add(failedInsertion);
+        ret.add(sucessInsertion);
+
+        Collections.sort(timeSlots);
+
+        return ret;
+    }
+
+    /**
+     * start before
+     * end before start -> add and return
+     * end after start -> combine and ignore the new end time and return
+     * start within
+     * end before end -> ignored, current one is bigger and return
+     * end after end -> check with the next one
+     * if last one , update end time and return
+     * start before the next one, combine and ignore the new start and return
+     * start after the next one, use the next start as end and return
+     * start after
+     * last one -> add
+     * not last one -> check with the next
+     *
+     * @param slot
+     * @return
+     */
+    private boolean insert(TimeSlot slot){
+        if(timeSlots.size() == 0){
+            timeSlots.add(slot);
+            return true;
+        }
+        for(int i = 0; i < timeSlots.size(); ++i){
+            TimeSlot get = timeSlots.get(i);
+            //time slots are sorted
+            if(slot.getStartMilli() < get.getStartMilli()){
+                if(slot.getEndMilli() < get.getStartMilli()){
+                    //add in front
+                    timeSlots.add(slot);
+                    return true;
+                }else{
+                    //combine, ignored the new end time in this case
+                    get.setStartTime(slot.getStartTime());
+                    if(get.getStudentID() != null){
+                        get.cancelBooking();//student's counter reduces in the method call
+                    }
+                    return true;
+                }
+            }else if(slot.getStartMilli() <= get.getEndMilli()){
+                if(slot.getEndMilli() > get.getEndMilli()){
+                    if(i == timeSlots.size() - 1){//last one in the current list
+                        get.setEndTime(slot.getEndTime());
+                        return true;
+                    }else{
+                        TimeSlot nextOne = timeSlots.get(i + 1);//next one
+                        if(slot.getEndMilli() < nextOne.getStartMilli()){
+                            get.setEndTime(slot.getEndTime());
+                            if(get.getStudentID() != null) get.cancelBooking();
+                            return true;
+                        }else{
+                            Calendar end = (Calendar) nextOne.getStartTime().clone();
+                            end.add(Calendar.MINUTE, -1);
+                            get.setEndTime(end);
+                            return true;
+                        }
+                    }
+                }else{
+                    //do nothing, this new slot is in the current one
+                    return true;
+                }
+            }else{//new slot start time is after current slot's end time
+
+                if(i == timeSlots.size() - 1){//i am at the last one, insert at the end
+                    timeSlots.add(slot);
+                    return true;
+                }//else go to next slot in list
+            }
+        }
+        return false;
+    }
+
+    public String getRoomNumber(){
+        return roomNumber;
+    }
+
+    public List<TimeSlot> getTimeSlots(){
+        synchronized(timeSlotLock){
+            return timeSlots;
+        }
+    }
+}

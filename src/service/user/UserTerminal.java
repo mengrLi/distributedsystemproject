@@ -1,13 +1,13 @@
 package service.user;
 
 import domain.CampusName;
+import domain.Format;
 import domain.TimeSlot;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
@@ -116,11 +116,11 @@ public class UserTerminal{
             String input = null;
             do{
                 if(input != null) printlnErr("Invalid input : " + input);
-                println("Create room " + roomNumber + " on " + formatDate(calendar));
+                println("Create room " + roomNumber + " on " + Format.formatDate(calendar));
 
                 for(TimeSlot slot : list)
-                    println("From : " + formatTime(slot.getStartTime()) +
-                            "To : " + formatTime(slot.getEnd()));
+                    println("From : " + Format.formatTime(slot.getStartTime()) +
+                            "To : " + Format.formatTime(slot.getEndTime()));
 
                 println("Complete input, input \"y\" to process or \"n\" to start over\n");
                 input = reader.readLine().toLowerCase();
@@ -193,7 +193,7 @@ public class UserTerminal{
 
                 println("Input time :\n" + calendar1.getTime().toString() + "\n" + calendar2.getTime().toString());
 
-                list.add(new TimeSlot(calendar1, calendar2, null));
+                list.add(new TimeSlot(calendar1, calendar2));
                 return true;
             }
         }catch(NumberFormatException e){
@@ -292,6 +292,7 @@ public class UserTerminal{
                 }
             }
             calendar.set(year, month, day, 0, 0, 0);
+            calendar.set(Calendar.MILLISECOND, 0);
             return true;
         }catch(NumberFormatException e){
             printlnErr("Invalid date format");
@@ -299,15 +300,6 @@ public class UserTerminal{
         }
     }
 
-    private String formatDate(Calendar calendar){
-        SimpleDateFormat format = new SimpleDateFormat("yyyy/MM/dd");
-        return format.format(calendar.getTime());
-    }
-
-    private String formatTime(Calendar calendar){
-        SimpleDateFormat format = new SimpleDateFormat("HH:mm");
-        return format.format(calendar.getTime());
-    }
 
     private void println(String s){
         System.out.println(s);

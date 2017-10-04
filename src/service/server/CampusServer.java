@@ -1,7 +1,8 @@
 package service.server;
 
 import domain.CampusName;
-import domain.Rooms;
+import domain.Format;
+import domain.Room;
 import domain.TimeSlot;
 
 import java.rmi.AlreadyBoundException;
@@ -9,15 +10,19 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.*;
-
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CampusServer extends UnicastRemoteObject implements ServerInterface, Runnable{
 
     private final CampusName campusName;
-    private Map<Date, Rooms> roomRecord;
     private boolean serverStatus = false;
-    private Object roomLock = new Object();
+
+    private final Object roomLock = new Object();
+    private Map<Calendar, Map<String, Room>> roomRecord;
+
 
     public CampusServer(CampusName name) throws RemoteException{
         super(name.port);
@@ -27,20 +32,24 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
 
     @Override
     public void createRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
-//        try{
-//            DatagramSocket socket = new DatagramSocket(campusName.port);
-//
-//            byte[] in = new byte[10000];
-//
-//
-//        }catch(SocketException e){
-//            e.printStackTrace();
-//        }
-        byte[] v = new byte[1000];
-        String s = String.valueOf(v);
-        System.out.println(campusName.name);
-        for(TimeSlot slot : list){
-            System.out.println(slot.getStartTime().getTime() + " " + slot.getEnd().getTime());
+        synchronized(this.roomLock){
+            Map<String, Room> getMap = this.roomRecord.getOrDefault(date, new HashMap<>());
+            Room room = getMap.getOrDefault(roomNumber, new Room(roomNumber));
+
+            room.addTimeSlots(list);
+
+            getMap.put(roomNumber, room);
+            this.roomRecord.put(date, getMap);
+        }
+
+        for(Map.Entry<Calendar, Map<String, Room>> entry : roomRecord.entrySet()){
+            System.out.println("\nServer Terminal Output : " + Format.formatDate(entry.getKey()) + ":");
+            for(Map.Entry<String, Room> entry1 : entry.getValue().entrySet()){
+                System.out.println(entry1.getKey() + ":");
+                for(TimeSlot slot : entry1.getValue().getTimeSlots()){
+                    System.out.println(Format.formatTime(slot.getStartTime()) + " " + Format.formatTime(slot.getEndTime()));
+                }
+            }
         }
     }
 
@@ -75,7 +84,8 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
     public void run(){
         serverStatus = true;
         try{
-            Registry registry = LocateRegistry.createRegistry(campusName.port);
+//            Registry registry = LocateRegistry.createRegistry(campusName.port);
+            Registry registry = LocateRegistry.getRegistry(1099);
             registry.bind(campusName.serverName, this);
             System.out.println(campusName.name + " server has been started");
         }catch(RemoteException | AlreadyBoundException e){
