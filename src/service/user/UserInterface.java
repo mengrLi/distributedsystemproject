@@ -23,7 +23,11 @@ public interface UserInterface{
         throw new NotImplementedException();
     }
 
-    default Map<String, Map<String, Room>> getAvailableTimesSlot(Calendar date) {
+    default Map<String, Integer> getAvailableTimeSlot(Calendar date){
+        throw new NotImplementedException();
+    }
+
+    default Map<String, Room> getAvailableTimeSlot(Calendar date, CampusName campusName){
         throw new NotImplementedException();
     }
 

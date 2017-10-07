@@ -56,11 +56,6 @@ public class UserTerminal implements Runnable{
         UserTerminal ui = new UserTerminal();
         Thread thread = new Thread(ui);
         thread.start();
-        try{
-            thread.join();
-        }catch(InterruptedException e){
-            e.printStackTrace();
-        }
     }
 
     private void init(){
@@ -394,7 +389,11 @@ public class UserTerminal implements Runnable{
         //select date
         Calendar calendar = inputDate(reader);
         //show select room
-        getAvailableRooms(null, calendar);
+        Map<String, Integer> get = getAvailableRooms(calendar);
+        for(Map.Entry<String, Integer> entry : get.entrySet()){
+            print(entry.getKey() + " " + entry.getValue() + "; ");
+        }
+        println("");
     }
 
     /**
@@ -420,7 +419,8 @@ public class UserTerminal implements Runnable{
         else return;
 
         if(slot == null) return;
-        println(client.bookRoom(campusOfInterest, room.getRoomNumber(), calendar, slot, campusOfTheID, id));
+        println("Booking ID : "
+                + client.bookRoom(campusOfInterest, room.getRoomNumber(), calendar, slot, campusOfTheID, id));
 
         campusOfInterest = null;//reset campusOfInterest after use
     }
@@ -471,6 +471,10 @@ public class UserTerminal implements Runnable{
         return null;
     }
 
+    private Map<String, Integer> getAvailableRooms(Calendar date){
+        return client.getAvailableTimeSlot(date);
+    }
+
     /**
      * get all available rooms
      * @param calendar Date of interest
@@ -478,37 +482,31 @@ public class UserTerminal implements Runnable{
      */
     @Nullable
     private Map<String, Room> getAvailableRooms(CampusName campus, Calendar calendar) {
-        Map<String, Map<String, Room>> availableRooms = client.getAvailableTimesSlot(calendar);
-        if (campus == null) {
-            for (Map.Entry<String, Map<String, Room>> campusMap : availableRooms.entrySet()) {
-                int counter1 = 0;
-                for (Map.Entry<String, Room> roomMap : campusMap.getValue().entrySet())
-                    for (TimeSlot slotList : roomMap.getValue().getTimeSlots())
-                        if (slotList.getStudentID() == null) ++counter1;
-                System.out.println(campusMap.getKey() + counter1);
-            }
+
+        Map<String, Room> availableRooms = client.getAvailableTimeSlot(calendar, campus);
+
+        if(availableRooms == null){
+            printlnErr("No room is available on " + Format.formatDate(calendar));
             return null;
-        } else {
-            Map<String, Room> allRooms = availableRooms.get(campus.abrev);
-            if (allRooms == null) {
-                printlnErr("No room is available on " + Format.formatDate(calendar));
-                return null;
-            } else {
-                println(Format.formatDate(calendar));
-                for (Map.Entry<String, Room> entry : allRooms.entrySet()) {
-                    println("Room number - " + entry.getKey());
-                    for (TimeSlot slot : entry.getValue().getTimeSlots()) {
-                        if (slot.getStudentID() == null) {
-                            println("\t" + Format.formatTime(slot.getStartTime()) +
-                                    "\tto\t" +
-                                    Format.formatTime(slot.getEndTime()));
-                        }
+        }else{
+            /*
+            Display only the available ones
+             */
+            println(Format.formatDate(calendar));
+            for(Map.Entry<String, Room> entry : availableRooms.entrySet()){
+                println("Room number - " + entry.getKey());
+                for(TimeSlot slot : entry.getValue().getTimeSlots()){
+                    if(slot.getStudentID() == null){
+                        println("\t" + Format.formatTime(slot.getStartTime()) +
+                                "\tto\t" +
+                                Format.formatTime(slot.getEndTime()));
                     }
                 }
-                return allRooms;
             }
+            return availableRooms;
         }
     }
+
 
     /**
      * helper function

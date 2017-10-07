@@ -26,9 +26,20 @@ public class StudentClient extends Client implements UserInterface{
         }
     }
 
-    public Map<String, Map<String, Room>> getAvailableTimesSlot(Calendar date) {
+    @Override
+    public Map<String, Integer> getAvailableTimeSlot(Calendar date){
         try{
-            return connect().getAvailableTimesSlot(date);
+            return connect().getAvailableTimeSlot(date);
+        }catch(RemoteException | NotBoundException e){
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Map<String, Room> getAvailableTimeSlot(Calendar date, CampusName campusName){
+        try{
+            return connect().getAvailableTimeSlot(date, campusName);
         }catch(RemoteException | NotBoundException e){
             System.err.println(e.getMessage());
         }

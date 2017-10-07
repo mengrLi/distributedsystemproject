@@ -25,7 +25,11 @@ public interface ServerInterface extends Remote{
         throw new NotImplementedException();
     }
 
-    default Map<String, Map<String, Room>> getAvailableTimesSlot(Calendar date) throws RemoteException {
+    default Map<String, Integer> getAvailableTimeSlot(Calendar date) throws RemoteException{
+        throw new NotImplementedException();
+    }
+
+    default Map<String, Room> getAvailableTimeSlot(Calendar date, CampusName campusName) throws RemoteException{
         throw new NotImplementedException();
     }
 

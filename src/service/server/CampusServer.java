@@ -167,6 +167,7 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
     private int determinePort(String campusOfInterestAbrev) {
         CampusName ret = CampusName.getCampusName(campusOfInterestAbrev);
         if (ret != null) return ret.inPort;
+        System.err.println("Campus invalid");
         return -1;
     }
 
@@ -199,28 +200,56 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
 
 
     @Override
-    public Map<String, Map<String, Room>> getAvailableTimesSlot(Calendar date) throws RemoteException {
-        Map<String, Map<String, Room>> ret = new HashMap<>();
-
-        synchronized(roomLock){
-            ret.put(campusName.abrev, roomRecord.get(date));
-        }
-        StringBuilder builder = new StringBuilder();
-        String response;
-        Map<String, Room> temp;
-        for (CampusName campus : CampusName.values()) {
-            if (!campusName.abrev.equals(campus.abrev)) {
-                builder.append("**availability-").append(date.getTimeInMillis());
-                response = udpRequest(builder.toString().getBytes(), builder.length(), campus.inPort);
-                Type type = new TypeToken<Map<String, Room>>() {
-                }.getType();
-                temp = new GsonBuilder().create().fromJson(response, type);
-                ret.put(campus.abrev, temp);
-                builder = new StringBuilder();
-            }
-        }
+    public Map<String, Integer> getAvailableTimeSlot(Calendar date) throws RemoteException{
+        Map<String, Integer> ret = new HashMap<>();
+        for(CampusName name : CampusName.values()) ret.put(name.abrev, checkFreeRooms(date, name));
         return ret;
     }
+
+    private int checkFreeRooms(Calendar date, CampusName name){
+        if(name.name.equals(this.campusName.name)){
+            return countFreeRooms(date);
+        }else{
+            int port = determinePort(name.abrev);
+            String req = "**countA-" + date.getTimeInMillis();
+            String response = udpRequest(req.getBytes(), req.length(), port);
+            try{
+                return Integer.parseInt(response);
+            }catch(NumberFormatException e){
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+                return -1;
+            }
+        }
+    }
+
+    private int countFreeRooms(Calendar calendar){
+        synchronized(roomLock){
+            Map<String, Room> getDate = roomRecord.get(calendar);
+            int counter = 0;
+            for(Map.Entry<String, Room> entry : getDate.entrySet())
+                for(TimeSlot slot : entry.getValue().getTimeSlots())
+                    if(slot.getStudentID() == null) ++counter;
+            return counter;
+        }
+    }
+
+    @Override
+    public Map<String, Room> getAvailableTimeSlot(Calendar date, CampusName campusName) throws RemoteException{
+        if(campusName.equals(this.campusName)){
+            synchronized(roomLock){
+                return roomRecord.get(date);
+            }
+        }else{
+            int port = campusName.inPort;
+            String req = "**countB-" + date.getTimeInMillis();
+            String json = udpRequest(req.getBytes(), req.length(), port).trim();
+            Type type = new TypeToken<Map<String, Room>>(){
+            }.getType();
+            return new GsonBuilder().create().fromJson(json, type);
+        }
+    }
+
 
     /**
      * When canceling, student connects to his own campus
@@ -322,8 +351,8 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         DatagramSocket socket = null;
         try {
             socket = new DatagramSocket(campusName.inPort);
-            byte[] buffer = new byte[100000];
             while (true) {
+                byte[] buffer = new byte[100000];
                 DatagramPacket request = new DatagramPacket(buffer, buffer.length);
                 socket.receive(request);
                 new Thread(new Responder(socket, request)).start();
@@ -386,7 +415,9 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
             try {
                 byte[] data = makeResponse();
                 DatagramPacket response = new DatagramPacket(data, data.length, request.getAddress(), request.getPort());
-                socket.send(response);
+                if(data != null){
+                    socket.send(response);
+                }else socket.send(null);
             } catch (IOException e) {
                 System.err.println(e.getMessage());
                 e.printStackTrace();
@@ -398,6 +429,7 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
 
             String json = new String(request.getData()).trim();
             String requestType = json.substring(2, 8);
+            System.out.println("json:" + json);
             if (requestType.equals("toBook")) {
                 bookingInfo = new GsonBuilder().create().fromJson(json, BookingInfo.class);
                 if (bookingInfo.isToBook()) {
@@ -406,21 +438,29 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
                 } else {
                     //to cancel
                 }
-            } else if (requestType.equals("availa")) {
+            }else if(requestType.equals("countA")){
                 String[] delim = json.split("-");
                 Calendar calendar = Calendar.getInstance();
                 try {
-                    System.out.println(campusName.name + " " + json);
-                    long parse = Long.parseLong(delim[1]);
-                    calendar.setTimeInMillis(parse);
-                    Type type = new TypeToken<Map<String, Room>>() {
+                    calendar.setTimeInMillis(Long.parseLong(delim[1]));
+                    int get = countFreeRooms(calendar);
+
+                    return String.valueOf(get).getBytes();
+                }catch(NumberFormatException e){
+                    e.printStackTrace();
+                    return null;
+                }
+            }else if(requestType.equals("countB")){
+                String[] delim = json.split("-");
+                Calendar calendar = Calendar.getInstance();
+                try{
+                    calendar.setTimeInMillis(Long.parseLong(delim[1]));
+                    Type type = new TypeToken<Map<String, Room>>(){
                     }.getType();
-                    Map<String, Room> get;
-                    synchronized (roomLock) {
-                        get = roomRecord.get(calendar);
-                    }
-                    return new GsonBuilder().create().toJson(get, type).getBytes();
-                } catch (NumberFormatException e) {
+
+                    Map<String, Room> ret = roomRecord.get(calendar);
+                    return new GsonBuilder().create().toJson(ret, type).getBytes();
+                }catch(NumberFormatException e){
                     e.printStackTrace();
                     return null;
                 }
