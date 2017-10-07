@@ -1,9 +1,11 @@
 package service.server;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import domain.*;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -17,7 +19,7 @@ import java.util.regex.PatternSyntaxException;
 
 public class CampusServer extends UnicastRemoteObject implements ServerInterface, Runnable{
 
-    final Lock roomLock = new Lock();
+    private final Lock roomLock = new Lock();
     private final CampusName campusName;
     private Map<Calendar, Map<String, Room>> roomRecord;
     private Map<Long, Map<Integer, Integer>> studentBookingRecord;
@@ -156,13 +158,10 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
 
     private String udpSendBookingRequest(BookingInfo bookingInfo) {
         String bookIDString = bookingInfo.toString();
-        System.out.println(bookIDString.length());
         byte[] messageByte = bookIDString.getBytes();
         int serverPort = determinePort(bookingInfo.getCampusOfInterestAbrev());
         if (serverPort == -1) return "Error: Invalid campus name"; //should never be reached
-        String reply = udpRequest(messageByte, bookIDString.length(), serverPort);
-        System.out.println("Reply : " + reply);
-        return reply;
+        return udpRequest(messageByte, bookIDString.length(), serverPort);
     }
 
     private int determinePort(String campusOfInterestAbrev) {
@@ -186,10 +185,10 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
             InetAddress address = InetAddress.getByName("localhost");
             DatagramPacket request = new DatagramPacket(messageInByte, length, address, serverPort);
             socket.send(request);
-            byte[] buffer = new byte[10000];
+            byte[] buffer = new byte[100000];
             DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
             socket.receive(reply);
-            return new String(reply.getData());
+            return new String(reply.getData()).trim();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -200,10 +199,27 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
 
 
     @Override
-    public Map<String, Room> getAvailableTimesSlot(Calendar date) throws RemoteException{
+    public Map<String, Map<String, Room>> getAvailableTimesSlot(Calendar date) throws RemoteException {
+        Map<String, Map<String, Room>> ret = new HashMap<>();
+
         synchronized(roomLock){
-            return roomRecord.get(date);
+            ret.put(campusName.abrev, roomRecord.get(date));
         }
+        StringBuilder builder = new StringBuilder();
+        String response;
+        Map<String, Room> temp;
+        for (CampusName campus : CampusName.values()) {
+            if (!campusName.abrev.equals(campus.abrev)) {
+                builder.append("**availability-").append(date.getTimeInMillis());
+                response = udpRequest(builder.toString().getBytes(), builder.length(), campus.inPort);
+                Type type = new TypeToken<Map<String, Room>>() {
+                }.getType();
+                temp = new GsonBuilder().create().fromJson(response, type);
+                ret.put(campus.abrev, temp);
+                builder = new StringBuilder();
+            }
+        }
+        return ret;
     }
 
     /**
@@ -306,7 +322,7 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         DatagramSocket socket = null;
         try {
             socket = new DatagramSocket(campusName.inPort);
-            byte[] buffer = new byte[1000];
+            byte[] buffer = new byte[100000];
             while (true) {
                 DatagramPacket request = new DatagramPacket(buffer, buffer.length);
                 socket.receive(request);
@@ -382,7 +398,6 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
 
             String json = new String(request.getData()).trim();
             String requestType = json.substring(2, 8);
-            System.out.println(json.length());
             if (requestType.equals("toBook")) {
                 bookingInfo = new GsonBuilder().create().fromJson(json, BookingInfo.class);
                 if (bookingInfo.isToBook()) {
@@ -390,6 +405,24 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
                     return bookRoomHelperPrivate(bookingInfo).getBytes();
                 } else {
                     //to cancel
+                }
+            } else if (requestType.equals("availa")) {
+                String[] delim = json.split("-");
+                Calendar calendar = Calendar.getInstance();
+                try {
+                    System.out.println(campusName.name + " " + json);
+                    long parse = Long.parseLong(delim[1]);
+                    calendar.setTimeInMillis(parse);
+                    Type type = new TypeToken<Map<String, Room>>() {
+                    }.getType();
+                    Map<String, Room> get;
+                    synchronized (roomLock) {
+                        get = roomRecord.get(calendar);
+                    }
+                    return new GsonBuilder().create().toJson(get, type).getBytes();
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                    return null;
                 }
             }
             return null;

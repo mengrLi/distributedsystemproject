@@ -390,13 +390,11 @@ public class UserTerminal implements Runnable{
      * @throws IOException io exception
      */
     @Nullable
-    private Map<String, Room> checkAvailability(BufferedReader reader) throws IOException{
-        //select campus
-        if(selectCampus(reader) == null) return null;
+    private void checkAvailability(BufferedReader reader) throws IOException {
         //select date
         Calendar calendar = inputDate(reader);
         //show select room
-        return getAvailableRooms(calendar);
+        getAvailableRooms(null, calendar);
     }
 
     /**
@@ -410,7 +408,7 @@ public class UserTerminal implements Runnable{
         //select date
         Calendar calendar = inputDate(reader);
         //show available rooms
-        Map<String, Room> availableRoom = getAvailableRooms(calendar);
+        Map<String, Room> availableRoom = getAvailableRooms(campusOfInterest, calendar);
         //select room
         Room room;
         if (availableRoom != null) room = selectRoom(reader, availableRoom);
@@ -479,25 +477,36 @@ public class UserTerminal implements Runnable{
      * @return Map of rooms that are available
      */
     @Nullable
-    private Map<String, Room> getAvailableRooms(Calendar calendar){
-        Map<String, Room> availableRooms = client.getAvailableTimesSlot(calendar);
-
-        if(availableRooms == null){
-            printlnErr("No room is available on " + Format.formatDate(calendar));
+    private Map<String, Room> getAvailableRooms(CampusName campus, Calendar calendar) {
+        Map<String, Map<String, Room>> availableRooms = client.getAvailableTimesSlot(calendar);
+        if (campus == null) {
+            for (Map.Entry<String, Map<String, Room>> campusMap : availableRooms.entrySet()) {
+                int counter1 = 0;
+                for (Map.Entry<String, Room> roomMap : campusMap.getValue().entrySet())
+                    for (TimeSlot slotList : roomMap.getValue().getTimeSlots())
+                        if (slotList.getStudentID() == null) ++counter1;
+                System.out.println(campusMap.getKey() + counter1);
+            }
             return null;
-        }else{
-            println(Format.formatDate(calendar));
-            for(Map.Entry<String, Room> entry : availableRooms.entrySet()){
-                println("Room number - " + entry.getKey());
-                for(TimeSlot slot : entry.getValue().getTimeSlots()){
-                    if(slot.getStudentID() == null){
-                        println("\t" + Format.formatTime(slot.getStartTime()) +
-                                "\tto\t" +
-                                Format.formatTime(slot.getEndTime()));
+        } else {
+            Map<String, Room> allRooms = availableRooms.get(campus.abrev);
+            if (allRooms == null) {
+                printlnErr("No room is available on " + Format.formatDate(calendar));
+                return null;
+            } else {
+                println(Format.formatDate(calendar));
+                for (Map.Entry<String, Room> entry : allRooms.entrySet()) {
+                    println("Room number - " + entry.getKey());
+                    for (TimeSlot slot : entry.getValue().getTimeSlots()) {
+                        if (slot.getStudentID() == null) {
+                            println("\t" + Format.formatTime(slot.getStartTime()) +
+                                    "\tto\t" +
+                                    Format.formatTime(slot.getEndTime()));
+                        }
                     }
                 }
+                return allRooms;
             }
-            return availableRooms;
         }
     }
 

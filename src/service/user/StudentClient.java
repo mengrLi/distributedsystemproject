@@ -26,7 +26,7 @@ public class StudentClient extends Client implements UserInterface{
         }
     }
 
-    public Map<String, Room> getAvailableTimesSlot(Calendar date){
+    public Map<String, Map<String, Room>> getAvailableTimesSlot(Calendar date) {
         try{
             return connect().getAvailableTimesSlot(date);
         }catch(RemoteException | NotBoundException e){
