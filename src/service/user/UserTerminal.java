@@ -88,6 +88,8 @@ public class UserTerminal implements Runnable{
     }
 
     /**
+     * User always connects to his own server at log in
+     *
      * Determine what kind of connection should be used, parse id info
      *
      * @param username String user id
@@ -411,15 +413,14 @@ public class UserTerminal implements Runnable{
         Map<String, Room> availableRoom = getAvailableRooms(calendar);
         //select room
         Room room;
-        if(availableRoom != null){
-            room = selectRoom(reader, availableRoom);
-        }else return;
+        if (availableRoom != null) room = selectRoom(reader, availableRoom);
+        else return;
 
         //select slot
         TimeSlot slot;
-        if(room != null){
-            slot = selectSlot(reader, room);
-        }else return;
+        if (room != null) slot = selectSlot(reader, room);
+        else return;
+
         if(slot == null) return;
         println(client.bookRoom(campusOfInterest, room.getRoomNumber(), calendar, slot, campusOfTheID, id));
 

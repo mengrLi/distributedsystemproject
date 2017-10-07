@@ -1,7 +1,12 @@
 package service.server;
 
+import com.google.gson.GsonBuilder;
 import domain.*;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -12,14 +17,10 @@ import java.util.regex.PatternSyntaxException;
 
 public class CampusServer extends UnicastRemoteObject implements ServerInterface, Runnable{
 
+    final Lock roomLock = new Lock();
     private final CampusName campusName;
-    private boolean serverStatus = false;
-
     private Map<Calendar, Map<String, Room>> roomRecord;
-    private final Lock roomLock = new Lock();
-
     private Map<Long, Map<Integer, Integer>> studentBookingRecord;
-
 
     public CampusServer(CampusName name) throws RemoteException{
         super(name.port);
@@ -43,7 +44,6 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         synchronized(this.roomLock){
             Map<String, Room> getMap = this.roomRecord.getOrDefault(date, new HashMap<>());
             Room room = getMap.getOrDefault(roomNumber, new Room(roomNumber));
-
 
             if(toAdd) ret = room.addTimeSlots(list);
             else ret = room.removeTimeSlots(list);
@@ -75,63 +75,129 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
      * @param timeSlot         the time slot
      * @param campusOfID       student's original campus code
      * @param id               student id in form of int
-     * @return response string
+     * @return response string Booking ID
      * @throws RemoteException io exception
      */
     @Override
-    public String bookRoom(CampusName campusOfInterest, String roomNumber, Calendar date, TimeSlot timeSlot, CampusName campusOfID, int id) throws RemoteException{
-        //connect to the right campus using listening socket port
-        if(campusOfInterest.name.equals(campusName.name)){
-            //this server is needed, no need to connect to others
-            synchronized(roomLock){
-                Map<String, Room> getRoomMap = roomRecord.get(date);
-                if(getRoomMap == null) return "Date not found"; //no date found
-                Room getRoom = getRoomMap.get(roomNumber);
-                if(getRoom == null) return "Room not found"; //no room found
-                List<TimeSlot> getSlots = getRoom.getTimeSlots();
-                if(getSlots.size() == 0) return "This room's time slot list is empty"; // no time slot available
+    public String bookRoom(CampusName campusOfInterest, String roomNumber,
+                           Calendar date, TimeSlot timeSlot, CampusName campusOfID, int id) throws RemoteException {
+        /* Create a booking ID object */
 
-                for(TimeSlot slot : getSlots){
-                    if(slot.equals(timeSlot)){
-                        if(slot.getStudentID() == null){
-                            Calendar temp = (Calendar) date.clone();
-                            temp.set(Calendar.DAY_OF_WEEK, temp.getFirstDayOfWeek());
-                            long beginOfWeek = temp.getTimeInMillis();
-                            //check booking record
-                            Map<Integer, Integer> getWeek
-                                    = studentBookingRecord.getOrDefault(beginOfWeek, new HashMap<>());
+        BookingInfo bookingInfo = new BookingInfo(
+                true,
+                campusOfInterest.abrev, campusName.abrev,
+                id, date, roomNumber,
+                timeSlot.getStartTime(), timeSlot.getEndTime());
+        /*
+        Step 1 : check if student can book a room at the week indicated, since student always connect to his own
+        campus first.
+        //get the key to the week of interest in milliseconds
+        */
+        Calendar weekKey = (Calendar) bookingInfo.getBookingDate().clone();
+        weekKey.set(Calendar.DAY_OF_WEEK, weekKey.getFirstDayOfWeek());
+        long beginOfWeek = weekKey.getTimeInMillis();
 
-                            int getCount = getWeek.getOrDefault(id, 0);//not null
-                            if(getCount < 3){ //save to booking record
-                                getWeek.put(id, getCount + 1);
-                                String bookingID = generateRandomString(campusOfInterest, campusOfID, id, date, roomNumber, timeSlot);
-                                slot.setStudentID(campusOfID, id, bookingID);
-                                studentBookingRecord.put(beginOfWeek, getWeek);
-                                System.err.println("You can book " + (2 - getCount) + " more rooms this week");
-                                return bookingID;
-                            }else return "Booking limit reached";
-                        }else return "This room has been booked";
-                    }
+        //check booking record
+        Map<Integer, Integer> getWeek = studentBookingRecord.getOrDefault(beginOfWeek, new HashMap<>());
+        int count = getWeek.getOrDefault(bookingInfo.getStudentID(), 0);
+
+        /*
+        Strp 2: if count is less than 3, book the room
+        if the room is in the same campus as student's account, book directly, else connect and send bookingInfo to book
+         */
+        if (count < 3) {
+            String returnBookingId;
+            String message;
+            /* Same campus */
+            if (bookingInfo.getCampusOfInterestAbrev().equals(campusName.abrev))
+                message = bookRoomHelperPrivate(bookingInfo);
+            /* different campus */
+            else
+                message = udpSendBookingRequest(bookingInfo);
+
+            //  Error message break the booking process, returns the error message
+            if (message.substring(0, 6).equals("Error:")) return message;
+            else returnBookingId = message;
+
+            /* Update student's booking record in student's account server */
+            getWeek.put(bookingInfo.getStudentID(), count + 1);
+            studentBookingRecord.put(beginOfWeek, getWeek);
+            System.err.println("You can book " + (2 - count) + " more rooms this week");
+            return returnBookingId;
+        } else return "Error: Booking limit reached";
+    }
+
+    private String bookRoomHelperPrivate(BookingInfo bookingInfo) {
+        synchronized (roomLock) {
+            Map<String, Room> getRoomMap = roomRecord.get(bookingInfo.getBookingDate());
+            if (getRoomMap == null) return "Error: Date not found"; //no date found
+            Room getRoom = getRoomMap.get(bookingInfo.getRoomName());
+            if (getRoom == null) return "Error: Room not found"; //no room found
+            List<TimeSlot> getSlots = getRoom.getTimeSlots();
+            if (getSlots.size() == 0) return "Error: This room's time slot list is empty"; // no time slot available
+
+            for (TimeSlot slot : getSlots) {
+                if (slot.getStartTime().equals(bookingInfo.getBookingStartTime())
+                        && slot.getEndTime().equals(bookingInfo.getBookingEndTime())) {
+                    if (slot.getStudentID() == null) {
+                        String bookingID = bookingInfo.encodeBookingID();
+                        slot.setStudentID(
+                                CampusName.getCampusName(bookingInfo.getStudentCampusAbrev()),
+                                bookingInfo.getStudentID(),
+                                bookingID
+                        );
+                        return bookingID;
+                    } else return "Error: This room has been booked";
                 }
-                return "Time slot not found";
             }
-        }else{
-            //remote server is needed
-            return "NOT DONE YET";
+            return "Error: Time slot not found";
         }
     }
 
-    /**
-     * random string generator
-     *
-     * @return confirmation booking code
-     */
-    private String generateRandomString(CampusName destinateCampus, CampusName studentCampusAbrev, int studentID,
-                                        Calendar bookingDate, String roomName,
-                                        TimeSlot timeSlot){
-        return RandomString.encode(destinateCampus.abrev, studentCampusAbrev.abrev,
-                studentID, bookingDate, roomName, timeSlot.getStartTime(), timeSlot.getEndTime());
+    private String udpSendBookingRequest(BookingInfo bookingInfo) {
+        String bookIDString = bookingInfo.toString();
+        System.out.println(bookIDString.length());
+        byte[] messageByte = bookIDString.getBytes();
+        int serverPort = determinePort(bookingInfo.getCampusOfInterestAbrev());
+        if (serverPort == -1) return "Error: Invalid campus name"; //should never be reached
+        String reply = udpRequest(messageByte, bookIDString.length(), serverPort);
+        System.out.println("Reply : " + reply);
+        return reply;
     }
+
+    private int determinePort(String campusOfInterestAbrev) {
+        CampusName ret = CampusName.getCampusName(campusOfInterestAbrev);
+        if (ret != null) return ret.inPort;
+        return -1;
+    }
+
+
+    /**
+     * UDP request helper
+     * @param messageInByte message string in byte array
+     * @param length length of the original message
+     * @param serverPort port which is listening
+     * @return string response from the other server
+     */
+    private String udpRequest(byte[] messageInByte, int length, int serverPort) {
+        DatagramSocket socket;
+        try {
+            socket = new DatagramSocket();
+            InetAddress address = InetAddress.getByName("localhost");
+            DatagramPacket request = new DatagramPacket(messageInByte, length, address, serverPort);
+            socket.send(request);
+            byte[] buffer = new byte[10000];
+            DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
+            socket.receive(reply);
+            return new String(reply.getData());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "Error: I/O Exception";
+    }
+
+
+
 
     @Override
     public Map<String, Room> getAvailableTimesSlot(Calendar date) throws RemoteException{
@@ -140,52 +206,37 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         }
     }
 
+    /**
+     * When canceling, student connects to his own campus
+     *
+     * @param bookingID
+     * @return
+     * @throws RemoteException
+     */
     @Override
-    public boolean cancelBooking(String booking) throws RemoteException{
-        try{
-            String decode = RandomString.decode(booking);
-            if(!decode.contains("-")){
-                System.err.println("Invalid booking reference input");
-                return false;
-            }
-            String[] delim = decode.split("-");
-            if(delim.length != 8){
-                System.err.println("Invalid booking reference input");
-                return false;
-            }
-            String campusAbrev = delim[0];
-
-            String studentCampusAbrev = delim[1];
-
-            int studentID = Integer.parseInt(delim[2]);
-
-            Calendar bookingDate = Calendar.getInstance();
-            bookingDate.setTimeInMillis(Long.parseLong(delim[3]));
-
-            String roomName = delim[4];
-
-            Calendar bookingStartTime = Calendar.getInstance();
-            bookingStartTime.setTimeInMillis(Long.parseLong(delim[5]));
-
-            Calendar bookingEndTime = Calendar.getInstance();
-            bookingEndTime.setTimeInMillis(Long.parseLong(delim[6]));
-
-            System.out.println("Booking campus " + campusAbrev);
-            System.out.println("Student ID campus " + studentCampusAbrev);
-            System.out.println("Date of reservation " + bookingDate.getTime());
-            System.out.println("Room " + roomName);
-            System.out.println("Start time " + bookingStartTime.getTime());
-            System.out.println("End time" + bookingEndTime.getTime());
+    public boolean cancelBooking(String bookingID) throws RemoteException{
+        try {
+            BookingInfo bookingInfo = BookingInfo.decode(bookingID);
+            if (bookingInfo != null) {
+                System.out.println("Booking campus " + bookingInfo.getCampusOfInterestAbrev());
+                System.out.println("Student ID campus " + bookingInfo.getStudentCampusAbrev());
+                System.out.println("Date of reservation " + bookingInfo.getBookingDate().getTime());
+                System.out.println("Room " + bookingInfo.getRoomName());
+                System.out.println("Start time " + bookingInfo.getBookingStartTime().getTime());
+                System.out.println("End time" + bookingInfo.getBookingEndTime().getTime());
 
 
-            if(campusAbrev.equals(studentCampusAbrev)){ //this is the right server, no need of connection
-                boolean r1 = removeBooking(bookingDate, roomName, bookingStartTime, bookingEndTime);
-                boolean r2 = removeStudentRecord(bookingDate, studentID);
-                return r1 && r2;
-            }else{
+                if (campusName.abrev.equals(bookingInfo.getCampusOfInterestAbrev())) {
+                    //this is the right server, no need of connection
+                    boolean r1 = removeBooking(
+                            bookingInfo.getBookingDate(), bookingInfo.getRoomName(), bookingInfo.getBookingStartTime(), bookingInfo.getBookingEndTime());
+                    boolean r2 = removeStudentRecord(bookingInfo.getBookingDate(), bookingInfo.getStudentID());
+                    return r1 && r2;
+                } else {
+                    //ask other server
 
-                //remote
 
+                }
             }
             return false;
             //this happens in the correct server only
@@ -235,21 +286,36 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         }
     }
 
-    public void turnOffServer() throws RemoteException{
-        this.serverStatus = false;
-        System.err.println("Turning off " + campusName.name + " server...");
-        System.err.println(campusName.name + " server is off!");
+    @Override
+    public void run() {
+        bindRegistry();
+        udpListening();
     }
 
-    @Override
-    public void run(){
-        serverStatus = true;
+    private void bindRegistry() {
         try{
             Registry registry = LocateRegistry.getRegistry(1099);
             registry.bind(campusName.serverName, this);
             System.out.println(campusName.name + " server has been started");
         }catch(RemoteException | AlreadyBoundException e){
             e.printStackTrace();
+        }
+    }
+
+    private void udpListening() {
+        DatagramSocket socket = null;
+        try {
+            socket = new DatagramSocket(campusName.inPort);
+            byte[] buffer = new byte[1000];
+            while (true) {
+                DatagramPacket request = new DatagramPacket(buffer, buffer.length);
+                socket.receive(request);
+                new Thread(new Responder(socket, request)).start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (socket != null) socket.close();
         }
     }
 
@@ -289,4 +355,45 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         }
         System.out.println(roomRecord.size()+" days added to server");
     }
+
+    public class Responder implements Runnable {
+        private DatagramSocket socket = null;
+        private DatagramPacket request = null;
+
+        Responder(DatagramSocket socket, DatagramPacket packet) {
+            this.socket = socket;
+            this.request = packet;
+        }
+
+        @Override
+        public void run() {
+            try {
+                byte[] data = makeResponse();
+                DatagramPacket response = new DatagramPacket(data, data.length, request.getAddress(), request.getPort());
+                socket.send(response);
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        private byte[] makeResponse() {
+            BookingInfo bookingInfo;
+
+            String json = new String(request.getData()).trim();
+            String requestType = json.substring(2, 8);
+            System.out.println(json.length());
+            if (requestType.equals("toBook")) {
+                bookingInfo = new GsonBuilder().create().fromJson(json, BookingInfo.class);
+                if (bookingInfo.isToBook()) {
+                    //to book
+                    return bookRoomHelperPrivate(bookingInfo).getBytes();
+                } else {
+                    //to cancel
+                }
+            }
+            return null;
+        }
+    }
+
 }
