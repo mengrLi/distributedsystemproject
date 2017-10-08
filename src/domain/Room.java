@@ -1,6 +1,10 @@
 package domain;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -62,7 +66,30 @@ public class Room implements Serializable{
                         /*
                          * if student has booked this room, it will be deleted
                          */
-                        if(currSlot.getStudentID() != null) currSlot.cancelBooking();
+                        if (currSlot.getStudentID() != null) {
+                            CampusName studentCampus = currSlot.getStudentCampus();
+                            int student_id = currSlot.getStudentID();
+                            DatagramSocket socket;
+                            try {
+                                Calendar calendar = (Calendar) currSlot.getStartTime().clone();
+                                calendar.set(Calendar.HOUR, 0);
+                                calendar.set(Calendar.MINUTE, 0);
+                                calendar.set(Calendar.SECOND, 0);
+                                calendar.set(Calendar.MILLISECOND, 0);
+                                calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
+                                String message = "**remove-" + calendar.getTimeInMillis() + "-" + student_id;
+                                System.out.println(calendar.getTime() + " " + calendar.getTimeInMillis());
+                                byte[] messageByte = message.getBytes();
+                                socket = new DatagramSocket();
+                                InetAddress address = InetAddress.getByName("localhost");
+                                DatagramPacket request = new DatagramPacket(messageByte, message.length(), address, studentCampus.inPort);
+                                socket.send(request);
+
+                                currSlot.cancelBooking();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 }
                 if(index != -1){

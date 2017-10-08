@@ -8,9 +8,11 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
-public abstract class Client{
+public abstract class Client implements Runnable {
     protected CampusName campusName;
     protected int id;
+    protected String fullID;
+
 
     Client(CampusName campusName, int id){
         this.campusName = campusName;

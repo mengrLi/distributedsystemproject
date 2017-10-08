@@ -15,6 +15,9 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import java.util.regex.PatternSyntaxException;
 
 public class CampusServer extends UnicastRemoteObject implements ServerInterface, Runnable{
@@ -24,11 +27,34 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
     private Map<Calendar, Map<String, Room>> roomRecord;
     private Map<Long, Map<Integer, Integer>> studentBookingRecord;
 
+    private Logger log = null;
+
     public CampusServer(CampusName name) throws RemoteException{
         super(name.port);
         campusName = name;
         roomRecord = new HashMap<>();
         studentBookingRecord = new HashMap<>();
+
+        initLogger();
+        log.info(campusName.name + " Server has been loaded");
+
+    }
+
+    private void initLogger() {
+        try {
+            System.out.println("loading log");
+            String dir = "src/server_log/";
+            log = Logger.getLogger(CampusServer.class.getName());
+            log.setUseParentHandlers(false);
+            FileHandler fileHandler = new FileHandler(dir + campusName.abrev + ".log", true);
+            log.addHandler(fileHandler);
+            SimpleFormatter formatter = new SimpleFormatter();
+            fileHandler.setFormatter(formatter);
+            System.out.println("loaded log");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Override
@@ -52,21 +78,10 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
             getMap.put(roomNumber, room);
             this.roomRecord.put(date, getMap);
         }
-        printRoomRecord();
         return ret;
     }
 
-    private void printRoomRecord(){
-        for(Map.Entry<Calendar, Map<String, Room>> entry : roomRecord.entrySet()){
-            System.out.println("\nServer Terminal Output : " + Format.formatDate(entry.getKey()) + ":");
-            for(Map.Entry<String, Room> entry1 : entry.getValue().entrySet()){
-                System.out.println(entry1.getKey() + ":");
-                for(TimeSlot slot : entry1.getValue().getTimeSlots()){
-                    System.out.println(Format.formatTime(slot.getStartTime()) + " " + Format.formatTime(slot.getEndTime()));
-                }
-            }
-        }
-    }
+
 
     /**
      * Booking method
@@ -86,10 +101,10 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         /* Create a booking ID object */
 
         BookingInfo bookingInfo = new BookingInfo(
-                true,
                 campusOfInterest.abrev, campusName.abrev,
                 id, date, roomNumber,
                 timeSlot.getStartTime(), timeSlot.getEndTime());
+        bookingInfo.setToBook(true);
         /*
         Step 1 : check if student can book a room at the week indicated, since student always connect to his own
         campus first.
@@ -227,6 +242,9 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         synchronized(roomLock){
             Map<String, Room> getDate = roomRecord.get(calendar);
             int counter = 0;
+            if (getDate == null) {
+                return 0;
+            }
             for(Map.Entry<String, Room> entry : getDate.entrySet())
                 for(TimeSlot slot : entry.getValue().getTimeSlots())
                     if(slot.getStudentID() == null) ++counter;
@@ -255,14 +273,24 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
      * When canceling, student connects to his own campus
      *
      * @param bookingID
+     * @param campusName
+     * @param id
      * @return
      * @throws RemoteException
      */
     @Override
-    public boolean cancelBooking(String bookingID) throws RemoteException{
+    public boolean cancelBooking(String bookingID, CampusName campusName, int id) throws RemoteException {
         try {
             BookingInfo bookingInfo = BookingInfo.decode(bookingID);
-            if (bookingInfo != null) {
+            if (bookingInfo == null) {
+                System.err.println("Booking info process unsuccessful");
+                return false;
+            } else {
+                if (bookingInfo.getStudentID() != id || !bookingInfo.getStudentCampusAbrev().equals(campusName.abrev)) {
+                    System.err.println("STUDENT ID DOES NOT MATCH BOOKING RECORD");
+                    return false;
+                }
+                bookingInfo.setToBook(false);
                 System.out.println("Booking campus " + bookingInfo.getCampusOfInterestAbrev());
                 System.out.println("Student ID campus " + bookingInfo.getStudentCampusAbrev());
                 System.out.println("Date of reservation " + bookingInfo.getBookingDate().getTime());
@@ -271,66 +299,78 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
                 System.out.println("End time" + bookingInfo.getBookingEndTime().getTime());
 
 
-                if (campusName.abrev.equals(bookingInfo.getCampusOfInterestAbrev())) {
-                    //this is the right server, no need of connection
-                    boolean r1 = removeBooking(
-                            bookingInfo.getBookingDate(), bookingInfo.getRoomName(), bookingInfo.getBookingStartTime(), bookingInfo.getBookingEndTime());
-                    boolean r2 = removeStudentRecord(bookingInfo.getBookingDate(), bookingInfo.getStudentID());
-                    return r1 && r2;
+                if (this.campusName.abrev.equals(bookingInfo.getCampusOfInterestAbrev())) {
+                    //booking record is on the student's server
+                    boolean result = removeBookingRecord(bookingInfo);
+                    if (!result) {
+                        System.err.println("BOOKING CANNOT BE REMOVED FROM LOCAL SERVER");
+                        return false;
+                    }
                 } else {
-                    //ask other server
-
-
+                    //booking record is on a remote server
+                    boolean result = Boolean.parseBoolean(udpSendBookingRequest(bookingInfo));
+                    if (!result) {
+                        System.err.println("BOOKING CANNOT BE REMOVED FROM REMOTE SERVER");
+                        return false;
+                    }
                 }
+                //reaching here means booking has been removed properly
+                //Student record is always on the current server
+                return removeStudentRecord(bookingInfo);
             }
-            return false;
-            //this happens in the correct server only
-
         }catch(PatternSyntaxException | NumberFormatException e){
             System.err.println(e.getMessage());
             return false;
         }
     }
 
-    private boolean removeStudentRecord(Calendar bookingDate, int id){
-        Calendar startOfWeek = (Calendar) bookingDate.clone();
-        startOfWeek.set(Calendar.DAY_OF_WEEK, startOfWeek.getFirstDayOfWeek());
-        long beginOfWeekMilli = startOfWeek.getTimeInMillis();
-        synchronized(roomLock){
-            Map<Integer, Integer> record = studentBookingRecord.get(beginOfWeekMilli);
-            if(record == null) return false;
-            Integer count = record.get(id);
-            if(count == null) return false;
-            record.put(id, count - 1);
-            return true;
-        }
-    }
-
-    private boolean removeBooking(Calendar bookingDate, String roomName,
-                                  Calendar bookingStartTime, Calendar bookingEndTime){
+    private boolean removeBookingRecord(BookingInfo bookingInfo) {
 
         synchronized(roomLock){
-            Map<String, Room> getMap = roomRecord.get(bookingDate);
+            Map<String, Room> getMap = roomRecord.get(bookingInfo.getBookingDate());
             if(getMap == null) return false;
 
-            Room getRoom = getMap.get(roomName);
+            Room getRoom = getMap.get(bookingInfo.getRoomName());
             if(getRoom == null) return false;
 
             List<TimeSlot> slots = getRoom.getTimeSlots();
             if(slots == null) return false;
 
-            TimeSlot temp = new TimeSlot(bookingStartTime, bookingEndTime);
             for(TimeSlot slot : slots){
-                if(slot.equals(temp)){
-                    System.out.println("Record found");
-                    slot.cancelBooking();
-                    return true;
+                if (slot.getStartTime().equals(bookingInfo.getBookingStartTime())
+                        && slot.getEndTime().equals(bookingInfo.getBookingEndTime())) {
+                    if (slot.getStudentID() == null) {
+                        System.err.println("NO RECORD FOUND ON " + campusName.name.toUpperCase() + "SERVER");
+                        return false;
+                    } else {
+                        System.err.println("RECORD FOUND ON " +
+                                campusName.name.toUpperCase() +
+                                "SERVER for STUDENT " +
+                                bookingInfo.getStudentID()
+                        );
+                        slot.cancelBooking();
+                        return true;
+                    }
                 }
             }
             return false;
         }
     }
 
+    private boolean removeStudentRecord(BookingInfo bookingInfo) {
+        Calendar startOfWeek = (Calendar) bookingInfo.getBookingDate().clone();
+        startOfWeek.set(Calendar.DAY_OF_WEEK, startOfWeek.getFirstDayOfWeek());
+        long beginOfWeekMilli = startOfWeek.getTimeInMillis();
+        synchronized (roomLock) {
+            Map<Integer, Integer> record = studentBookingRecord.get(beginOfWeekMilli);
+            int id = bookingInfo.getStudentID();
+            if (record == null) return false;
+            Integer count = record.get(id);
+            if (count == null) return false;
+            record.put(id, count - 1);
+            return true;
+        }
+    }
     @Override
     public void run() {
         bindRegistry();
@@ -351,9 +391,11 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         DatagramSocket socket = null;
         try {
             socket = new DatagramSocket(campusName.inPort);
+            byte[] buffer;
+            DatagramPacket request;
             while (true) {
-                byte[] buffer = new byte[100000];
-                DatagramPacket request = new DatagramPacket(buffer, buffer.length);
+                buffer = new byte[100000];
+                request = new DatagramPacket(buffer, buffer.length);
                 socket.receive(request);
                 new Thread(new Responder(socket, request)).start();
             }
@@ -414,10 +456,10 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         public void run() {
             try {
                 byte[] data = makeResponse();
-                DatagramPacket response = new DatagramPacket(data, data.length, request.getAddress(), request.getPort());
                 if(data != null){
+                    DatagramPacket response = new DatagramPacket(data, data.length, request.getAddress(), request.getPort());
                     socket.send(response);
-                }else socket.send(null);
+                }
             } catch (IOException e) {
                 System.err.println(e.getMessage());
                 e.printStackTrace();
@@ -426,47 +468,63 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
 
         private byte[] makeResponse() {
             BookingInfo bookingInfo;
-
             String json = new String(request.getData()).trim();
             String requestType = json.substring(2, 8);
-            System.out.println("json:" + json);
-            if (requestType.equals("toBook")) {
-                bookingInfo = new GsonBuilder().create().fromJson(json, BookingInfo.class);
-                if (bookingInfo.isToBook()) {
-                    //to book
-                    return bookRoomHelperPrivate(bookingInfo).getBytes();
-                } else {
-                    //to cancel
+            switch (requestType) {
+                case "toBook":
+                    bookingInfo = new GsonBuilder().create().fromJson(json, BookingInfo.class);
+                    if (bookingInfo.isToBook()) {
+                        //to book
+                        return bookRoomHelperPrivate(bookingInfo).getBytes();
+                    } else {
+                        //to cancel
+                        return String.valueOf(removeBookingRecord(bookingInfo)).getBytes();
+                    }
+                case "countA": {
+                    String[] delim = json.split("-");
+                    Calendar calendar = Calendar.getInstance();
+                    try {
+                        calendar.setTimeInMillis(Long.parseLong(delim[1]));
+                        int get = countFreeRooms(calendar);
+                        return String.valueOf(get).getBytes();
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
                 }
-            }else if(requestType.equals("countA")){
-                String[] delim = json.split("-");
-                Calendar calendar = Calendar.getInstance();
-                try {
-                    calendar.setTimeInMillis(Long.parseLong(delim[1]));
-                    int get = countFreeRooms(calendar);
-
-                    return String.valueOf(get).getBytes();
-                }catch(NumberFormatException e){
-                    e.printStackTrace();
-                    return null;
+                case "countB": {
+                    String[] delim = json.split("-");
+                    Calendar calendar = Calendar.getInstance();
+                    try {
+                        calendar.setTimeInMillis(Long.parseLong(delim[1]));
+                        Type type = new TypeToken<Map<String, Room>>() {
+                        }.getType();
+                        synchronized (roomLock) {
+                            Map<String, Room> ret = roomRecord.get(calendar);
+                            return new GsonBuilder().create().toJson(ret, type).getBytes();
+                        }
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                        return null;
+                    }
                 }
-            }else if(requestType.equals("countB")){
-                String[] delim = json.split("-");
-                Calendar calendar = Calendar.getInstance();
-                try{
-                    calendar.setTimeInMillis(Long.parseLong(delim[1]));
-                    Type type = new TypeToken<Map<String, Room>>(){
-                    }.getType();
-
-                    Map<String, Room> ret = roomRecord.get(calendar);
-                    return new GsonBuilder().create().toJson(ret, type).getBytes();
-                }catch(NumberFormatException e){
-                    e.printStackTrace();
+                case "remove": {
+                    String[] delim = json.split("-");
+                    Calendar calendar = Calendar.getInstance();
+                    try {
+                        calendar.setTimeInMillis(Long.parseLong(delim[1]));
+                        int id = Integer.parseInt(delim[2]);
+                        synchronized (roomLock) {
+                            int count = studentBookingRecord.get(calendar.getTimeInMillis()).get(id);
+                            studentBookingRecord.get(calendar.getTimeInMillis()).put(id, count - 1);
+                        }
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                    }
                     return null;
                 }
             }
             return null;
         }
     }
-
 }

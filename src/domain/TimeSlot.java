@@ -2,16 +2,22 @@ package domain;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
+import lombok.Getter;
 
 import java.io.Serializable;
 import java.util.Calendar;
 
 
 public class TimeSlot implements Serializable, Comparable<TimeSlot>{
+    @Getter
     private Calendar startTime;
+    @Getter
     private Calendar endTime;
+    @Getter
     private Integer studentID = null;
+    @Getter
     private CampusName studentCampus = null;
+    @Getter
     private String bookingID = null;
 
 
@@ -28,13 +34,7 @@ public class TimeSlot implements Serializable, Comparable<TimeSlot>{
         this.finish = Format.formatTime(endTime);
     }
 
-    public Calendar getStartTime(){
-        return startTime;
-    }
 
-    public Calendar getEndTime(){
-        return endTime;
-    }
 
     public void setEndTime(Calendar endTime){
         this.endTime = endTime;
@@ -45,17 +45,11 @@ public class TimeSlot implements Serializable, Comparable<TimeSlot>{
         return startTime.getTimeInMillis();
     }
 
-    public Integer getStudentID(){
-        return studentID;
-    }
 
     public long getEndMilli(){
         return endTime.getTimeInMillis();
     }
 
-    public CampusName getStudentCampus(){
-        return studentCampus;
-    }
 
     public void setStartTime(Calendar startTime){
         this.startTime = startTime;

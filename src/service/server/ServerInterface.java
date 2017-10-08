@@ -33,7 +33,7 @@ public interface ServerInterface extends Remote{
         throw new NotImplementedException();
     }
 
-    default boolean cancelBooking(String booking) throws RemoteException{
+    default boolean cancelBooking(String booking, CampusName campusName, int id) throws RemoteException {
         throw new NotImplementedException();
     }
 }

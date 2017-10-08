@@ -4,13 +4,13 @@ import com.google.gson.GsonBuilder;
 import com.sun.istack.internal.Nullable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 import java.util.Calendar;
 
 @Getter
 @RequiredArgsConstructor
 public class BookingInfo {
-    private final boolean toBook;
     private final String campusOfInterestAbrev;
     private final String studentCampusAbrev;
     private final int studentID;
@@ -18,6 +18,8 @@ public class BookingInfo {
     private final String roomName;
     private final Calendar bookingStartTime;
     private final Calendar bookingEndTime;
+    @Setter
+    private boolean toBook;
 
     @Nullable
     public static BookingInfo decode(String code) {
@@ -33,7 +35,7 @@ public class BookingInfo {
             System.err.println("Invalid booking reference input");
             return null;
         }
-        boolean toBook = Boolean.getBoolean(delim[0]);
+
         String campusAbrev = delim[1];
         String studentCampusAbrev = delim[2];
 
@@ -50,8 +52,7 @@ public class BookingInfo {
         Calendar bookingEndTime = Calendar.getInstance();
         bookingEndTime.setTimeInMillis(Long.parseLong(delim[7]));
 
-        return new BookingInfo(
-                toBook,
+        BookingInfo ret = new BookingInfo(
                 campusAbrev,
                 studentCampusAbrev,
                 studentID,
@@ -60,6 +61,8 @@ public class BookingInfo {
                 bookingStartTime,
                 bookingEndTime
         );
+        ret.setToBook(Boolean.getBoolean(delim[0]));
+        return ret;
     }
 
     public String toString() {
