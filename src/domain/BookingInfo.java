@@ -11,6 +11,8 @@ import java.util.Calendar;
 @Getter
 @RequiredArgsConstructor
 public class BookingInfo {
+    @Setter
+    private boolean toBook;
     private final String campusOfInterestAbrev;
     private final String studentCampusAbrev;
     private final int studentID;
@@ -18,8 +20,7 @@ public class BookingInfo {
     private final String roomName;
     private final Calendar bookingStartTime;
     private final Calendar bookingEndTime;
-    @Setter
-    private boolean toBook;
+
 
     @Nullable
     public static BookingInfo decode(String code) {

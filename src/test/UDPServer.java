@@ -11,15 +11,15 @@ public class UDPServer {
     public static void main(String[] args) {
         DatagramSocket socket;
         try {
-            socket = new DatagramSocket(5858);
+            socket = new DatagramSocket(5860);
             byte[] buffer = new byte[1000];
             while (true) {
                 System.out.println("init");
                 DatagramPacket request = new DatagramPacket(buffer, buffer.length);
                 socket.receive(request);
                 System.out.println("request received");
-//                DatagramPacket reply = new DatagramPacket(request.getData(), request.getLength(), request.getAddress(), request.getPort());
-//                socket.send(reply);
+                DatagramPacket reply = new DatagramPacket(request.getData(), request.getLength(), request.getAddress(), request.getPort());
+                socket.send(reply);
 
 
 //                new Thread(new Responder(socket, request, CampusName.DORVAL)).start();
