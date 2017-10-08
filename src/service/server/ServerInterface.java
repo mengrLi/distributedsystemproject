@@ -13,11 +13,11 @@ import java.util.Map;
 
 public interface ServerInterface extends Remote{
 
-    default List<List<TimeSlot>> createRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
+    default List<List<TimeSlot>> createRoom(String roomNumber, Calendar date, List<TimeSlot> list, String adminID) throws RemoteException {
         throw new NotImplementedException();
     }
 
-    default List<List<TimeSlot>> deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
+    default List<List<TimeSlot>> deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list, String admiID) throws RemoteException {
         throw new NotImplementedException();
     }
 
@@ -34,6 +34,10 @@ public interface ServerInterface extends Remote{
     }
 
     default boolean cancelBooking(String booking, CampusName campusName, int id) throws RemoteException {
+        throw new NotImplementedException();
+    }
+
+    default boolean checkIDAdmin(String fullID) throws RemoteException {
         throw new NotImplementedException();
     }
 }

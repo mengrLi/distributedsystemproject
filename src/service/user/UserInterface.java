@@ -11,6 +11,10 @@ import java.util.Map;
 
 public interface UserInterface{
 
+    default boolean checkID() {
+        throw new NotImplementedException();
+    }
+
     default boolean createRoom(String roomNumber, Calendar date, List<TimeSlot> list){
         throw new NotImplementedException();
     }

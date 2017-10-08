@@ -104,12 +104,12 @@ public class UserTerminal implements Runnable{
 
         if(type.equals("A")){
             client = new AdminClient(campusOfTheID, id);
-            admin = true;
-            return true;
+            admin = client.checkID();
+            return admin;
         }else if(type.equals("S")){
             client = new StudentClient(campusOfTheID, id);
-            admin = false;
-            return true;
+            admin = client.checkID();
+            return false;
         }
         return false;
     }

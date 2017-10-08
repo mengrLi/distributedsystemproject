@@ -16,9 +16,9 @@ public class AdminClient extends Client implements UserInterface, Runnable {
     private Logger log = null;
     AdminClient(CampusName campusName, int id){
         super(campusName, id);
-        fullID = campusName.abrev + "s" + id;
+        fullID = campusName.abrev + "a" + id;
         initLogger();
-        log.info(" Administrator " + fullID + " has logged into " + campusName.name + " server");
+
     }
 
     private void initLogger() {
@@ -34,6 +34,19 @@ public class AdminClient extends Client implements UserInterface, Runnable {
             e.printStackTrace();
         }
     }
+
+    public boolean checkID() {
+        try {
+            if (connect().checkIDAdmin(fullID)) {
+                log.info(" Administrator " + fullID + " has logged into " + campusName.name + " server");
+                return true;
+            }
+            return false;
+        } catch (RemoteException | NotBoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
     public boolean createRoom(String roomNumber, Calendar date, List<TimeSlot> list){
         StringBuilder builder = new StringBuilder();
         builder.append(" :").append(fullID)
@@ -43,7 +56,11 @@ public class AdminClient extends Client implements UserInterface, Runnable {
             builder.append(" from ").append(slot.getStartTime().getTime()).append(" to ").append(slot.getEndTime().getTime()).append("\n");
         }
         try{
-            List<List<TimeSlot>> response = connect().createRoom(roomNumber, date, list);
+            List<List<TimeSlot>> response = connect().createRoom(roomNumber, date, list, fullID);
+            if (response == null) {
+                log.info("ILLEGAL ACCESS OF SERVER USING INCVALID ADMIN ID");
+                return false;
+            }
             if(response.get(0).size() == 0){
                 log.info(builder.append(" SUCCEEDED").toString());
                 return true;
@@ -73,7 +90,11 @@ public class AdminClient extends Client implements UserInterface, Runnable {
             builder.append(" from ").append(slot.getStartTime().getTime()).append(" to ").append(slot.getEndTime().getTime()).append("\n");
         }
         try{
-            List<List<TimeSlot>> response = connect().deleteRoom(roomNumber, date, list);
+            List<List<TimeSlot>> response = connect().deleteRoom(roomNumber, date, list, fullID);
+            if (response == null) {
+                log.info("ILLEGAL ACCESS OF SERVER USING INCVALID ADMIN ID");
+                return false;
+            }
             if(response.get(0).size() == 0){
                 log.info(builder.append(" SUCCEEDED").toString());
                 return true;

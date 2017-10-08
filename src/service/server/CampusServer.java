@@ -26,7 +26,7 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
     private final CampusName campusName;
     private Map<Calendar, Map<String, Room>> roomRecord;
     private Map<Long, Map<Integer, Integer>> studentBookingRecord;
-
+    private final List<String> adminList;
     private Logger log = null;
 
     public CampusServer(CampusName name) throws RemoteException{
@@ -34,15 +34,29 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         campusName = name;
         roomRecord = new HashMap<>();
         studentBookingRecord = new HashMap<>();
-
+        adminList = initAdminID();
         initLogger();
         log.info(campusName.name + " Server has been loaded");
 
     }
 
+    private List<String> initAdminID() {
+        List<String> adm = new LinkedList<>();
+        for (int i = 1111; i < 10000; i *= 2) {
+            String id = campusName.abrev + "a" + i;
+            adm.add(id.toLowerCase());
+        }
+        return adm;
+    }
+
+    @Override
+    public boolean checkIDAdmin(String fullID) {
+        return adminList.contains(fullID.toLowerCase());
+    }
+
+
     private void initLogger() {
         try {
-            System.out.println("loading log");
             String dir = "src/server_log/";
             log = Logger.getLogger(CampusServer.class.getName());
             log.setUseParentHandlers(false);
@@ -58,13 +72,15 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
     }
 
     @Override
-    public List<List<TimeSlot>> createRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
-        return modifyRoom(roomNumber, date, list, true);
+    public List<List<TimeSlot>> createRoom(String roomNumber, Calendar date, List<TimeSlot> list, String adminID) throws RemoteException {
+        if (adminList.contains(adminID.toLowerCase())) return modifyRoom(roomNumber, date, list, true);
+        else return null;
     }
 
     @Override
-    public List<List<TimeSlot>> deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list) throws RemoteException{
-        return modifyRoom(roomNumber, date, list, false);
+    public List<List<TimeSlot>> deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list, String adminID) throws RemoteException {
+        if (adminList.contains(adminID.toLowerCase())) return modifyRoom(roomNumber, date, list, false);
+        else return null;
     }
 
     private List<List<TimeSlot>> modifyRoom(String roomNumber, Calendar date, List<TimeSlot> list, boolean toAdd){
