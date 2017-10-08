@@ -78,6 +78,7 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
             getMap.put(roomNumber, room);
             this.roomRecord.put(date, getMap);
         }
+        log.info("Time slot for room " + roomNumber + (toAdd ? " added " : " removed ") + "on" + date.getTime());
         return ret;
     }
 
@@ -105,6 +106,9 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
                 id, date, roomNumber,
                 timeSlot.getStartTime(), timeSlot.getEndTime());
         bookingInfo.setToBook(true);
+
+        StringBuilder builder = new StringBuilder();
+        builder.append(bookingInfo.toString());
         /*
         Step 1 : check if student can book a room at the week indicated, since student always connect to his own
         campus first.
@@ -131,21 +135,30 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
             /* different campus */
             else
                 message = udpSendBookingRequest(bookingInfo);
-
             //  Error message break the booking process, returns the error message
-            if (message.substring(0, 6).equals("Error:")) return message;
-            else returnBookingId = message;
+            if (message.substring(0, 6).equals("Error:")) {
+                log.info(builder.append("\n").append(message).toString());
+                return message;
+            } else {
+                log.info(builder.append("-SUCCESS").toString());
+                returnBookingId = message;
+            }
 
             /* Update student's booking record in student's account server */
             getWeek.put(bookingInfo.getStudentID(), count + 1);
             studentBookingRecord.put(beginOfWeek, getWeek);
             System.err.println("You can book " + (2 - count) + " more rooms this week");
             return returnBookingId;
-        } else return "Error: Booking limit reached";
+        } else {
+            String msg = "Error: Booking limit reached";
+            log.info(builder.append("\n").append(msg).toString());
+            return msg;
+        }
     }
 
     private String bookRoomHelperPrivate(BookingInfo bookingInfo) {
         synchronized (roomLock) {
+            String msg;
             Map<String, Room> getRoomMap = roomRecord.get(bookingInfo.getBookingDate());
             if (getRoomMap == null) return "Error: Date not found"; //no date found
             Room getRoom = getRoomMap.get(bookingInfo.getRoomName());
@@ -217,6 +230,7 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
     @Override
     public Map<String, Integer> getAvailableTimeSlot(Calendar date) throws RemoteException{
         Map<String, Integer> ret = new HashMap<>();
+        log.info(campusName.name + "  " + date.getTime() + " Check room availability");
         for(CampusName name : CampusName.values()) ret.put(name.abrev, checkFreeRooms(date, name));
         return ret;
     }
@@ -281,13 +295,18 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
     @Override
     public boolean cancelBooking(String bookingID, CampusName campusName, int id) throws RemoteException {
         try {
+            String msg = this.campusName.name + ":cancel booking by : " + campusName.abrev + "s" + id + " using booking id " + bookingID;
             BookingInfo bookingInfo = BookingInfo.decode(bookingID);
             if (bookingInfo == null) {
-                System.err.println("Booking info process unsuccessful");
+                String error = "Booking info process unsuccessful";
+                log.info(msg + error);
+                System.err.println(error);
                 return false;
             } else {
                 if (bookingInfo.getStudentID() != id || !bookingInfo.getStudentCampusAbrev().equals(campusName.abrev)) {
-                    System.err.println("STUDENT ID DOES NOT MATCH BOOKING RECORD");
+                    String error = "STUDENT ID DOES NOT MATCH BOOKING RECORD";
+                    log.info(msg + error);
+                    System.err.println(error);
                     return false;
                 }
                 bookingInfo.setToBook(false);
@@ -298,19 +317,23 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
                 System.out.println("Start time " + bookingInfo.getBookingStartTime().getTime());
                 System.out.println("End time" + bookingInfo.getBookingEndTime().getTime());
 
-
+                String error;
                 if (this.campusName.abrev.equals(bookingInfo.getCampusOfInterestAbrev())) {
                     //booking record is on the student's server
                     boolean result = removeBookingRecord(bookingInfo);
                     if (!result) {
-                        System.err.println("BOOKING CANNOT BE REMOVED FROM LOCAL SERVER");
+                        error = "BOOKING CANNOT BE REMOVED FROM LOCAL SERVER";
+                        log.info(msg + error);
+                        System.err.println(error);
                         return false;
                     }
                 } else {
                     //booking record is on a remote server
                     boolean result = Boolean.parseBoolean(udpSendBookingRequest(bookingInfo));
                     if (!result) {
-                        System.err.println("BOOKING CANNOT BE REMOVED FROM REMOTE SERVER");
+                        error = "BOOKING CANNOT BE REMOVED FROM REMOTE SERVER";
+                        log.info(msg + error);
+                        System.err.println(error);
                         return false;
                     }
                 }
