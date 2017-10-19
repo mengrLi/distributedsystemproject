@@ -14,7 +14,8 @@ import java.util.logging.SimpleFormatter;
 
 public class AdminClient extends Client implements UserInterface, Runnable {
     private Logger log = null;
-    AdminClient(CampusName campusName, int id){
+
+    public AdminClient(CampusName campusName, int id) {
         super(campusName, id);
         fullID = campusName.abrev + "a" + id;
         initLogger();

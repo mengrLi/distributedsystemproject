@@ -18,7 +18,7 @@ public class StudentClient extends Client implements UserInterface, Runnable {
 
     private Logger log = null;
 
-    StudentClient(CampusName campus, int id){
+    public StudentClient(CampusName campus, int id) {
         super(campus, id);
         fullID = campus.abrev + "s" + id;
         initLogger();

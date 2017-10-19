@@ -1,11 +1,11 @@
 package service.user;
 
+import GUI.panels.UserTerminalGUI;
 import com.sun.istack.internal.Nullable;
 import domain.CampusName;
 import domain.Format;
 import domain.Room;
 import domain.TimeSlot;
-import lombok.extern.log4j.Log4j2;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,7 +15,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-@Log4j2
 public class UserTerminal implements Runnable{
     /**
      * Client interface, student or admin
@@ -45,6 +44,8 @@ public class UserTerminal implements Runnable{
      * global exit boolean
      */
     private boolean exit;
+
+    private UserTerminalGUI gui;
 
     /**
      * constructor
@@ -108,8 +109,8 @@ public class UserTerminal implements Runnable{
             return admin;
         }else if(type.equals("S")){
             client = new StudentClient(campusOfTheID, id);
-            admin = client.checkID();
-            return false;
+            admin = false;
+            return true;
         }
         return false;
     }
