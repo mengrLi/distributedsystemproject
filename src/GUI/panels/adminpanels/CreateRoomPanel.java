@@ -1,12 +1,127 @@
 package GUI.panels.adminpanels;
 
 import GUI.panels.UserTerminalGUI;
+import com.github.lgooddatepicker.components.DatePicker;
+import com.github.lgooddatepicker.components.TimePicker;
+import domain.TimeSlot;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.util.List;
+import java.util.Vector;
 
 
 public class CreateRoomPanel extends JPanel {
+    private final AdminPanels parentPanel;
+    private final UserTerminalGUI gui;
+
+    private final DatePicker datePicker;
+    private final TimePicker timePicker1, timePicker2;
+    private final JTextField roomNameField;
+
+    private final JButton addTimeSlotButton, removeSelectedButton, submitButton, backButton;
+
+    private final JTable adminTable;
+    private final DefaultTableModel adminTableModel;
+    private final Vector<String> header;
+//    private List<List<Object>> data;
+    private List<TimeSlot> list;
+
     public CreateRoomPanel(AdminPanels adminPanels, UserTerminalGUI gui, String cardName) {
+        this.parentPanel = adminPanels;
+        this.gui = gui;
+        this.setLayout(new BorderLayout());
+        adminPanels.add(this, cardName);
+
+        JLabel title = new JLabel("Create Time Slots");
+        title.setFont(new Font("Serif", Font.BOLD, 20));
+        this.add(title, BorderLayout.NORTH);
+
+        datePicker = new DatePicker();
+        datePicker.setDateToToday();
+
+        timePicker1 = new TimePicker();
+        timePicker2 = new TimePicker();
+        timePicker1.setTimeToNow();
+        timePicker2.setTimeToNow();
+
+        roomNameField = new JTextField();
+
+        addTimeSlotButton = new JButton("Add");
+        addTimeSlotButton.addActionListener(e -> addTimeSlotButtonListener());
+        removeSelectedButton = new JButton("Remove");
+        removeSelectedButton.addActionListener(e->removeTimeSlotButtonListener());
+        submitButton = new JButton("Submit");
+        submitButton.addActionListener(e->submitButtonListener());
+        backButton = new JButton("Back");
+        backButton.addActionListener(e->((CardLayout)parentPanel.getLayout()).show(parentPanel, "menu"));
+
+
+        header = new Vector<>();
+        setHeader();
+        adminTable = new JTable();
+        adminTableModel = new DefaultTableModel(header, 0);
+        adminTable.setModel(adminTableModel);
+
+        insertPanels();
+    }
+
+    private void setHeader(){
+        header.add("Index");
+        header.add("Start");
+        header.add("End");
+    }
+
+
+    private void insertPanels(){
+        JPanel top, bottom;
+
+        JPanel panel1, panel2, panel3, panel4;
+
+        panel1 = new JPanel(new BorderLayout());
+        panel2 = new JPanel(new GridLayout(1,2));
+        panel3 = new JPanel(new BorderLayout());
+        panel4 = new JPanel(new GridLayout(4,1));
+
+        top = new JPanel(new BorderLayout());
+        top.add(panel1, BorderLayout.NORTH);
+        top.add(panel2, BorderLayout.SOUTH);
+
+        bottom = new JPanel(new BorderLayout());
+        bottom.add(panel3, BorderLayout.WEST);
+        bottom.add(panel4, BorderLayout.EAST);
+
+        this.add(top, BorderLayout.CENTER);
+        this.add(bottom, BorderLayout.SOUTH);
+
+        panel1.add(datePicker, BorderLayout.WEST);
+        panel1.add(roomNameField);
+
+        panel2.add(timePicker1);
+        panel2.add(timePicker2);
+
+        panel3.add(new JScrollPane(adminTable));
+
+        panel4.add(addTimeSlotButton);
+        panel4.add(removeSelectedButton);
+        panel4.add(submitButton);
+        panel4.add(backButton);
+    }
+
+    private void addTimeSlotButtonListener(){
+        Object[] innerList = new Object[3];
+        innerList[0] = adminTableModel.getRowCount()+1;
+        innerList[1] = timePicker1.getTime();
+        innerList[2] = timePicker2.getTime();
+        adminTableModel.addRow(innerList);
+    }
+
+    private void removeTimeSlotButtonListener(){
+
+    }
+
+    private void submitButtonListener(){
 
     }
 }

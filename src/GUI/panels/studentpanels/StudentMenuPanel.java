@@ -31,7 +31,9 @@ public class StudentMenuPanel extends JPanel {
         this.cancelRoomButton = new MenuButtons("Cancel Booking");
         this.checkRoomButton = new MenuButtons("Check Available Rooms");
         this.backButton = new MenuButtons("Back");
-        add(new JLabel("Student functions"), BorderLayout.NORTH);
+        JLabel title = new JLabel("Student functions");
+        title.setFont(new Font("Serif", Font.BOLD, 20 ));
+        add(title, BorderLayout.NORTH);
         this.buttonPanel = new JPanel(new GridLayout(4, 1));
         add(buttonPanel, BorderLayout.SOUTH);
         init();
