@@ -23,15 +23,13 @@ public class StudentPanels extends JPanel {
         this.gui = gui;
         this.parentPanel.add(this, cardName);
         this.cardLayout = new CardLayout();
-        setLayout(cardLayout);
+        this.setLayout(cardLayout);
         HelperFunctions.setDimension(this, parentPanel.getWidth(), parentPanel.getHeight());
 
         this.studentMenuPanel = new StudentMenuPanel(this, gui, "menu");
         this.bookRoomPanel = new BookRoomPanel(this, gui, "book");
         this.cancelRoomPanel = new CancelRoomPanel(this, gui, "cancel");
         this.checkRoomPanel = new CheckRoomPanel(this, gui, "check");
-
-        cardLayout.show(this, "menu");
 
 
     }

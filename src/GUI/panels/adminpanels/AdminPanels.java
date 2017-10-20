@@ -22,17 +22,13 @@ public class AdminPanels extends JPanel {
         this.parentPanel = parentPanel;
         this.gui = gui;
         this.parentPanel.add(this, cardName);
-
-        cardLayout = new CardLayout();
-        setLayout(cardLayout);
-
-        adminMenuPanel = new AdminMenuPanel(this, gui, "menu");
-        createRoomPanel = new CreateRoomPanel(this, gui, "create");
-        deleteRoomPanel = new DeleteRoomPanel(this, gui, "delete");
-
-        cardLayout.show(this, "menu");
-
+        this.cardLayout = new CardLayout();
+        this.setLayout(cardLayout);
         HelperFunctions.setDimension(this, parentPanel.getWidth(), parentPanel.getHeight());
+
+        this.adminMenuPanel = new AdminMenuPanel(this, gui, "menu");
+        this.createRoomPanel = new CreateRoomPanel(this, gui, "create");
+        this.deleteRoomPanel = new DeleteRoomPanel(this, gui, "delete");
     }
 
 }

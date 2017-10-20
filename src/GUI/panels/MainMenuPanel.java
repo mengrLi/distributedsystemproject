@@ -26,12 +26,17 @@ public class MainMenuPanel extends JPanel {
         setLayout(cardLayout);
         this.parentPanel.add(this, cardName);
 
-        studentMenuPanel = new StudentPanels(this, gui, "admin");
-        adminMenuPanel = new AdminPanels(this, gui, "student");
+        studentMenuPanel = new StudentPanels(this, gui, "student");
+        adminMenuPanel = new AdminPanels(this, gui, "admin");
     }
 
-    void loadPanel(boolean isAdmin) {
-        cardLayout.show(this, isAdmin ? "admin" : "student");
+    void loadPanel(){
+        cardLayout.show(this, gui.isAdmin() ? "admin" : "student");
+
+        //guarantee to show the menu card
+        if(gui.isAdmin()) ((CardLayout) adminMenuPanel.getLayout()).show(adminMenuPanel, "menu");
+        else ((CardLayout) studentMenuPanel.getLayout()).show(studentMenuPanel, "menu");
+
     }
 
 

@@ -61,17 +61,11 @@ public class LoginPanel extends JPanel {
         JButton button = new JButton("Log in");
         button.addActionListener(e -> {
             String username = usernameField.getText();
-            if (!checkUsername(username)) {
-                Message.optionPaneError("Invalid Username", gui.getBasePanel());
-            } else {
+            if(checkUsername(username)){
                 CardLayout parentLayout = (CardLayout) getParent().getLayout();
                 parentLayout.show(getParent(), "menu");
-
                 MainMenuPanel mainMenuPanel = gui.getBasePanel().getMainMenuPanel();
-                CardLayout cardLayout = (CardLayout) mainMenuPanel.getLayout();
-//                cardLayout.show(mainMenuPanel, gui.isAdmin()? "admin" : "student");
-
-
+                mainMenuPanel.loadPanel();
             }
         });
         return button;
@@ -84,17 +78,26 @@ public class LoginPanel extends JPanel {
             Message.optionPaneError("Empty username", gui.getBasePanel());
             return false;
         }
-        if (username.length() != 8) return false;
+        if(username.length() != 8){
+            Message.optionPaneError("Invalid username - invalid length", gui.getBasePanel());
+            return false;
+        }
+
         String type = username.substring(3, 4).toUpperCase();
         String campus = username.substring(0, 3).toUpperCase();
+
         try {
             id = Integer.parseInt(username.substring(4));
             gui.setId(id);
         } catch (NumberFormatException e) {
+            Message.optionPaneError("Invalid username - Number format invalid", gui.getBasePanel());
             return false;
         }
         CampusName campusOfTheID = CampusName.getCampusName(campus);
-        if (campusOfTheID == null) return false;
+        if(campusOfTheID == null){
+            Message.optionPaneError("Invalid username - Campus name invalid", gui.getBasePanel());
+            return false;
+        }
         gui.setCampusOfTheID(campusOfTheID);
 
         if (type.equals("A")) {
@@ -104,16 +107,21 @@ public class LoginPanel extends JPanel {
                 gui.setClient(client);
                 gui.setAdmin(true);
                 gui.setFullID(username);
+                return true;
+            }else{
+                Message.optionPaneError("Invalid Admin username", gui.getBasePanel());
+                return false;
             }
-            return isAdmin;
         } else if (type.equals("S")) {
             client = new StudentClient(campusOfTheID, id);
             gui.setClient(client);
             gui.setAdmin(false);
             gui.setFullID(username);
             return true;
+        }else{
+            Message.optionPaneError("Invalid username - type indentifier", gui.getBasePanel());
+            return false;
         }
-        return false;
     }
 
 }
