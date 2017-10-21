@@ -107,7 +107,7 @@ class BookRoomPanel extends JPanel{
             //get all the available rooms using date and campus of interested
             availableRooms = gui.getClient().getAvailableTimeSlot(calendar, campus);
 
-            if(availableRooms.size() == 0){
+            if (availableRooms == null) {
                 Message.optionPaneError("No room available on " + calendar.getTime() + " in " + campus.name, this);
                 room = null;
                 slot = null;
@@ -142,7 +142,9 @@ class BookRoomPanel extends JPanel{
                         timeslotBox.addItem(new TimeSlotItem(slot));
                     }
                 }
-                slot = ((TimeSlotItem) timeslotBox.getSelectedItem()).getTimeSlot();
+                if (timeslotBox.getItemCount() != 0)
+                    slot = ((TimeSlotItem) timeslotBox.getSelectedItem()).getTimeSlot();
+                else slot = null;
             }
         });
     }

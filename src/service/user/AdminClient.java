@@ -1,6 +1,7 @@
 package service.user;
 
 import domain.CampusName;
+import domain.Room;
 import domain.TimeSlot;
 
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -79,6 +81,16 @@ public class AdminClient extends Client implements UserInterface, Runnable {
             log.severe(builder.append(e.getMessage()).toString());
             System.err.println(e.getMessage());
             return false;
+        }
+    }
+
+    @Override
+    public Map<String, Room> getAvailableTimeSlot(Calendar date, CampusName campusName) {
+        try {
+            return connect().getAvailableTimeSlot(date, campusName);
+        } catch (RemoteException | NotBoundException e) {
+            System.err.println(e.getMessage());
+            return null;
         }
     }
 

@@ -2,12 +2,9 @@ package GUI.functions;
 
 import javax.swing.*;
 
-/**
- * Created by PT-PC on 2017-10-19.
- */
 public class Message {
     public static void optionPanePlain(String msg, JPanel parent) {
-
+        JOptionPane.showMessageDialog(parent, msg, "", JOptionPane.PLAIN_MESSAGE);
     }
 
     public static void optionPaneError(String msg, JPanel parent) {

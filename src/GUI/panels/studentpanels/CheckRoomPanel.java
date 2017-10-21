@@ -3,9 +3,6 @@ package GUI.panels.studentpanels;
 import GUI.functions.HelperFunctions;
 import GUI.panels.UserTerminalGUI;
 import com.github.lgooddatepicker.components.DatePicker;
-import domain.CampusName;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,12 +10,12 @@ import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Map;
 
-public class CheckRoomPanel extends JPanel {
+class CheckRoomPanel extends JPanel {
     private final StudentPanels parentPanel;
     private final UserTerminalGUI gui;
 
     private final JPanel topPanel;
-    private final JComboBox<CampusBoxItem> campusBox;
+    //    private final JComboBox<CampusBoxItem> campusBox;
     private final DatePicker datePicker;
     private final JButton refreshButton;
 
@@ -28,7 +25,7 @@ public class CheckRoomPanel extends JPanel {
     private Calendar calendar;
 
 
-    public CheckRoomPanel(StudentPanels parentPanel, UserTerminalGUI gui, String cardName) {
+    CheckRoomPanel(StudentPanels parentPanel, UserTerminalGUI gui, String cardName) {
         this.parentPanel = parentPanel;
         this.gui = gui;
         this.parentPanel.add(this, cardName);
@@ -38,9 +35,9 @@ public class CheckRoomPanel extends JPanel {
 
 
         topPanel = new JPanel(new BorderLayout());
-        campusBox = new JComboBox<>();
-        setCampusComboBox();
-        topPanel.add(campusBox, BorderLayout.WEST);
+//        campusBox = new JComboBox<>();
+//        setCampusComboBox();
+//        topPanel.add(campusBox, BorderLayout.WEST);
 
         datePicker = new DatePicker();
         datePicker.setDateToToday();
@@ -74,20 +71,20 @@ public class CheckRoomPanel extends JPanel {
         this.add(backButton, BorderLayout.SOUTH);
     }
 
-    private void setCampusComboBox(){
-        campusBox.addItem(new CampusBoxItem(CampusName.DORVAL));
-        campusBox.addItem(new CampusBoxItem(CampusName.KIRKLAND));
-        campusBox.addItem(new CampusBoxItem(CampusName.WESTMOUNT));
+//    private void setCampusComboBox(){
+//        campusBox.addItem(new CampusBoxItem(CampusName.DORVAL));
+//        campusBox.addItem(new CampusBoxItem(CampusName.KIRKLAND));
+//        campusBox.addItem(new CampusBoxItem(CampusName.WESTMOUNT));
+//
+//    }
 
-    }
-
-    @RequiredArgsConstructor
-    @Getter
-    class CampusBoxItem{
-        final CampusName campus;
-
-        public String toString(){
-            return campus.name;
-        }
-    }
+//    @RequiredArgsConstructor
+//    @Getter
+//    class CampusBoxItem{
+//        final CampusName campus;
+//
+//        public String toString(){
+//            return campus.name;
+//        }
+//    }
 }

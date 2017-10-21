@@ -16,6 +16,7 @@ public class StudentPanels extends JPanel {
     private final CancelRoomPanel cancelRoomPanel;
     private final CheckRoomPanel checkRoomPanel;
     private final StudentMenuPanel studentMenuPanel;
+    private final SwitchRoomPanel switchRoomPanel;
 
 
     public StudentPanels(MainMenuPanel parentPanel, UserTerminalGUI gui, String cardName) {
@@ -30,6 +31,7 @@ public class StudentPanels extends JPanel {
         this.bookRoomPanel = new BookRoomPanel(this, gui, "book");
         this.cancelRoomPanel = new CancelRoomPanel(this, gui, "cancel");
         this.checkRoomPanel = new CheckRoomPanel(this, gui, "check");
+        this.switchRoomPanel = new SwitchRoomPanel(this, gui, "switch");
 
 
     }
