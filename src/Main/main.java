@@ -9,9 +9,7 @@ import java.rmi.RemoteException;
 public class main{
 
     public static void main(String[] args) throws RemoteException{
-        Test test = new Test();
-
-
+        StartServers.turnOnServers();
         UserTerminalGUI gui = new UserTerminalGUI();
     }
 }

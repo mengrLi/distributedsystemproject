@@ -161,7 +161,7 @@ public class StudentClient extends Client implements UserInterface, Runnable {
                 if (!bookingID.startsWith("Error")) System.out.println("Book again successful");
                 else System.err.println(bookingID);
             } else {
-                System.out.println("Test failed");
+                System.out.println("StartServers failed");
             }
         }
     }

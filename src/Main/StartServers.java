@@ -6,11 +6,8 @@ import service.server.CampusServer;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 
-public class Test {
-    public Test() throws RemoteException{
-        turnOnServers();
-    }
-    private void turnOnServers() throws RemoteException{
+public class StartServers{
+    public static void turnOnServers() throws RemoteException{
         LocateRegistry.createRegistry(1099);
         CampusServer dorval = new CampusServer(CampusName.DORVAL);
         CampusServer westmount = new CampusServer(CampusName.WESTMOUNT);
@@ -29,8 +26,7 @@ public class Test {
         thread3.start();
     }
     public static void main(String[] args) throws RemoteException{
-        Test test = new Test();
-        test.turnOnServers();
+        StartServers.turnOnServers();
     }
 
 

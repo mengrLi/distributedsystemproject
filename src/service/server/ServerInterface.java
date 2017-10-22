@@ -24,6 +24,9 @@ public interface ServerInterface extends Remote{
     default String bookRoom(CampusName campusOfInterest, String roomNumber, Calendar date, TimeSlot timeSlot, CampusName campusOfID, int id) throws RemoteException{
         throw new NotImplementedException();
     }
+    default String switchRoom() throws RemoteException{
+        throw new NotImplementedException();
+    }
 
     default Map<String, Integer> getAvailableTimeSlot(Calendar date) throws RemoteException{
         throw new NotImplementedException();

@@ -12,7 +12,6 @@ import java.net.InetAddress;
 import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.logging.FileHandler;
@@ -53,7 +52,6 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
     public boolean checkIDAdmin(String fullID) {
         return adminList.contains(fullID.toLowerCase());
     }
-
 
     private void initLogger() {
         try {
@@ -97,8 +95,6 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         log.info("Time slot for room " + roomNumber + (toAdd ? " added " : " removed ") + "on" + date.getTime());
         return ret;
     }
-
-
 
     /**
      * Booking method
@@ -174,7 +170,6 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
 
     private String bookRoomHelperPrivate(BookingInfo bookingInfo) {
         synchronized (roomLock) {
-            String msg;
             Map<String, Room> getRoomMap = roomRecord.get(bookingInfo.getBookingDate());
             if (getRoomMap == null) return "Error: Date not found"; //no date found
             Room getRoom = getRoomMap.get(bookingInfo.getRoomName());
@@ -240,9 +235,6 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         return "Error: I/O Exception";
     }
 
-
-
-
     @Override
     public Map<String, Integer> getAvailableTimeSlot(Calendar date) throws RemoteException{
         Map<String, Integer> ret = new HashMap<>();
@@ -257,7 +249,7 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         }else{
             int port = determinePort(name.abrev);
             String req = "**countA-" + date.getTimeInMillis();
-            String response = udpRequest(req.getBytes(), req.length(), port);
+            String response = udpRequest(req.getBytes(), req.length(), port).trim();
             try{
                 return Integer.parseInt(response);
             }catch(NumberFormatException e){
@@ -272,9 +264,7 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         synchronized(roomLock){
             Map<String, Room> getDate = roomRecord.get(calendar);
             int counter = 0;
-            if (getDate == null) {
-                return 0;
-            }
+            if (getDate == null) return 0;
             for(Map.Entry<String, Room> entry : getDate.entrySet())
                 for(TimeSlot slot : entry.getValue().getTimeSlots())
                     if(slot.getStudentID() == null) ++counter;
@@ -289,12 +279,18 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
                 return roomRecord.get(date);
             }
         }else{
-            int port = campusName.inPort;
             String req = "**countB-" + date.getTimeInMillis();
-            String json = udpRequest(req.getBytes(), req.length(), port).trim();
-            Type type = new TypeToken<Map<String, Room>>(){
-            }.getType();
-            return new GsonBuilder().create().fromJson(json, type);
+            return
+                    new GsonBuilder()
+                            .create()
+                            .fromJson(
+                                    udpRequest(
+                                            req.getBytes(),
+                                            req.length(),
+                                            campusName.inPort).trim(),
+                                    new TypeToken<Map<String, Room>>(){
+                                    }.getType()
+                            );
         }
     }
 
@@ -418,8 +414,7 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
 
     private void bindRegistry() {
         try{
-            Registry registry = LocateRegistry.getRegistry(1099);
-            registry.bind(campusName.serverName, this);
+            LocateRegistry.getRegistry(1099).bind(campusName.serverName, this);
             System.out.println(campusName.name + " server has been started");
         }catch(RemoteException | AlreadyBoundException e){
             e.printStackTrace();
@@ -482,7 +477,7 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         System.out.println(roomRecord.size()+" days added to server");
     }
 
-    public class Responder implements Runnable {
+    class Responder implements Runnable {
         private DatagramSocket socket = null;
         private DatagramPacket request = null;
 
@@ -506,12 +501,11 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
         }
 
         private byte[] makeResponse() {
-            BookingInfo bookingInfo;
             String json = new String(request.getData()).trim();
             String requestType = json.substring(2, 8);
             switch (requestType) {
                 case "toBook":
-                    bookingInfo = new GsonBuilder().create().fromJson(json, BookingInfo.class);
+                    BookingInfo bookingInfo = new GsonBuilder().create().fromJson(json, BookingInfo.class);
                     if (bookingInfo.isToBook()) {
                         //to book
                         return bookRoomHelperPrivate(bookingInfo).getBytes();
@@ -562,8 +556,14 @@ public class CampusServer extends UnicastRemoteObject implements ServerInterface
                     }
                     return null;
                 }
+                case "switch":{
+                    System.out.println("SWITCH NOT DONE YET");
+                    return null;
+                }
+                default:
+                    System.err.println("Invalid udp request message");
+                    return null;
             }
-            return null;
         }
     }
 }
