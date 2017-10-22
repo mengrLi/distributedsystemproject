@@ -11,6 +11,7 @@ public class main{
     public static void main(String[] args) throws RemoteException{
         Test test = new Test();
 
+
         UserTerminalGUI gui = new UserTerminalGUI();
     }
 }
