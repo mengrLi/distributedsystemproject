@@ -40,7 +40,7 @@ public class UserTerminalGUI {
 
     private String fullID;
 
-    private UserTerminalGUI() {
+    public UserTerminalGUI() {
         init();
     }
 

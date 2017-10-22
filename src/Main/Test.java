@@ -7,7 +7,10 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 
 public class Test {
-    public static void main(String[] args) throws RemoteException {
+    public Test() throws RemoteException{
+        turnOnServers();
+    }
+    private void turnOnServers() throws RemoteException{
         LocateRegistry.createRegistry(1099);
         CampusServer dorval = new CampusServer(CampusName.DORVAL);
         CampusServer westmount = new CampusServer(CampusName.WESTMOUNT);
@@ -24,6 +27,10 @@ public class Test {
         thread1.start();
         thread2.start();
         thread3.start();
+    }
+    public static void main(String[] args) throws RemoteException{
+        Test test = new Test();
+        test.turnOnServers();
     }
 
 
