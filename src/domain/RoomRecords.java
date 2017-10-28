@@ -109,36 +109,39 @@ public class RoomRecords{
     }
 
     public String cancelBooking(BookingInfo bookingInfo) {
-        Map<String, Room> getMap = roomRecord.get(bookingInfo.getBookingDate());
-        if (getMap == null) return false;
-
-        Room getRoom = getMap.get(bookingInfo.getRoomName());
-        if (getRoom == null) return false;
+        Calendar calendar = bookingInfo.getBookingDate();
+        Map<String, Room> getMap = getRecordsOfDate(calendar);
+        if (getMap == null) return "Error: No room found on " + calendar.getTime();
+        String roomIdentifier = bookingInfo.getRoomName();
+        Room getRoom = getMap.get(roomIdentifier);
+        if (getRoom == null) return "Error: Room " + roomIdentifier + " cannot be found on " + calendar.getTime();
 
         List<TimeSlot> slots = getRoom.getTimeSlots();
-        if (slots == null) return false;
+        if (slots == null) return "Error: No time slot found for room " + roomIdentifier + " on " + calendar.getTime();
+
 
         for (TimeSlot slot : slots) {
             if (slot.getStartTime().equals(bookingInfo.getBookingStartTime())
                     && slot.getEndTime().equals(bookingInfo.getBookingEndTime())) {
                 if (slot.getStudentID() == null) {
-                    System.err.println("NO RECORD FOUND ON " + campusName.name.toUpperCase() + "SERVER");
-                    return false;
+                    String error = "Error: this time slot has not been booked";
+                    System.err.println(error);
+                    return error;
                 } else {
-                    System.err.println("RECORD FOUND ON " +
-                            campusName.name.toUpperCase() +
+                    System.err.println("RECORD FOUND in " +
+                            campus.name.toUpperCase() +
                             "SERVER for STUDENT " +
                             bookingInfo.getStudentID()
                     );
                     slot.cancelBooking();
-                    return true;
+                    return "Booking has been cancelled for student "
+                            + bookingInfo.getStudentID() + " on "
+                            + calendar.getTime() + " at " + campus.name;
                 }
             }
         }
-        error = "Error: BOOKING CANNOT BE REMOVED FROM LOCAL SERVER";
-
-        return false;
-
+        return "Error: No booking record found in " + campus.name +
+                "server for student " + bookingInfo.getStudentID() + " on " + calendar.getTime();
     }
 
     //TODO there is probably some problems here

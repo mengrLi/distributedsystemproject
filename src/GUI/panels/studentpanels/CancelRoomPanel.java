@@ -60,9 +60,7 @@ class CancelRoomPanel extends JPanel{
         if(bookingID.equals("")) Message.optionPaneError("Please enter your booking ID", this);
         else{
             String response = gui.getClient().cancelBooking(bookingID);
-            if (!response.substring(0, 6).equals("Error"))
-                resultField.setText("Booking has been cancelled");
-            else resultField.setText(response);
+            resultField.setText(response);
         }
     }
 }

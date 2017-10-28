@@ -48,13 +48,15 @@ public class UdpResponder implements Runnable {
                 if (bookingInfo.isToBook()) {
                     //to book
                     synchronized (server.getRoomLock()) {
-                        System.out.println(bookingInfo.toString());
+                        System.out.println(server.getCampus().name + ": booking request processing");
                         return server.getRoomRecords().bookRoom(bookingInfo).getBytes();
                     }
                 } else {
                     //to cancel
-//                        return String.valueOf(server.removeBookingRecord(bookingInfo)).getBytes();
-                    return null; // temp
+                    synchronized (server.getRoomLock()) {
+                        System.out.println(server.getCampus().name + ": cancel booking request processing");
+                        return server.getRoomRecords().cancelBooking(bookingInfo).getBytes();
+                    }
                 }
             }
             case "getInt": {

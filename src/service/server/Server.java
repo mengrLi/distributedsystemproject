@@ -255,7 +255,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
                     synchronized (this.roomLock) {
                         result = roomRecords.cancelBooking(bookingInfo);
                     }
-                    if (result.substring(0, 6).equals("Error")) {
+                    if (result.substring(0, 5).equals("Error")) {
                         synchronized (this.logLock) {
                             log.info(msg + result);
                         }
@@ -267,9 +267,9 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
                     UdpRequest udpRequest = new UdpRequest(this, udpMessage, destinationCampus);
                     result = udpRequest.sendRequest();
                     if (result.substring(0, 6).equals("Error")) {
-                        error = " Error: BOOKING CANNOT BE REMOVED FROM REMOTE SERVER";
+                        error = "Error: BOOKING CANNOT BE REMOVED FROM REMOTE SERVER";
                         synchronized (this.logLock) {
-                            log.info(msg + error + "-Remote Message-" + result);
+                            log.info(msg + "-" + error + "-Remote Message-" + result);
                         }
                         System.err.println(error);
                         return error + "-Remote Error-" + result;
@@ -277,10 +277,13 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
                 }
                 //reaching here means booking has been removed properly
                 //Student record is always on the current server
-                int remainingBookingOfWeek = studentBookingRecords
-                        .modifyBookingRecords(
-                                bookingInfo.getBookingDate(), bookingInfo.getStudentID(), null, false
-                        );
+                int remainingBookingOfWeek;
+                synchronized (this.roomLock) {
+                    remainingBookingOfWeek = studentBookingRecords
+                            .modifyBookingRecords(
+                                    bookingInfo.getBookingDate(), bookingInfo.getStudentID(), bookingId, false
+                            );
+                }
                 if (remainingBookingOfWeek == 4) {
                     //should not reached normally
                     error = "Error: student record could not be found for the week of "
@@ -302,7 +305,10 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
             }
         } catch (PatternSyntaxException | NumberFormatException e) {
             System.err.println(e.getMessage());
-            return e.getMessage();
+            synchronized (this.logLock) {
+                log.info(e.getMessage());
+            }
+            return "Error: " + e.getMessage();
         }
     }
 

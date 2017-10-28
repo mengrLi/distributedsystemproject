@@ -63,7 +63,6 @@ public class TimeSlot implements Serializable, Comparable<TimeSlot>{
     }
 
     public void cancelBooking(){
-        //TODO reduce student booking count
         this.studentID = null;
         this.bookingID = null;
         this.studentCampus = null;

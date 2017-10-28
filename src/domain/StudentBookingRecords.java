@@ -54,20 +54,22 @@ public class StudentBookingRecords{
             bookingIdList.add(bookingID);
             week.put(studentID, bookingIdList);
             records.put(startOfWeek, week);
+            System.out.println(bookingIdList);
         } else {
             if (bookingIdList.size() == 0) return 4;//should not be reached
             else {
                 int index = -1;
                 for (int i = 0, size = bookingIdList.size(); i < size; ++i) {
+                    System.out.println((i + 1) + "    : " + bookingIdList.get(i));
                     if (bookingIdList.get(i).equals(bookingID)) {
+                        System.out.println("found: " + bookingID);
                         index = i;
                         break;
                     }
                 }
                 if (index != -1) {
                     bookingIdList.remove(index);
-                    return -1;
-                }
+                } else return -1;
             }
         }
         return 3 - bookingIdList.size();
