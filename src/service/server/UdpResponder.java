@@ -6,7 +6,6 @@ import com.sun.istack.internal.NotNull;
 import domain.BookingInfo;
 import domain.Room;
 import lombok.RequiredArgsConstructor;
-import service.server.student.BookRoom;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -39,22 +38,25 @@ public class UdpResponder implements Runnable {
     }
 
     private byte[] makeResponse() throws RemoteException {
+        System.out.println(server.getCampus().name + " received request from " + request.getSocketAddress());
         String json = new String(request.getData()).trim();
+        System.out.println(server.getCampus().name + "'s Responder received json message : " + json);
         String requestType = json.substring(2, 8);
         switch (requestType) {
-            case "toBook":
+            case "toBook": {
                 BookingInfo bookingInfo = new GsonBuilder().create().fromJson(json, BookingInfo.class);
                 if (bookingInfo.isToBook()) {
-//                        to book
-
-                    BookRoom bookRoom = new BookRoom(bookingInfo, server);
-
-                    return bookRoom.book().getBytes();
+                    //to book
+                    synchronized (server.getRoomLock()) {
+                        System.out.println(bookingInfo.toString());
+                        return server.getRoomRecords().bookRoom(bookingInfo).getBytes();
+                    }
                 } else {
                     //to cancel
 //                        return String.valueOf(server.removeBookingRecord(bookingInfo)).getBytes();
+                    return null; // temp
                 }
-                return null; // temp
+            }
             case "getInt": {
                 String[] delim = json.split("-");
                 Calendar calendar = Calendar.getInstance();
@@ -104,9 +106,10 @@ public class UdpResponder implements Runnable {
                 System.out.println("SWITCH NOT DONE YET");
                 return null;
             }
-            default:
+            default: {
                 System.err.println("Invalid udp request message");
                 return null;
+            }
         }
     }
 }

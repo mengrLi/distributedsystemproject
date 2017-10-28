@@ -35,7 +35,7 @@ public interface UserInterface{
         throw new NotImplementedException();
     }
 
-    default boolean cancelBooking(String booking){
+    default String cancelBooking(String bookingId) {
         throw new NotImplementedException();
     }
 

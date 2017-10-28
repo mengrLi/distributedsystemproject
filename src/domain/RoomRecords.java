@@ -7,14 +7,14 @@ import service.server.Server;
 import java.util.*;
 
 public class RoomRecords{
-    private final Server server;
+//    private final Server server;
 
     private final Campus campus;
 
     private final Map<Calendar, Map<String, Room>> records;
 
     public RoomRecords(Server server, Campus campus){
-        this.server  =server;
+//        this.server  =server;
         this.campus = campus;
         records = new HashMap<>();
         initRoomsAndTimeSlots();
@@ -22,7 +22,7 @@ public class RoomRecords{
 
 
     public Map<String, Room> getRecordsOfDate(Calendar date){
-        System.out.println("Accessing room availability of " + date.getTime());
+        System.out.println("Accessing room availability of " + date.getTime() + " in " + campus.name);
         return records.getOrDefault(date, new HashMap<>());
     }
 
@@ -65,26 +65,80 @@ public class RoomRecords{
 
     private List<List<TimeSlot>> modifyRoom(String roomIdentifier, Calendar date, List<TimeSlot> list, boolean add){
         List<List<TimeSlot>> ret;
-        Map<String, Room> rooms;
-        Room room;
-            rooms = this.records.getOrDefault(date, new HashMap<>());
-            room = rooms.getOrDefault(roomIdentifier, new Room(roomIdentifier));
 
-            if(add) ret = room.addTimeSlots(list);
-            else ret = room.removeTimeSlots(list);
-            rooms.put(roomIdentifier, room);
-            this.records.put(date, rooms);
+        Map<String, Room> rooms = this.records.getOrDefault(date, new HashMap<>());
+        Room room = rooms.getOrDefault(roomIdentifier, new Room(roomIdentifier));
 
-        int success = ret.get(1).size();
-
-        int total = success + ret.get(0).size();
-
-        server.getLogFile().info(success + "/" + total
-                    + " Time slot for room "
-                    + roomIdentifier + " has been"
-                    + (add ? " added " : " removed ")
-                    + "on " + date.getTime());
+        if (add) ret = room.addTimeSlots(list);
+        else ret = room.removeTimeSlots(list);
+        rooms.put(roomIdentifier, room);
+        this.records.put(date, rooms);
         return ret;
+    }
+
+
+    /**
+     * Book room and return booking ID, should be locked by server
+     *
+     * @param bookingInfo
+     * @return String booking id
+     */
+    public String bookRoom(BookingInfo bookingInfo) {
+        Map<String, Room> getRoomMap = getRecordsOfDate(bookingInfo.getBookingDate());
+        if (getRoomMap.size() == 0) return "Error: Date not found"; //no date found
+        Room getRoom = getRoomMap.get(bookingInfo.getRoomName());
+        if (getRoom == null) return "Error: Room not found"; //no room found
+        List<TimeSlot> getSlots = getRoom.getTimeSlots();
+        if (getSlots.size() == 0) return "Error: This room's time slot list is empty"; // no time slot available
+
+        for (TimeSlot slot : getSlots) {
+            if (slot.getStartTime().equals(bookingInfo.getBookingStartTime())
+                    && slot.getEndTime().equals(bookingInfo.getBookingEndTime())) {
+                if (slot.getStudentID() == null) {
+                    String bookingID = bookingInfo.encodeBookingID();
+                    slot.setStudentID(
+                            Campus.getCampusName(bookingInfo.getStudentCampusAbrev()),
+                            bookingInfo.getStudentID(),
+                            bookingID
+                    );
+                    return bookingID;
+                } else return "Error: This room has been booked";
+            }
+        }
+        return "Error: Time slot not found";
+    }
+
+    public String cancelBooking(BookingInfo bookingInfo) {
+        Map<String, Room> getMap = roomRecord.get(bookingInfo.getBookingDate());
+        if (getMap == null) return false;
+
+        Room getRoom = getMap.get(bookingInfo.getRoomName());
+        if (getRoom == null) return false;
+
+        List<TimeSlot> slots = getRoom.getTimeSlots();
+        if (slots == null) return false;
+
+        for (TimeSlot slot : slots) {
+            if (slot.getStartTime().equals(bookingInfo.getBookingStartTime())
+                    && slot.getEndTime().equals(bookingInfo.getBookingEndTime())) {
+                if (slot.getStudentID() == null) {
+                    System.err.println("NO RECORD FOUND ON " + campusName.name.toUpperCase() + "SERVER");
+                    return false;
+                } else {
+                    System.err.println("RECORD FOUND ON " +
+                            campusName.name.toUpperCase() +
+                            "SERVER for STUDENT " +
+                            bookingInfo.getStudentID()
+                    );
+                    slot.cancelBooking();
+                    return true;
+                }
+            }
+        }
+        error = "Error: BOOKING CANNOT BE REMOVED FROM LOCAL SERVER";
+
+        return false;
+
     }
 
     //TODO there is probably some problems here
@@ -109,12 +163,11 @@ public class RoomRecords{
             countFreeTimeSlots();
         }
     }
-    @SuppressWarnings("Duplicates")
+
     public void initRoomsAndTimeSlots(){
         int year = 2017;
         int month = Calendar.OCTOBER;
         int minutes = 119;
-
 
         for(int day = 1; day < 30; ++day){
             Room room;
@@ -147,9 +200,6 @@ public class RoomRecords{
                 rooms.put(roomName, room);
             }
             records.put(calendar, rooms);
-        }
-        synchronized(server.getLogLock()){
-            server.getLogFile().info(records.size() + " days added to " + campus.name);
         }
     }
 }

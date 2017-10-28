@@ -17,11 +17,11 @@ public interface ServerInterface extends Remote{
         throw new NotImplementedException();
     }
 
-    default List<List<TimeSlot>> deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list, String admiID) throws RemoteException {
+    default List<List<TimeSlot>> deleteRoom(String roomIdentifier, Calendar date, List<TimeSlot> list, String admiID) throws RemoteException {
         throw new NotImplementedException();
     }
 
-    default String bookRoom(Campus campusOfInterest, String roomNumber, Calendar date, TimeSlot timeSlot, Campus campusOfID, int id) throws RemoteException{
+    default String bookRoom(Campus campusOfInterest, String roomIdentifier, Calendar date, TimeSlot timeSlot, int id) throws RemoteException {
         throw new NotImplementedException();
     }
     default String switchRoom() throws RemoteException{
@@ -36,7 +36,7 @@ public interface ServerInterface extends Remote{
         throw new NotImplementedException();
     }
 
-    default boolean cancelBooking(String booking, Campus campus, int id) throws RemoteException {
+    default String cancelBooking(String bookingId, Campus campus, int id) throws RemoteException {
         throw new NotImplementedException();
     }
 

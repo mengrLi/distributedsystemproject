@@ -13,16 +13,18 @@ import java.net.InetAddress;
 public class UdpRequest{
     private final Server server;
     private final String request;
-    private final Campus campus;
+    private final Campus destinationCampus;
 
     public String sendRequest() {
         byte[] messageInByte = request.getBytes();
         int length = messageInByte.length;
         DatagramSocket socket;
         try {
+            System.out.println("Sending request from " + server.getCampus().name
+                    + " to " + destinationCampus.name);
             socket = new DatagramSocket();
             InetAddress address = InetAddress.getByName("localhost");
-            DatagramPacket request = new DatagramPacket(messageInByte, length, address, campus.udpPort);
+            DatagramPacket request = new DatagramPacket(messageInByte, length, address, destinationCampus.udpPort);
             socket.send(request);
             byte[] buffer = new byte[100000];
             DatagramPacket reply = new DatagramPacket(buffer, buffer.length);

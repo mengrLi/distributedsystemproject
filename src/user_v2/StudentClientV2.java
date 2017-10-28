@@ -10,6 +10,9 @@ import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.Map;
 
+/**
+ * Student always connect to his home campus
+ */
 public class StudentClientV2 extends ClientV2 implements UserInterface {
     public StudentClientV2(Campus campus, int id){
         super(campus, id);
@@ -19,7 +22,7 @@ public class StudentClientV2 extends ClientV2 implements UserInterface {
     @Override
     public String bookRoom(Campus campusOfInterest, String roomNumber, Calendar date, TimeSlot timeSlot, Campus campusOfID, int id){
         try {
-            return connect().bookRoom(campusOfInterest, roomNumber, date, timeSlot, campusOfID, id);
+            return connect().bookRoom(campusOfInterest, roomNumber, date, timeSlot, id);
         } catch (RemoteException | NotBoundException e) {
             System.err.println(e.getMessage());
             return "Student Client Error";
@@ -37,13 +40,18 @@ public class StudentClientV2 extends ClientV2 implements UserInterface {
             return connect().getAvailableTimeSlot(date, campus);
         }catch(RemoteException | NotBoundException e){
             System.err.println(e.getMessage());
+            return null;
         }
-        return null;
     }
 
     @Override
-    public boolean cancelBooking(String booking){
-        return false;
+    public String cancelBooking(String bookingId) {
+        try {
+            return connect().cancelBooking(bookingId, this.campus, this.id);
+        } catch (RemoteException | NotBoundException e) {
+            System.err.println(e.getMessage());
+            return "Error: " + e.getMessage();
+        }
     }
 
     @Override
