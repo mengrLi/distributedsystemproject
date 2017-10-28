@@ -18,7 +18,12 @@ public class StudentClientV2 extends ClientV2 implements UserInterface {
 
     @Override
     public String bookRoom(Campus campusOfInterest, String roomNumber, Calendar date, TimeSlot timeSlot, Campus campusOfID, int id){
-        return null;
+        try {
+            return connect().bookRoom(campusOfInterest, roomNumber, date, timeSlot, campusOfID, id);
+        } catch (RemoteException | NotBoundException e) {
+            System.err.println(e.getMessage());
+            return "Student Client Error";
+        }
     }
 
     @Override

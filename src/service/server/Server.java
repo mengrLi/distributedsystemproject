@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import domain.*;
 import lombok.Getter;
 import service.remote_interface.ServerInterface;
+import service.server.student.BookRoom;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -21,14 +22,20 @@ import java.util.logging.SimpleFormatter;
 
 @SuppressWarnings("Duplicates")
 public class Server extends UnicastRemoteObject implements ServerInterface, Runnable{
+    @Getter
     private final Campus campus;
+    @Getter
     private final Administrators administrators;
+    @Getter
     private final RoomRecords roomRecords;
+    @Getter
     private final StudentBookingRecords studentBookingRecords;
-    @Getter private final Lock logLock = new Lock();
-    private final Logger log;
-    private final Lock roomLock = new Lock();
 
+    private final Logger log;
+    @Getter
+    private final Lock roomLock = new Lock();
+    @Getter
+    private final Lock logLock = new Lock();
 
     public Server(Campus campus) throws RemoteException{
         //TO BE CHANGED FOR CORBA
@@ -52,6 +59,10 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
             log.addHandler(fileHandler);
             SimpleFormatter formatter = new SimpleFormatter();
             fileHandler.setFormatter(formatter);
+            synchronized (this.logLock) {
+                log.info(campus.name + " log loaded");
+                log.info(campus.name + " has been initialized");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -63,7 +74,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
         bindRegistry();
 
         //setup udp listener
-        UdpListener listener = new UdpListener(campus);
+        UdpListener listener = new UdpListener(campus, this);
         listener.init();
 
     }
@@ -81,23 +92,26 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
 
     @Override
     public List<List<TimeSlot>> createRoom(String roomIdentifier, Calendar date, List<TimeSlot> list, String adminID) throws RemoteException{
-        if (administrators.contains(adminID)) {
-            System.out.println("Creating room");
-            return roomRecords.addTimeSlots(date, roomIdentifier, list);
+        if (administrators.contains(adminID)) return roomRecords.addTimeSlots(date, roomIdentifier, list);
+        synchronized (this.logLock) {
+            log.info("Invalid admin access trying to create rooms in " + campus.name);
         }
-        System.err.println("admin id wrong");
         return null;
     }
 
     @Override
     public List<List<TimeSlot>> deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list, String adminID) throws RemoteException{
         if (administrators.contains(adminID.toLowerCase())) return roomRecords.removeTimeSlots(date, roomNumber, list);
+        synchronized (this.logLock) {
+            log.info("Invalid admin access trying to delete rooms in " + campus.name);
+        }
         return null;
     }
 
     @Override
-    public String bookRoom(Campus campusOfInterest, String roomNumber, Calendar date, TimeSlot timeSlot, Campus campusOfID, int id) throws RemoteException{
-        return null;
+    public String bookRoom(Campus campusOfInterest, String roomIdentifier, Calendar date, TimeSlot timeSlot, Campus campusOfID, int id) throws RemoteException {
+        BookRoom bookRoom = new BookRoom(campusOfInterest, campusOfID, roomIdentifier, date, timeSlot, id, this);
+        return bookRoom.book();
     }
 
     @Override
@@ -117,7 +131,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
                 return roomRecords.getRecordsOfDate(date);
             }
         }else{
-            String req = "**countB-" + date.getTimeInMillis();
+            String req = "**getMap-" + date.getTimeInMillis();
             UdpRequest udpRequest = new UdpRequest(this, req, campus);
             String json = udpRequest.sendRequest();
             Type type = new TypeToken<Map<String, Room>>(){
@@ -140,6 +154,4 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
     public Logger getLogFile(){
         return log;
     }
-
-
 }

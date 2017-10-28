@@ -10,9 +10,10 @@ import java.net.DatagramSocket;
 @RequiredArgsConstructor
 public class UdpListener{
     private final Campus campus;
+    private final Server server;
 
     public void init(){
-        System.out.println(campus.name + " trying to set udp listener");
+        System.out.println(campus.name + " setting udp listener");
         udpListening();
         System.out.println(campus.name + " creating upd listener");
     }
@@ -31,7 +32,7 @@ public class UdpListener{
                 System.out.println(socket.getPort());
                 socket.receive(request);
                 System.out.println(2);
-                new Thread(new UdpResponder(socket, request)).start();
+                new Thread(new UdpResponder(socket, request, server)).start();
                 System.out.println(3);
             }
         } catch (IOException e) {

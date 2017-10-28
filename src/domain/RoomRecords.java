@@ -22,7 +22,7 @@ public class RoomRecords{
 
 
     public Map<String, Room> getRecordsOfDate(Calendar date){
-        System.out.println(date);
+        System.out.println("Accessing room availability of " + date.getTime());
         return records.getOrDefault(date, new HashMap<>());
     }
 
@@ -75,12 +75,11 @@ public class RoomRecords{
             rooms.put(roomIdentifier, room);
             this.records.put(date, rooms);
 
-            int success = ret.get(0).size();
-            int failed = ret.get(1).size();
+        int success = ret.get(1).size();
 
-            int total = success + failed;
+        int total = success + ret.get(0).size();
 
-            server.getLogFile().info((add ? success : failed) + "/" + total
+        server.getLogFile().info(success + "/" + total
                     + " Time slot for room "
                     + roomIdentifier + " has been"
                     + (add ? " added " : " removed ")
@@ -150,7 +149,7 @@ public class RoomRecords{
             records.put(calendar, rooms);
         }
         synchronized(server.getLogLock()){
-            server.getLogFile().info(records.size()+" days added to server");
+            server.getLogFile().info(records.size() + " days added to " + campus.name);
         }
     }
 }

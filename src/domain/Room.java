@@ -31,9 +31,10 @@ public class Room implements Serializable{
         List<TimeSlot> failedInsertion = new LinkedList<>();
         List<TimeSlot> sucessInsertion = new LinkedList<>();
 
-        for(TimeSlot slot : list)
-            if(!insert(slot)) failedInsertion.add(slot);
+        for (TimeSlot slot : list) {
+            if (!insert(slot)) failedInsertion.add(slot);
             else sucessInsertion.add(slot);
+        }
 
         List<List<TimeSlot>> ret = new LinkedList<>();
         ret.add(failedInsertion);
@@ -56,41 +57,41 @@ public class Room implements Serializable{
         List<List<TimeSlot>> ret = new LinkedList<>();
         List<TimeSlot> deletedSlots = new LinkedList<>();
         List<TimeSlot> notDeletedSlots = new LinkedList<>();
-            for(TimeSlot delSlot : list){
-                for(TimeSlot currSlot : timeSlots){
-                    if(currSlot.getStartMilli() == delSlot.getStartMilli()
-                            && currSlot.getEndMilli() == delSlot.getEndMilli()){
-                        index = timeSlots.indexOf(currSlot);
-                        /*
-                         * if student has booked this room, it will be deleted
-                         */
-                        if (currSlot.getStudentID() != null) {
-                            Campus studentCampus = currSlot.getStudentCampus();
-                            int student_id = currSlot.getStudentID();
-                            DatagramSocket socket;
-                            try {
-                                Calendar calendar = CalendarHelpers.getStartOfWeek(currSlot.getStartTime());
+        for (TimeSlot delSlot : list) {
+            for (TimeSlot currSlot : timeSlots) {
+                if (currSlot.getStartMilli() == delSlot.getStartMilli()
+                        && currSlot.getEndMilli() == delSlot.getEndMilli()) {
+                    index = timeSlots.indexOf(currSlot);
+                    /*
+                     * if student has booked this room, it will be deleted
+                     */
+                    if (currSlot.getStudentID() != null) {
+                        Campus studentCampus = currSlot.getStudentCampus();
+                        int student_id = currSlot.getStudentID();
+                        DatagramSocket socket;
+                        try {
+                            Calendar calendar = CalendarHelpers.getStartOfWeek(currSlot.getStartTime());
 
-                                String message = "**remove-" + calendar.getTimeInMillis() + "-" + student_id;
-                                byte[] messageByte = message.getBytes();
-                                socket = new DatagramSocket();
-                                InetAddress address = InetAddress.getByName("localhost");
-                                DatagramPacket request = new DatagramPacket(messageByte, message.length(), address, studentCampus.udpPort);
-                                socket.send(request);
+                            String message = "**remove-" + calendar.getTimeInMillis() + "-" + student_id;
+                            byte[] messageByte = message.getBytes();
+                            socket = new DatagramSocket();
+                            InetAddress address = InetAddress.getByName("localhost");
+                            DatagramPacket request = new DatagramPacket(messageByte, message.length(), address, studentCampus.udpPort);
+                            socket.send(request);
 
-                                currSlot.cancelBooking();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            currSlot.cancelBooking();
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     }
                 }
-                if(index != -1){
-                    deletedSlots.add(timeSlots.remove(index));
-                    System.err.println(delSlot.toString() + " has been deleted");
-                }else notDeletedSlots.add(delSlot);
-                index = -1;
             }
+            if (index != -1) {
+                deletedSlots.add(timeSlots.remove(index));
+                System.err.println(delSlot.toString() + " has been deleted");
+            } else notDeletedSlots.add(delSlot);
+            index = -1;
+        }
         Collections.sort(timeSlots);
         ret.add(notDeletedSlots);
         ret.add(deletedSlots);

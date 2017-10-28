@@ -19,7 +19,6 @@ public abstract class ClientV2 implements Runnable{
     }
 
     protected ServerInterface connect() throws RemoteException, NotBoundException{
-        System.out.println("getting server interface");
         ServerInterface serverInterface
                 = (ServerInterface) LocateRegistry.getRegistry(campus.port).lookup(campus.serverName);
         return serverInterface;

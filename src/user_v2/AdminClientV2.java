@@ -20,7 +20,7 @@ public class AdminClientV2 extends ClientV2 implements UserInterface{
     private final Logger log;
     public AdminClientV2(Campus campus, int id){
         super(campus, id);
-        System.out.println("admin v2 started with id " + campus.abrev + "a" + id);
+        System.out.println("admin client started with id " + campus.abrev + "a" + id);
         fullID = campus.abrev + "a" + id;
         log = Logger.getLogger(fullID + " " + AdminClientV2.class);
         initLogger();
@@ -56,6 +56,7 @@ public class AdminClientV2 extends ClientV2 implements UserInterface{
     @Override
     public Map<String, Room> getAvailableTimeSlot(Calendar date, Campus campus){
         try{
+            log.info(fullID + " checking available time slot of " + campus.name + " on " + date.getTime());
             return connect().getAvailableTimeSlot(date, campus);
         }catch(RemoteException | NotBoundException e){
             System.err.println(e.getMessage());
@@ -84,15 +85,18 @@ public class AdminClientV2 extends ClientV2 implements UserInterface{
             }else{
                 System.err.println("The following time slot was not successfully created");
                 builder.append(" Partially succeeded with the following exception\n");
-                for (TimeSlot slot : response.get(0)) {
-                    builder.append(" from ").append(slot.getStartTime().getTime()).append(" to ").append(slot.getEndTime().getTime()).append("\n");
+                for (TimeSlot slot : response.get(0))
+                    builder.append(" from ")
+                            .append(slot.getStartTime().getTime())
+                            .append(" to ")
+                            .append(slot.getEndTime().getTime())
+                            .append("\n");
 
-                }
-                log.severe(builder.toString());
+                log.info(builder.toString());
                 return false;
             }
         }catch(RemoteException | NotBoundException e){
-            log.severe(builder.append(e.getMessage()).toString());
+            log.info(builder.append(e.getMessage()).toString());
             System.err.println(e.getMessage());
             return false;
         }
