@@ -12,8 +12,8 @@ import java.util.List;
 
 public class Room implements Serializable{
     private final String roomNumber;
-    private final List<TimeSlot> timeSlots;
-    private final Lock timeSlotLock = new Lock();
+    private List<TimeSlot> timeSlots;
+//    private final Lock timeSlotLock = new Lock();
 
     public Room(String roomNumber){
         this.roomNumber = roomNumber;
@@ -30,11 +30,10 @@ public class Room implements Serializable{
     public List<List<TimeSlot>> addTimeSlots(List<TimeSlot> list){
         List<TimeSlot> failedInsertion = new LinkedList<>();
         List<TimeSlot> sucessInsertion = new LinkedList<>();
-        synchronized(timeSlotLock){
-            for(TimeSlot slot : list)
-                if(!insert(slot)) failedInsertion.add(slot);
-                else sucessInsertion.add(slot);
-        }
+
+        for(TimeSlot slot : list)
+            if(!insert(slot)) failedInsertion.add(slot);
+            else sucessInsertion.add(slot);
 
         List<List<TimeSlot>> ret = new LinkedList<>();
         ret.add(failedInsertion);
@@ -57,7 +56,6 @@ public class Room implements Serializable{
         List<List<TimeSlot>> ret = new LinkedList<>();
         List<TimeSlot> deletedSlots = new LinkedList<>();
         List<TimeSlot> notDeletedSlots = new LinkedList<>();
-        synchronized(timeSlotLock){
             for(TimeSlot delSlot : list){
                 for(TimeSlot currSlot : timeSlots){
                     if(currSlot.getStartMilli() == delSlot.getStartMilli()
@@ -67,22 +65,17 @@ public class Room implements Serializable{
                          * if student has booked this room, it will be deleted
                          */
                         if (currSlot.getStudentID() != null) {
-                            CampusName studentCampus = currSlot.getStudentCampus();
+                            Campus studentCampus = currSlot.getStudentCampus();
                             int student_id = currSlot.getStudentID();
                             DatagramSocket socket;
                             try {
-                                Calendar calendar = (Calendar) currSlot.getStartTime().clone();
-                                calendar.set(Calendar.HOUR, 0);
-                                calendar.set(Calendar.MINUTE, 0);
-                                calendar.set(Calendar.SECOND, 0);
-                                calendar.set(Calendar.MILLISECOND, 0);
-                                calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
+                                Calendar calendar = CalendarHelpers.getStartOfWeek(currSlot.getStartTime());
+
                                 String message = "**remove-" + calendar.getTimeInMillis() + "-" + student_id;
-                                System.out.println(calendar.getTime() + " " + calendar.getTimeInMillis());
                                 byte[] messageByte = message.getBytes();
                                 socket = new DatagramSocket();
                                 InetAddress address = InetAddress.getByName("localhost");
-                                DatagramPacket request = new DatagramPacket(messageByte, message.length(), address, studentCampus.inPort);
+                                DatagramPacket request = new DatagramPacket(messageByte, message.length(), address, studentCampus.udpPort);
                                 socket.send(request);
 
                                 currSlot.cancelBooking();
@@ -98,7 +91,6 @@ public class Room implements Serializable{
                 }else notDeletedSlots.add(delSlot);
                 index = -1;
             }
-        }
         Collections.sort(timeSlots);
         ret.add(notDeletedSlots);
         ret.add(deletedSlots);
@@ -182,10 +174,9 @@ public class Room implements Serializable{
     }
 
     public List<TimeSlot> getTimeSlots(){
-        synchronized(timeSlotLock){
+//        synchronized(timeSlotLock){
             return timeSlots;
-        }
+//        }
     }
-
 
 }

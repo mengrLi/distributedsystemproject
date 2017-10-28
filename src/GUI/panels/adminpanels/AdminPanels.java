@@ -1,9 +1,9 @@
 package GUI.panels.adminpanels;
 
 
+import GUI.UserTerminalGUI;
 import GUI.functions.HelperFunctions;
 import GUI.panels.MainMenuPanel;
-import GUI.panels.UserTerminalGUI;
 
 import javax.swing.*;
 import java.awt.*;

@@ -22,7 +22,7 @@ public class UDPServer {
                 socket.send(reply);
 
 
-//                new Thread(new Responder(socket, request, CampusName.DORVAL)).start();
+//                new Thread(new UdpResponder(socket, request, Campus.DORVAL)).start();
 
             }
         } catch (Exception e) {

@@ -1,7 +1,7 @@
 package GUI.panels.adminpanels;
 
+import GUI.UserTerminalGUI;
 import GUI.functions.Message;
-import GUI.panels.UserTerminalGUI;
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.TimePicker;
 import domain.TimeSlot;

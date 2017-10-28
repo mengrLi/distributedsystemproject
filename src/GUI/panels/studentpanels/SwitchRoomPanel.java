@@ -1,11 +1,11 @@
 package GUI.panels.studentpanels;
 
+import GUI.UserTerminalGUI;
 import GUI.functions.HelperFunctions;
 import GUI.functions.Message;
-import GUI.panels.UserTerminalGUI;
 import com.github.lgooddatepicker.components.DatePicker;
 import domain.BookingInfo;
-import domain.CampusName;
+import domain.Campus;
 import domain.Room;
 import domain.TimeSlot;
 import lombok.Getter;
@@ -113,9 +113,9 @@ class SwitchRoomPanel extends JPanel {
     }
 
     private void setCampusComboBox() {
-        campusComboBox.addItem(new CampusNameBox(CampusName.DORVAL));
-        campusComboBox.addItem(new CampusNameBox(CampusName.WESTMOUNT));
-        campusComboBox.addItem(new CampusNameBox(CampusName.KIRKLAND));
+        campusComboBox.addItem(new CampusNameBox(Campus.DORVAL));
+        campusComboBox.addItem(new CampusNameBox(Campus.WESTMOUNT));
+        campusComboBox.addItem(new CampusNameBox(Campus.KIRKLAND));
     }
 
     private void refreshDateButtonListener() {
@@ -159,7 +159,7 @@ class SwitchRoomPanel extends JPanel {
                 Message.optionPaneError("Booking ID contains errors", this);
             else {
                 studentIDLabel.setText(gui.getFullID());
-                bookedCampusLabel.setText("Campus: " + CampusName.getCampusName(bookingInfo.getCampusOfInterestAbrev()));
+                bookedCampusLabel.setText("Campus: " + Campus.getCampusName(bookingInfo.getCampusOfInterestAbrev()));
                 dateLabel.setText("Date: " + bookingInfo.getBookingDate().getTime());
                 startTimeLabel.setText("Start: " +
                         bookingInfo.getBookingStartTime().get(Calendar.HOUR_OF_DAY) +
@@ -185,7 +185,7 @@ class SwitchRoomPanel extends JPanel {
     @RequiredArgsConstructor
     @Getter
     private class CampusNameBox {
-        private final CampusName campus;
+        private final Campus campus;
 
         @Override
         public String toString() {

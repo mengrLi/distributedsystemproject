@@ -1,6 +1,6 @@
 package GUI.panels.adminpanels;
 
-import GUI.panels.UserTerminalGUI;
+import GUI.UserTerminalGUI;
 import GUI.panels.buttons.MenuButtons;
 
 import javax.swing.*;

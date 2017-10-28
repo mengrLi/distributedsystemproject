@@ -1,5 +1,6 @@
 package GUI.panels;
 
+import GUI.UserTerminalGUI;
 import GUI.functions.HelperFunctions;
 import GUI.panels.adminpanels.AdminPanels;
 import GUI.panels.studentpanels.StudentPanels;

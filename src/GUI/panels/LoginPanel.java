@@ -1,11 +1,12 @@
 package GUI.panels;
 
+import GUI.UserTerminalGUI;
 import GUI.functions.HelperFunctions;
 import GUI.functions.Message;
-import domain.CampusName;
-import service.user.AdminClient;
-import service.user.StudentClient;
-import service.user.UserInterface;
+import domain.Campus;
+import service.remote_interface.UserInterface;
+import user_v2.AdminClientV2;
+import user_v2.StudentClientV2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -93,7 +94,7 @@ public class LoginPanel extends JPanel {
             Message.optionPaneError("Invalid username - Number format invalid", gui.getBasePanel());
             return false;
         }
-        CampusName campusOfTheID = CampusName.getCampusName(campus);
+        Campus campusOfTheID = Campus.getCampusName(campus);
         if(campusOfTheID == null){
             Message.optionPaneError("Invalid username - Campus name invalid", gui.getBasePanel());
             return false;
@@ -101,7 +102,7 @@ public class LoginPanel extends JPanel {
         gui.setCampusOfTheID(campusOfTheID);
 
         if (type.equals("A")) {
-            client = new AdminClient(campusOfTheID, id);
+            client = new AdminClientV2(campusOfTheID, id);
             boolean isAdmin = client.checkID();
             if (isAdmin) {
                 gui.setClient(client);
@@ -110,10 +111,11 @@ public class LoginPanel extends JPanel {
                 return true;
             }else{
                 Message.optionPaneError("Invalid Admin username", gui.getBasePanel());
+                client = null;
                 return false;
             }
         } else if (type.equals("S")) {
-            client = new StudentClient(campusOfTheID, id);
+            client = new StudentClientV2(campusOfTheID, id);
             gui.setClient(client);
             gui.setAdmin(false);
             gui.setFullID(username);

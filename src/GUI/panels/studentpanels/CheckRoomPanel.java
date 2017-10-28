@@ -1,7 +1,7 @@
 package GUI.panels.studentpanels;
 
+import GUI.UserTerminalGUI;
 import GUI.functions.HelperFunctions;
-import GUI.panels.UserTerminalGUI;
 import com.github.lgooddatepicker.components.DatePicker;
 
 import javax.swing.*;
@@ -72,16 +72,16 @@ class CheckRoomPanel extends JPanel {
     }
 
 //    private void setCampusComboBox(){
-//        campusBox.addItem(new CampusBoxItem(CampusName.DORVAL));
-//        campusBox.addItem(new CampusBoxItem(CampusName.KIRKLAND));
-//        campusBox.addItem(new CampusBoxItem(CampusName.WESTMOUNT));
+//        campusBox.addItem(new CampusBoxItem(Campus.DORVAL));
+//        campusBox.addItem(new CampusBoxItem(Campus.KIRKLAND));
+//        campusBox.addItem(new CampusBoxItem(Campus.WESTMOUNT));
 //
 //    }
 
 //    @RequiredArgsConstructor
 //    @Getter
 //    class CampusBoxItem{
-//        final CampusName campus;
+//        final Campus campus;
 //
 //        public String toString(){
 //            return campus.name;

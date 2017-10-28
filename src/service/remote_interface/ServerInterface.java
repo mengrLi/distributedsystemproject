@@ -1,6 +1,6 @@
-package service.server;
+package service.remote_interface;
 
-import domain.CampusName;
+import domain.Campus;
 import domain.Room;
 import domain.TimeSlot;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -21,7 +21,7 @@ public interface ServerInterface extends Remote{
         throw new NotImplementedException();
     }
 
-    default String bookRoom(CampusName campusOfInterest, String roomNumber, Calendar date, TimeSlot timeSlot, CampusName campusOfID, int id) throws RemoteException{
+    default String bookRoom(Campus campusOfInterest, String roomNumber, Calendar date, TimeSlot timeSlot, Campus campusOfID, int id) throws RemoteException{
         throw new NotImplementedException();
     }
     default String switchRoom() throws RemoteException{
@@ -32,11 +32,11 @@ public interface ServerInterface extends Remote{
         throw new NotImplementedException();
     }
 
-    default Map<String, Room> getAvailableTimeSlot(Calendar date, CampusName campusName) throws RemoteException{
+    default Map<String, Room> getAvailableTimeSlot(Calendar date, Campus campus) throws RemoteException{
         throw new NotImplementedException();
     }
 
-    default boolean cancelBooking(String booking, CampusName campusName, int id) throws RemoteException {
+    default boolean cancelBooking(String booking, Campus campus, int id) throws RemoteException {
         throw new NotImplementedException();
     }
 

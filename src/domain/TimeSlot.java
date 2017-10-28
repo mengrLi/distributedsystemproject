@@ -16,7 +16,7 @@ public class TimeSlot implements Serializable, Comparable<TimeSlot>{
     @Getter
     private Integer studentID = null;
     @Getter
-    private CampusName studentCampus = null;
+    private Campus studentCampus = null;
     @Getter
     private String bookingID = null;
 
@@ -56,7 +56,7 @@ public class TimeSlot implements Serializable, Comparable<TimeSlot>{
         this.start = Format.formatTime(startTime);
     }
 
-    public void setStudentID(CampusName campusOfID, Integer studentID, String bookingID){
+    public void setStudentID(Campus campusOfID, Integer studentID, String bookingID){
         this.studentID = studentID;
         this.studentCampus = campusOfID;
         this.bookingID = bookingID;

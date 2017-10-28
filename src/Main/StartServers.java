@@ -1,21 +1,18 @@
 package Main;
 
-import domain.CampusName;
-import service.server.CampusServer;
+import domain.Campus;
+import service.server.Server;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 
 public class StartServers{
-    public static void turnOnServers() throws RemoteException{
+    public static void turnOnServerNew() throws RemoteException{
         LocateRegistry.createRegistry(1099);
-        CampusServer dorval = new CampusServer(CampusName.DORVAL);
-        CampusServer westmount = new CampusServer(CampusName.WESTMOUNT);
-        CampusServer kirkland = new CampusServer(CampusName.KIRKLAND);
-
-        dorval.initServer();
-        westmount.initServer();
-        kirkland.initServer();
+        System.out.println("Registry at 1099 created");
+        Server dorval = new Server(Campus.DORVAL);
+        Server kirkland = new Server(Campus.KIRKLAND);
+        Server westmount = new Server(Campus.WESTMOUNT);
 
         Thread thread1 = new Thread(dorval);
         Thread thread2 = new Thread(westmount);
@@ -24,9 +21,11 @@ public class StartServers{
         thread1.start();
         thread2.start();
         thread3.start();
+
     }
+
     public static void main(String[] args) throws RemoteException{
-        StartServers.turnOnServers();
+        turnOnServerNew();
     }
 
 

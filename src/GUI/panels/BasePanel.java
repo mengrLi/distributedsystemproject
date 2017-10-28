@@ -1,5 +1,6 @@
 package GUI.panels;
 
+import GUI.UserTerminalGUI;
 import GUI.functions.HelperFunctions;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +16,7 @@ public class BasePanel extends JPanel {
     private final MainMenuPanel mainMenuPanel;
     private final CardLayout cardLayout;
 
-    BasePanel(UserTerminalGUI gui) {
+    public BasePanel(UserTerminalGUI gui) {
         this.gui = gui;
         HelperFunctions.setDimension(this, 600, 500);
         cardLayout = new CardLayout();
