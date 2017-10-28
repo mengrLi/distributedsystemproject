@@ -40,6 +40,8 @@ public class BookRoom{
         this.studentID = bookingInfo.getStudentID();
     }
 
+    //TODO book reference is wrong
+
     public String book() throws RemoteException {
         /* Create a booking ID object */
 
