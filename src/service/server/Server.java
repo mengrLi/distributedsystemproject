@@ -469,8 +469,21 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
     }
 
     @Override
-    public Map<String, Integer> getAvailableTimeSlot(Calendar date) throws RemoteException{
-        return null;
+    public Map<Campus, Integer> getAvailableTimeSlot(Calendar date) throws RemoteException {
+        Map<Campus, Integer> ret = new HashMap<>();
+        for (Campus campus : Campus.values()) {
+            int count = 0;
+            if (this.campus.equals(campus)) {
+                count = roomRecords.getAvailableTimeSlotsCountOfDate(date);
+            } else {
+                String request = "**getInt-" + date.getTimeInMillis();
+                UdpRequest udpRequest = new UdpRequest(this, request, campus);
+                String udpResponse = udpRequest.sendRequest();
+                count = Integer.parseInt(udpResponse);
+            }
+            ret.put(campus, count);
+        }
+        return ret;
     }
 
     @Override

@@ -32,24 +32,29 @@ public class RoomRecords{
     }
 
     public int getAvailableTimeSlotsCountOfDate(Calendar date){
-        final Lock counterLock = new Lock();
         int roomCount = 0;
-
-        Map<String, Room> roomOfDate = getRecordsOfDate(date);
-        Iterator<String> iterator = roomOfDate.keySet().iterator();
-        List<String> keyList;
-        while(iterator.hasNext()){
-            keyList = new LinkedList<>();
-            keyList.add(iterator.next());
-            if(iterator.hasNext()) keyList.add(iterator.next());
-            if(iterator.hasNext()) keyList.add(iterator.next());
-
-            RoomCounter roomCounter = new RoomCounter(roomOfDate, keyList);
-            new Thread(roomCounter);
-
-            //TODO verify if this is correct
-            roomCount += roomCounter.getCounter();
+        Map<String, Room> roomMap = getRecordsOfDate(date);
+        for (Room room : roomMap.values()) {
+            for (TimeSlot slot : room.getTimeSlots()) {
+                if (slot.getStudentID() == null) ++roomCount;
+            }
         }
+
+//        Map<String, Room> roomOfDate = getRecordsOfDate(date);
+//        Iterator<String> iterator = roomOfDate.keySet().iterator();
+//        List<String> keyList;
+//        while(iterator.hasNext()){
+//            keyList = new LinkedList<>();
+//            keyList.add(iterator.next());
+//            if(iterator.hasNext()) keyList.add(iterator.next());
+//            if(iterator.hasNext()) keyList.add(iterator.next());
+//
+//            RoomCounter roomCounter = new RoomCounter(roomOfDate, keyList);
+//            new Thread(roomCounter);
+//
+//            //TODO verify if this is correct
+//            roomCount += roomCounter.getCounter();
+//        }
         return roomCount;
     }
 

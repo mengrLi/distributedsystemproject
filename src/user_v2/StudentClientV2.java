@@ -31,8 +31,17 @@ public class StudentClientV2 extends ClientV2 implements UserInterface {
     }
 
     @Override
-    public Map<String, Integer> getAvailableTimeSlot(Calendar date){
-        return null;
+    public Map<Campus, Integer> getAvailableTimeSlot(Calendar date) {
+        try {
+            return connect().getAvailableTimeSlot(date);
+        } catch (RemoteException | NotBoundException e) {
+            e.printStackTrace();
+            Map<Campus, Integer> ret = new HashMap<>();
+            for (Campus campus : Campus.values()) {
+                ret.put(campus, -1);
+            }
+            return ret;
+        }
     }
 
     @Override

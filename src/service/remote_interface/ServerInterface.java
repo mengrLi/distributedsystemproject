@@ -29,7 +29,7 @@ public interface ServerInterface extends Remote{
         throw new NotImplementedException();
     }
 
-    default Map<String, Integer> getAvailableTimeSlot(Calendar date) throws RemoteException{
+    default Map<Campus, Integer> getAvailableTimeSlot(Calendar date) throws RemoteException {
         throw new NotImplementedException();
     }
 

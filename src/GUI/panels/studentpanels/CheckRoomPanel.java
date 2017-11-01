@@ -3,6 +3,7 @@ package GUI.panels.studentpanels;
 import GUI.UserTerminalGUI;
 import GUI.functions.HelperFunctions;
 import com.github.lgooddatepicker.components.DatePicker;
+import domain.Campus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,10 +57,10 @@ class CheckRoomPanel extends JPanel {
                     0, 0, 0);
             calendar.set(Calendar.MILLISECOND, 0);
 
-            Map<String, Integer> get = gui.getClient().getAvailableTimeSlot(calendar);
+            Map<Campus, Integer> get = gui.getClient().getAvailableTimeSlot(calendar);
             StringBuilder builder = new StringBuilder();
-            for(Map.Entry<String, Integer> entry : get.entrySet())
-                builder.append(entry.getKey()).append(": ").append(entry.getValue()).append(System.lineSeparator());
+            for (Map.Entry<Campus, Integer> entry : get.entrySet())
+                builder.append(entry.getKey().name).append(": ").append(entry.getValue()).append(System.lineSeparator());
             resultField.setText(builder.toString());
         });
         topPanel.add(refreshButton, BorderLayout.EAST);

@@ -64,8 +64,10 @@ public class UdpResponder implements Runnable {
                 Calendar calendar = Calendar.getInstance();
                 try {
                     calendar.setTimeInMillis(Long.parseLong(delim[1]));
-//                        int get = server.countFreeRooms(calendar);
-                    int get = 0; // temp
+                    int get;
+                    synchronized (server.getRoomLock()) {
+                        get = server.getRoomRecords().getAvailableTimeSlotsCountOfDate(calendar);
+                    }
                     return String.valueOf(get).getBytes();
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
@@ -103,10 +105,6 @@ public class UdpResponder implements Runnable {
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
-                return null;
-            }
-            case "switch": {
-                System.out.println("SWITCH NOT DONE YET");
                 return null;
             }
             case "chkCnl": {

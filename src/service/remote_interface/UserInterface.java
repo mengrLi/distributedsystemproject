@@ -27,7 +27,7 @@ public interface UserInterface{
         throw new NotImplementedException();
     }
 
-    default Map<String, Integer> getAvailableTimeSlot(Calendar date){
+    default Map<Campus, Integer> getAvailableTimeSlot(Calendar date) {
         throw new NotImplementedException();
     }
 
