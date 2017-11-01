@@ -1,7 +1,7 @@
 package GUI.panels.adminpanels;
 
+import GUI.UserTerminalGUI;
 import GUI.functions.Message;
-import GUI.panels.UserTerminalGUI;
 import com.github.lgooddatepicker.components.DatePicker;
 import domain.Room;
 import domain.TimeSlot;
@@ -181,6 +181,7 @@ public class DeleteRoomPanel extends JPanel {
 
                 slotList.add(new TimeSlot(c1, c2));
             }
+
             if (gui.getClient().deleteRoom(room, calendar, slotList)) {
                 Message.optionPanePlain(
                         "Selected rooms have been removed from " + gui.getCampusOfTheID().name,

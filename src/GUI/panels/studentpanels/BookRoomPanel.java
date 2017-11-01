@@ -1,10 +1,10 @@
 package GUI.panels.studentpanels;
 
+import GUI.UserTerminalGUI;
 import GUI.functions.HelperFunctions;
 import GUI.functions.Message;
-import GUI.panels.UserTerminalGUI;
 import com.github.lgooddatepicker.components.DatePicker;
-import domain.CampusName;
+import domain.Campus;
 import domain.Room;
 import domain.TimeSlot;
 import lombok.Getter;
@@ -29,7 +29,7 @@ class BookRoomPanel extends JPanel{
     private final JButton backButton;
 
     private Map<String, Room> availableRooms;
-    private CampusName campus;
+    private Campus campus;
     private Calendar calendar = null;
     private String room = null;
     private TimeSlot slot = null;
@@ -72,9 +72,9 @@ class BookRoomPanel extends JPanel{
     }
 
     private void setCampusBox(int index){
-        campusBox.addItem(new CampusBoxItem(CampusName.DORVAL));
-        campusBox.addItem(new CampusBoxItem(CampusName.WESTMOUNT));
-        campusBox.addItem(new CampusBoxItem(CampusName.KIRKLAND));
+        campusBox.addItem(new CampusBoxItem(Campus.DORVAL));
+        campusBox.addItem(new CampusBoxItem(Campus.WESTMOUNT));
+        campusBox.addItem(new CampusBoxItem(Campus.KIRKLAND));
         selectionPanel.add(campusBox, index);
     }
 
@@ -100,7 +100,7 @@ class BookRoomPanel extends JPanel{
             calendar.set(Calendar.MILLISECOND, 0);
 
             //get the selected campus name
-            campus = ((CampusBoxItem) campusBox.getSelectedItem()).getCampusName();
+            campus = ((CampusBoxItem) campusBox.getSelectedItem()).getCampus();
             //set the campus of interested in gui
             gui.setCampusOfInterest(campus);
 
@@ -188,11 +188,11 @@ class BookRoomPanel extends JPanel{
     @RequiredArgsConstructor
     @Getter
     private class CampusBoxItem{
-        final CampusName campusName;
+        final Campus campus;
 
         @Override
         public String toString(){
-            return campusName.name;
+            return campus.name;
         }
     }
 

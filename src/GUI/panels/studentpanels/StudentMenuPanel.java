@@ -1,8 +1,8 @@
 package GUI.panels.studentpanels;
 
+import GUI.UserTerminalGUI;
 import GUI.functions.HelperFunctions;
 import GUI.panels.BasePanel;
-import GUI.panels.UserTerminalGUI;
 import GUI.panels.buttons.MenuButtons;
 
 import javax.swing.*;

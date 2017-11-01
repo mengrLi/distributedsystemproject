@@ -1,8 +1,8 @@
 package GUI.panels.studentpanels;
 
+import GUI.UserTerminalGUI;
 import GUI.functions.HelperFunctions;
 import GUI.functions.Message;
-import GUI.panels.UserTerminalGUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,8 +59,8 @@ class CancelRoomPanel extends JPanel{
         String bookingID = bookIdField.getText();
         if(bookingID.equals("")) Message.optionPaneError("Please enter your booking ID", this);
         else{
-            if(gui.getClient().cancelBooking(bookingID)) resultField.setText("Booking has been cancelled");
-            else resultField.setText("Booking cannot be cancelled");
+            String response = gui.getClient().cancelBooking(bookingID);
+            resultField.setText(response);
         }
     }
 }

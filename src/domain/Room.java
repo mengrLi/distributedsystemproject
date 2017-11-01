@@ -1,10 +1,9 @@
 package domain;
 
-import java.io.IOException;
+import service.server.Server;
+import service.server.UdpRequest;
+
 import java.io.Serializable;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -12,8 +11,8 @@ import java.util.List;
 
 public class Room implements Serializable{
     private final String roomNumber;
-    private final List<TimeSlot> timeSlots;
-    private final Lock timeSlotLock = new Lock();
+    private List<TimeSlot> timeSlots;
+//    private final Lock timeSlotLock = new Lock();
 
     public Room(String roomNumber){
         this.roomNumber = roomNumber;
@@ -30,10 +29,10 @@ public class Room implements Serializable{
     public List<List<TimeSlot>> addTimeSlots(List<TimeSlot> list){
         List<TimeSlot> failedInsertion = new LinkedList<>();
         List<TimeSlot> sucessInsertion = new LinkedList<>();
-        synchronized(timeSlotLock){
-            for(TimeSlot slot : list)
-                if(!insert(slot)) failedInsertion.add(slot);
-                else sucessInsertion.add(slot);
+
+        for (TimeSlot slot : list) {
+            if (!insert(slot)) failedInsertion.add(slot);
+            else sucessInsertion.add(slot);
         }
 
         List<List<TimeSlot>> ret = new LinkedList<>();
@@ -49,55 +48,65 @@ public class Room implements Serializable{
      * remove slot
      *
      * @param list list of slots to be deleted
+     * @param server
      * @return two lists, 0 failed list ,1 success list
      */
-    public List<List<TimeSlot>> removeTimeSlots(List<TimeSlot> list){
+    public List<List<TimeSlot>> removeTimeSlots(List<TimeSlot> list, Server server) {
         if(list.size() == 0) return null;
         int index = -1;
         List<List<TimeSlot>> ret = new LinkedList<>();
         List<TimeSlot> deletedSlots = new LinkedList<>();
         List<TimeSlot> notDeletedSlots = new LinkedList<>();
-        synchronized(timeSlotLock){
-            for(TimeSlot delSlot : list){
-                for(TimeSlot currSlot : timeSlots){
-                    if(currSlot.getStartMilli() == delSlot.getStartMilli()
-                            && currSlot.getEndMilli() == delSlot.getEndMilli()){
-                        index = timeSlots.indexOf(currSlot);
-                        /*
-                         * if student has booked this room, it will be deleted
-                         */
-                        if (currSlot.getStudentID() != null) {
-                            CampusName studentCampus = currSlot.getStudentCampus();
-                            int student_id = currSlot.getStudentID();
-                            DatagramSocket socket;
-                            try {
-                                Calendar calendar = (Calendar) currSlot.getStartTime().clone();
-                                calendar.set(Calendar.HOUR, 0);
-                                calendar.set(Calendar.MINUTE, 0);
-                                calendar.set(Calendar.SECOND, 0);
-                                calendar.set(Calendar.MILLISECOND, 0);
-                                calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
-                                String message = "**remove-" + calendar.getTimeInMillis() + "-" + student_id;
-                                System.out.println(calendar.getTime() + " " + calendar.getTimeInMillis());
-                                byte[] messageByte = message.getBytes();
-                                socket = new DatagramSocket();
-                                InetAddress address = InetAddress.getByName("localhost");
-                                DatagramPacket request = new DatagramPacket(messageByte, message.length(), address, studentCampus.inPort);
-                                socket.send(request);
+        for (TimeSlot delSlot : list) {
+            for (TimeSlot currSlot : timeSlots) {
+                if (currSlot.getStartMilli() == delSlot.getStartMilli()
+                        && currSlot.getEndMilli() == delSlot.getEndMilli()) {
+                    index = timeSlots.indexOf(currSlot);
+                    /*
+                     * if student has booked this room, it will be deleted
+                     */
+                    if (currSlot.getStudentID() != null) {
+                        Campus studentCampus = currSlot.getStudentCampus();
+                        int student_id = currSlot.getStudentID();
 
-                                currSlot.cancelBooking();
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                        boolean response;
+                        if (studentCampus.equals(server.getCampus())) {
+                            System.out.println("same campus");
+                            int count = server.getStudentBookingRecords().modifyBookingRecords(
+                                    currSlot.getStartTime(), student_id, currSlot.getBookingID(), false
+                            );
+                            System.out.println("count:" + count);
+                            response = count != -1 && count != 4;
+                        } else {
+                            System.out.println("diff campus");
+                            String message = "**remove-" + currSlot.getStartTime().getTimeInMillis() + "-" + student_id
+                                    + "-" + currSlot.getBookingID();
+                            UdpRequest request = new UdpRequest(server, message, studentCampus);
+                            response = Boolean.parseBoolean(request.sendRequest());
+                        }
+                        if (!response) {
+                            synchronized (server.getLogLock()) {
+                                //This should not be reached
+                                System.out.println("fail remove log");
+                                server.getLogFile().info("Deleting room from " + server.getCampus().name
+                                        + " could not remove student booking in the hosting " + studentCampus.name);
+                            }
+                        } else {
+                            synchronized (server.getLogLock()) {
+                                System.out.println("success remove log");
+                                server.getLogFile().info("Room deleted from " + server.getCampus().name
+                                        + " removed student booking in the hosting " + studentCampus.name);
                             }
                         }
+                        currSlot.cancelBooking();
                     }
                 }
-                if(index != -1){
-                    deletedSlots.add(timeSlots.remove(index));
-                    System.err.println(delSlot.toString() + " has been deleted");
-                }else notDeletedSlots.add(delSlot);
-                index = -1;
             }
+            if (index != -1) {
+                deletedSlots.add(timeSlots.remove(index));
+                System.err.println(delSlot.toString() + " has been deleted");
+            } else notDeletedSlots.add(delSlot);
+            index = -1;
         }
         Collections.sort(timeSlots);
         ret.add(notDeletedSlots);
@@ -182,10 +191,9 @@ public class Room implements Serializable{
     }
 
     public List<TimeSlot> getTimeSlots(){
-        synchronized(timeSlotLock){
+//        synchronized(timeSlotLock){
             return timeSlots;
-        }
+//        }
     }
-
 
 }

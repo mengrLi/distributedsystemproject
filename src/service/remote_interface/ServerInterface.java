@@ -1,6 +1,6 @@
-package service.server;
+package service.remote_interface;
 
-import domain.CampusName;
+import domain.Campus;
 import domain.Room;
 import domain.TimeSlot;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -17,23 +17,27 @@ public interface ServerInterface extends Remote{
         throw new NotImplementedException();
     }
 
-    default List<List<TimeSlot>> deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list, String admiID) throws RemoteException {
+    default List<List<TimeSlot>> deleteRoom(String roomIdentifier, Calendar date, List<TimeSlot> list, String admiID) throws RemoteException {
         throw new NotImplementedException();
     }
 
-    default String bookRoom(CampusName campusOfInterest, String roomNumber, Calendar date, TimeSlot timeSlot, CampusName campusOfID, int id) throws RemoteException{
+    default String bookRoom(Campus campusOfInterest, String roomIdentifier, Calendar date, TimeSlot timeSlot, int id) throws RemoteException {
         throw new NotImplementedException();
     }
 
-    default Map<String, Integer> getAvailableTimeSlot(Calendar date) throws RemoteException{
+    default Map<String, String> switchRoom(String bookingID, Campus campus, String RoomIdentifier, Calendar calendar, TimeSlot timeSlot, int studentID) throws RemoteException {
         throw new NotImplementedException();
     }
 
-    default Map<String, Room> getAvailableTimeSlot(Calendar date, CampusName campusName) throws RemoteException{
+    default Map<Campus, Integer> getAvailableTimeSlot(Calendar date) throws RemoteException {
         throw new NotImplementedException();
     }
 
-    default boolean cancelBooking(String booking, CampusName campusName, int id) throws RemoteException {
+    default Map<String, Room> getAvailableTimeSlot(Calendar date, Campus campus) throws RemoteException{
+        throw new NotImplementedException();
+    }
+
+    default String cancelBooking(String bookingId, Campus campus, int id) throws RemoteException {
         throw new NotImplementedException();
     }
 

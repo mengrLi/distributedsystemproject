@@ -1,7 +1,7 @@
 package Main;
 
 
-import GUI.panels.UserTerminalGUI;
+import GUI.UserTerminalGUI;
 
 import java.rmi.RemoteException;
 
@@ -9,9 +9,7 @@ import java.rmi.RemoteException;
 public class main{
 
     public static void main(String[] args) throws RemoteException{
-        Test test = new Test();
-
-
+        StartServers.turnOnServerNew();
         UserTerminalGUI gui = new UserTerminalGUI();
     }
 }

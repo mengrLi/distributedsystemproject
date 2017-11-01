@@ -1,9 +1,10 @@
-package GUI.panels;
+package GUI;
 
-import domain.CampusName;
+import GUI.panels.BasePanel;
+import domain.Campus;
 import lombok.Getter;
 import lombok.Setter;
-import service.user.UserInterface;
+import service.remote_interface.UserInterface;
 
 import javax.swing.*;
 
@@ -27,11 +28,11 @@ public class UserTerminalGUI {
     /**
      * the campus at which student or admin is bound to
      */
-    private CampusName campusOfTheID = null;
+    private Campus campusOfTheID = null;
     /**
      * the campus that the student is trying to connect to
      */
-    private CampusName campusOfInterest = null;
+    private Campus campusOfInterest = null;
 
     /**
      * student or admin id

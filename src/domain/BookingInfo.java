@@ -97,4 +97,12 @@ public class BookingInfo {
         for (int i = 0; i < chars.length; ++i) chars[i] += i;
         return new String(chars);
     }
+
+    public Campus getCampusOfInterest() {
+        return Campus.getCampusName(campusOfInterestAbrev);
+    }
+
+    public Campus getCampusOfStudent() {
+        return Campus.getCampusName(studentCampusAbrev);
+    }
 }
