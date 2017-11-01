@@ -146,7 +146,15 @@ class SwitchRoomPanel extends JPanel {
 //        }
 //    }
     private void submitButtonListener() {
+        String bookingID = bookingIDField.getText();
+        int id = gui.getId();
+        Campus campus = ((CampusNameBox) campusComboBox.getSelectedItem()).campus;
+        TimeSlot slot = ((TimeSlotBox) timeslotComboBox.getSelectedItem()).timeSlot;
+        String roomIdentifier = ((RoomNameBox) roomComboBox.getSelectedItem()).getRoom().getRoomNumber();
+        Map<String, String> response = gui.getClient().switchRoom(bookingID, id, campus, calendar, slot, roomIdentifier);
 
+        System.out.println(response.get("cancel"));
+        System.out.println(response.get("book"));
     }
 
 

@@ -95,9 +95,10 @@ public class UdpResponder implements Runnable {
                     calendar.setTimeInMillis(Long.parseLong(delim[1]));
                     int id = Integer.parseInt(delim[2]);
                     synchronized (server.getRoomLock()) {
-//                            int count = server.getStudentBookingRecords().get(calendar.getTimeInMillis()).get(id);
-//                            server.getStudentBookingRecords().get(calendar.getTimeInMillis()).put(id, count - 1);
-                        return "true".getBytes();
+                        int response = server.getStudentBookingRecords().modifyBookingRecords(calendar, id, delim[3], false);
+                        if (response == -1 || response == 4) {
+                            return "false".getBytes();
+                        } else return "true".getBytes();
                     }
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
@@ -107,6 +108,13 @@ public class UdpResponder implements Runnable {
             case "switch": {
                 System.out.println("SWITCH NOT DONE YET");
                 return null;
+            }
+            case "chkCnl": {
+                String bookingID = json.substring(8);
+                BookingInfo info = BookingInfo.decode(bookingID);
+                synchronized (server.getRoomLock()) {
+                    return String.valueOf(server.getRoomRecords().validateBooking(info, bookingID)).getBytes();
+                }
             }
             default: {
                 System.err.println("Invalid udp request message");

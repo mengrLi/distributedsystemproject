@@ -104,6 +104,7 @@ public class AdminClientV2 extends ClientV2 implements UserInterface{
 
     @Override
     public boolean deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list){
+
         StringBuilder builder = new StringBuilder();
         builder.append(" Administrator ").append(fullID).append(" delete rooms from ")
                 .append(campus.name).append(" server ")

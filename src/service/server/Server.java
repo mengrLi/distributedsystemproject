@@ -13,6 +13,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.FileHandler;
@@ -225,7 +226,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
                 return error;
             } else {
                 //check student id
-                if (bookingInfo.getStudentID() != studentId || !bookingInfo.getStudentCampusAbrev().equals(campusOfStudent.abrev)) {
+                if (bookingInfo.getStudentID() != studentId ||
+                        !bookingInfo.getStudentCampusAbrev().equals(campusOfStudent.abrev)) {
                     error = "Error: STUDENT ID DOES NOT MATCH BOOKING RECORD";
                     synchronized (this.logLock) {
                         log.info(msg + error);
@@ -234,8 +236,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
                     return error;
                 }
                 bookingInfo.setToBook(false);
-                Campus destinationCampus = Campus.getCampusName(bookingInfo.getCampusOfInterestAbrev());
-                Campus studentIdCampus = Campus.getCampusName(bookingInfo.getStudentCampusAbrev());
+                Campus destinationCampus = bookingInfo.getCampusOfInterest();
+                Campus studentIdCampus = bookingInfo.getCampusOfStudent();
                 if (destinationCampus == null || studentIdCampus == null) {
                     //should not be reached normally using a system generated booking id
                     error = "Error: Campus name invalid";
@@ -312,9 +314,158 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
         }
     }
 
+    /**
+     * Cases:
+     * 1. both local - simple
+     * 2. one local/one remote
+     * 3. both remote
+     * both same
+     * one each
+     * <p>
+     * First validate cancel, because booking process first
+     * Book first because book might fail. whereas cancel guarantee to work
+     *
+     * @param bookingID
+     * @param campus
+     * @param roomIdentifier
+     * @param newDate
+     * @param timeSlot
+     * @param studentID
+     * @return
+     * @throws RemoteException
+     */
     @Override
-    public String switchRoom() throws RemoteException{
-        return null;
+    public Map<String, String> switchRoom(String bookingID, Campus campus, String roomIdentifier,
+                                          Calendar newDate, TimeSlot timeSlot, int studentID) throws RemoteException {
+        Map<String, String> ret = new HashMap<>();
+        BookingInfo cancelBookingInfo = BookingInfo.decode(bookingID);
+        if (cancelBookingInfo != null) {
+            cancelBookingInfo.setToBook(false);
+            BookingInfo newBookingInfo = new BookingInfo(campus.abrev, cancelBookingInfo.getStudentCampusAbrev(),
+                    studentID, newDate, roomIdentifier,
+                    timeSlot.getStartTime(), timeSlot.getEndTime());
+            newBookingInfo.setToBook(true);
+            String errorMsg;
+            String bookResponse;
+            String cancelResponse = "Error: cancellation is not processed since booking was not successful";
+            UdpRequest udpRequest;
+
+            String cancelRequest = cancelBookingInfo.toString();
+            String bookRequest = newBookingInfo.toString();
+            String udpResponse;
+            if (validateCancellation(cancelBookingInfo, bookingID)) {
+                if (this.campus.equals(cancelBookingInfo.getCampusOfInterest())) {//cancel in this server
+                    if (this.campus.equals(campus)) {//both cancel and book in this server
+                        synchronized (this.roomRecords) {
+                            System.out.println("booking");
+                            bookResponse = roomRecords.bookRoom(newBookingInfo);
+                            System.out.println("cancelling");
+                            cancelResponse = roomRecords.cancelBooking(cancelBookingInfo);
+                        }
+                    } else {//cancel in this server , book in other server
+                        udpRequest = new UdpRequest(this, bookRequest, campus);
+                        udpResponse = udpRequest.sendRequest();
+                        bookResponse = udpResponse;
+                        boolean status = status(udpResponse);
+
+                        if (status) {
+                            synchronized (this.roomRecords) {
+                                cancelResponse = roomRecords.cancelBooking(cancelBookingInfo);
+                            }
+                        }
+                    }
+                } else {//cancel not at this server
+                    boolean status;
+                    if (this.campus.equals(campus)) {//cancel not in this server , book in this server
+                        synchronized (this.roomRecords) {
+                            bookResponse = roomRecords.bookRoom(newBookingInfo);
+                        }
+                        status = status(bookResponse);
+
+                        if (status) {// booking successful
+                            udpRequest = new UdpRequest(this, cancelRequest, cancelBookingInfo.getCampusOfInterest());
+                            udpResponse = udpRequest.sendRequest();
+                            status = status(udpResponse);
+                            if (!status) {/*
+                            cancel in remote failed, cancel the booking just made in this server
+                            this should not be reached, since cancel should always succeed since the existance of the/
+                            booking has been checked at the beginning
+                            */
+                                synchronized (this.roomLock) {
+                                    bookResponse = roomRecords.cancelBooking(BookingInfo.decode(bookResponse));
+                                }
+                            }//else unneeded
+                        }// else booking failed, cancellation is cancelled
+                    } else {//both in remote server
+                        udpRequest = new UdpRequest(this, bookRequest, campus);
+                        bookResponse = udpRequest.sendRequest();
+                        status = status(bookResponse);
+                        if (status) {
+                            udpRequest = new UdpRequest(this, cancelRequest, cancelBookingInfo.getCampusOfInterest());
+                            cancelResponse = udpRequest.sendRequest();
+                            if (!status(cancelResponse)) {
+                            /*cancel in remote failed, cancel the booking just made in this server
+                            this should not be reached, since cancel should always succeed since the existance of the/
+                            booking has been checked at the beginning
+                            */
+                                BookingInfo cancel = BookingInfo.decode(bookResponse);
+                                cancel.setToBook(false);
+                                udpRequest = new UdpRequest(this, cancel.toString(), campus);
+                                bookResponse = udpRequest.sendRequest();
+                            }
+                        }// else booking failed, cancellation is cancelled
+                    }
+                }
+                ret.put("cancel", cancelResponse);
+                ret.put("book", bookResponse);
+
+                //change the booking accordingly
+                Calendar oldStartOfWeek, newStartOfWeek;
+                oldStartOfWeek = CalendarHelpers.getStartOfWeek(cancelBookingInfo.getBookingDate());
+                newStartOfWeek = CalendarHelpers.getStartOfWeek(newDate);
+                if (!oldStartOfWeek.equals(newStartOfWeek)) {
+                    synchronized (this.roomLock) {
+                        studentBookingRecords.modifyBookingRecords(cancelBookingInfo.getBookingDate(), studentID, bookingID, false);
+                        studentBookingRecords.modifyBookingRecords(newDate, studentID, bookingID, true);
+                    }
+                }
+                return ret;
+            } else {
+                errorMsg = "Error: BookingID cannot be found at " + cancelBookingInfo.getCampusOfInterest()
+                        + "Switch was not performed";
+                synchronized (this.logLock) {
+                    log.info(errorMsg);
+                }
+                ret.put("cancel", cancelResponse);
+                ret.put("book", errorMsg);
+                return ret;
+            }
+        } else {
+            String errorMsg = "Error: BookingID invalid! Switch was not performed";
+            synchronized (this.logLock) {
+                log.info("Booking ID is invalid");
+            }
+            ret.put("cancel", "Error: cancellation is not processed since booking was not successful");
+            ret.put("book", errorMsg);
+            return ret;
+        }
+
+    }
+
+    private boolean status(String udpResponse) {
+        return !udpResponse.substring(0, 5).equals("Error");
+    }
+
+    private boolean validateCancellation(BookingInfo cancelBookingInfo, String bookingID) {
+        if (this.campus.equals(cancelBookingInfo.getCampusOfInterest())) {
+            synchronized (this.roomLock) {
+                return roomRecords.validateBooking(cancelBookingInfo, bookingID);
+            }
+        } else {
+            String msg = "**chkCnl" + bookingID;
+            UdpRequest request = new UdpRequest(this, msg, cancelBookingInfo.getCampusOfInterest());
+            return Boolean.parseBoolean(request.sendRequest());
+        }
     }
 
     @Override
@@ -343,8 +494,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
         System.out.println("reached with " + fullID);
         return administrators.contains(fullID);
     }
-
     public Logger getLogFile(){
         return log;
     }
+
 }

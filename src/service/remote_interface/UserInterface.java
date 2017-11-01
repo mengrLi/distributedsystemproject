@@ -39,7 +39,7 @@ public interface UserInterface{
         throw new NotImplementedException();
     }
 
-    default String switchRoom(String bookingID, String studentID, Campus campus, Calendar date, String roomIdentifier) {
+    default Map<String, String> switchRoom(String bookingID, int studentID, Campus campus, Calendar date, TimeSlot slot, String roomIdentifier) {
         throw new NotImplementedException();
     }
 }

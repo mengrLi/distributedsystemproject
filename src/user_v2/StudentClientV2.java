@@ -8,6 +8,7 @@ import service.remote_interface.UserInterface;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -55,8 +56,16 @@ public class StudentClientV2 extends ClientV2 implements UserInterface {
     }
 
     @Override
-    public String switchRoom(String bookingID, String studentID, Campus campus, Calendar date, String roomIdentifier){
-        return null;
+    public Map<String, String> switchRoom(String bookingID, int studentID, Campus campus, Calendar date, TimeSlot slot, String roomIdentifier) {
+        try {
+            return connect().switchRoom(bookingID, campus, roomIdentifier, date, slot, studentID);
+        } catch (RemoteException | NotBoundException e) {
+            e.printStackTrace();
+            Map<String, String> ret = new HashMap<>();
+            ret.put("cancel", "Error: remote interface error");
+            ret.put("book", "Error: remote interface error");
+            return ret;
+        }
     }
 
     @Override

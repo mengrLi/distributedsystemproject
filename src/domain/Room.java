@@ -1,10 +1,9 @@
 package domain;
 
-import java.io.IOException;
+import service.server.Server;
+import service.server.UdpRequest;
+
 import java.io.Serializable;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -49,9 +48,10 @@ public class Room implements Serializable{
      * remove slot
      *
      * @param list list of slots to be deleted
+     * @param server
      * @return two lists, 0 failed list ,1 success list
      */
-    public List<List<TimeSlot>> removeTimeSlots(List<TimeSlot> list){
+    public List<List<TimeSlot>> removeTimeSlots(List<TimeSlot> list, Server server) {
         if(list.size() == 0) return null;
         int index = -1;
         List<List<TimeSlot>> ret = new LinkedList<>();
@@ -68,21 +68,37 @@ public class Room implements Serializable{
                     if (currSlot.getStudentID() != null) {
                         Campus studentCampus = currSlot.getStudentCampus();
                         int student_id = currSlot.getStudentID();
-                        DatagramSocket socket;
-                        try {
-                            Calendar calendar = CalendarHelpers.getStartOfWeek(currSlot.getStartTime());
 
-                            String message = "**remove-" + calendar.getTimeInMillis() + "-" + student_id;
-                            byte[] messageByte = message.getBytes();
-                            socket = new DatagramSocket();
-                            InetAddress address = InetAddress.getByName("localhost");
-                            DatagramPacket request = new DatagramPacket(messageByte, message.length(), address, studentCampus.udpPort);
-                            socket.send(request);
-
-                            currSlot.cancelBooking();
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                        boolean response;
+                        if (studentCampus.equals(server.getCampus())) {
+                            System.out.println("same campus");
+                            int count = server.getStudentBookingRecords().modifyBookingRecords(
+                                    currSlot.getStartTime(), student_id, currSlot.getBookingID(), false
+                            );
+                            System.out.println("count:" + count);
+                            response = count != -1 && count != 4;
+                        } else {
+                            System.out.println("diff campus");
+                            String message = "**remove-" + currSlot.getStartTime().getTimeInMillis() + "-" + student_id
+                                    + "-" + currSlot.getBookingID();
+                            UdpRequest request = new UdpRequest(server, message, studentCampus);
+                            response = Boolean.parseBoolean(request.sendRequest());
                         }
+                        if (!response) {
+                            synchronized (server.getLogLock()) {
+                                //This should not be reached
+                                System.out.println("fail remove log");
+                                server.getLogFile().info("Deleting room from " + server.getCampus().name
+                                        + " could not remove student booking in the hosting " + studentCampus.name);
+                            }
+                        } else {
+                            synchronized (server.getLogLock()) {
+                                System.out.println("success remove log");
+                                server.getLogFile().info("Room deleted from " + server.getCampus().name
+                                        + " removed student booking in the hosting " + studentCampus.name);
+                            }
+                        }
+                        currSlot.cancelBooking();
                     }
                 }
             }

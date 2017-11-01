@@ -10,11 +10,12 @@ public class RoomRecords{
 //    private final Server server;
 
     private final Campus campus;
+    private final Server server;
 
     private final Map<Calendar, Map<String, Room>> records;
 
     public RoomRecords(Server server, Campus campus){
-//        this.server  =server;
+        this.server = server;
         this.campus = campus;
         records = new HashMap<>();
         initRoomsAndTimeSlots();
@@ -47,9 +48,7 @@ public class RoomRecords{
             new Thread(roomCounter);
 
             //TODO verify if this is correct
-            synchronized(counterLock){
-                roomCount+=roomCounter.getCounter();
-            }
+            roomCount += roomCounter.getCounter();
         }
         return roomCount;
     }
@@ -70,7 +69,7 @@ public class RoomRecords{
         Room room = rooms.getOrDefault(roomIdentifier, new Room(roomIdentifier));
 
         if (add) ret = room.addTimeSlots(list);
-        else ret = room.removeTimeSlots(list);
+        else ret = room.removeTimeSlots(list, server);
         rooms.put(roomIdentifier, room);
         this.records.put(date, rooms);
         return ret;
@@ -144,6 +143,21 @@ public class RoomRecords{
                 "server for student " + bookingInfo.getStudentID() + " on " + calendar.getTime();
     }
 
+    public boolean validateBooking(BookingInfo bookingInfo, String bookingID) {
+        Room room = getRoomRecordOfDate(bookingInfo.getBookingDate(), bookingInfo.getRoomName());
+        if (room.getTimeSlots().size() == 0) {
+            return false;
+        }
+        for (TimeSlot slot : room.getTimeSlots()) {
+            if (slot.getStartTime().equals(bookingInfo.getBookingStartTime())
+                    && slot.getEndTime().equals(bookingInfo.getBookingEndTime())
+                    && slot.getBookingID().equals(bookingID)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     //TODO there is probably some problems here
     @RequiredArgsConstructor
     private class RoomCounter implements Runnable{
@@ -169,10 +183,10 @@ public class RoomRecords{
 
     public void initRoomsAndTimeSlots(){
         int year = 2017;
-        int month = Calendar.OCTOBER;
+        int month = Calendar.NOVEMBER;
         int minutes = 119;
 
-        for(int day = 1; day < 30; ++day){
+        for (int day = 1; day <= 30; ++day) {
             Room room;
             Map<String, Room> rooms;
             String roomName;
