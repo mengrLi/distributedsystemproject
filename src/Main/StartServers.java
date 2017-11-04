@@ -4,12 +4,11 @@ import domain.Campus;
 import service.server.Server;
 
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
 
 public class StartServers{
     public static void turnOnServerNew() throws RemoteException{
-        LocateRegistry.createRegistry(1099);
-        System.out.println("Registry at 1099 created");
+//        LocateRegistry.createRegistry(1099);
+//        System.out.println("Registry at 1099 created");
         Server dorval = new Server(Campus.DORVAL);
         Server kirkland = new Server(Campus.KIRKLAND);
         Server westmount = new Server(Campus.WESTMOUNT);

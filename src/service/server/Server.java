@@ -4,14 +4,24 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import domain.*;
 import lombok.Getter;
-import service.remote_interface.ServerInterface;
+import org.omg.CORBA.ORB;
+import org.omg.CORBA.ORBPackage.InvalidName;
+import org.omg.CosNaming.NameComponent;
+import org.omg.CosNaming.NamingContextExt;
+import org.omg.CosNaming.NamingContextExtHelper;
+import org.omg.CosNaming.NamingContextPackage.CannotProceed;
+import org.omg.CosNaming.NamingContextPackage.NotFound;
+import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAHelper;
+import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
+import org.omg.PortableServer.POAPackage.ServantNotActive;
+import org.omg.PortableServer.POAPackage.WrongPolicy;
+import service.server.CampusServerCorba.CampusServerInterface;
+import service.server.CampusServerCorba.CampusServerInterfaceHelper;
+import service.server.CampusServerCorba.CampusServerInterfacePOA;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.rmi.AlreadyBoundException;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +31,9 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.util.regex.PatternSyntaxException;
 
-public class Server extends UnicastRemoteObject implements ServerInterface, Runnable{
+public class Server extends CampusServerInterfacePOA implements Runnable {
+    private ORB orb;
+
     @Getter
     private final Campus campus;
     @Getter
@@ -37,9 +49,7 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
     @Getter
     private final Lock logLock = new Lock();
 
-    public Server(Campus campus) throws RemoteException{
-        //TO BE CHANGED FOR CORBA
-        super(campus.port);
+    public Server(Campus campus) {
 
         this.campus = campus;
         administrators = new Administrators(campus);
@@ -68,30 +78,104 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
         }
     }
 
-    @Override
+
     public void run(){
         System.out.println(campus.name + " starting");
-        bindRegistry();
+
+        initializeORB();
 
         //setup udp listener
         UdpListener listener = new UdpListener(campus, this);
         listener.init();
-
     }
 
+    private void initializeORB() {
+        try {
+            // create and initialize the ORB
+            //get reference to rootpoa &amp; activate the POAManager
+            String[] params = {"-ORBInitialPort", "6666", "-ORBInitialHost", "localhost"};
+            orb = ORB.init(params, null);
+            POA rootPOA = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
+            rootPOA.the_POAManager().activate();
 
-    private void bindRegistry() {
-        try{
-            LocateRegistry.getRegistry(1099).bind(campus.serverName, this);
-            System.out.println(campus.name + " bind to port 1099 RMI port");
-        }catch(RemoteException | AlreadyBoundException e){
-            e.printStackTrace();
+
+            //get object reference from the servant
+            org.omg.CORBA.Object ref = rootPOA.servant_to_reference(this);
+            CampusServerInterface href = CampusServerInterfaceHelper.narrow(ref);
+
+            org.omg.CORBA.Object objRef = orb.resolve_initial_references("NameService");
+            NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
+
+            NameComponent path[] = ncRef.to_name(campus.abrev);
+            ncRef.rebind(path, href);
+
+            System.out.println(campus.name + " ready");
+
+            while (true) {
+                orb.run();
+            }
+
+        } catch (InvalidName | AdapterInactive | org.omg.CosNaming.NamingContextPackage.InvalidName | ServantNotActive | WrongPolicy | CannotProceed | NotFound invalidName) {
+            invalidName.printStackTrace();
         }
     }
 
+//    private void bindRegistry() {
+//        try{
+//            LocateRegistry.getRegistry(1099).bind(campus.serverName, this);
+//            System.out.println(campus.name + " bind to port 1099 RMI port");
+//        }catch(RemoteException | AlreadyBoundException e){
+//            e.printStackTrace();
+//        }
+//    }
 
     @Override
-    public List<List<TimeSlot>> createRoom(String roomIdentifier, Calendar date, List<TimeSlot> list, String adminID) throws RemoteException{
+    public int add(int a, int b) {
+        return campus.udpPort;
+    }
+
+    @Override
+    public String createRoom(String json) {
+        return null;
+    }
+
+    @Override
+    public String deleteRoom(String json) {
+        return null;
+    }
+
+    @Override
+    public String bookRoom(String json) {
+        return null;
+    }
+
+    @Override
+    public String switchRoom(String json) {
+        return null;
+    }
+
+    @Override
+    public String getAvailableTimeSlotCount(String json) {
+        return null;
+    }
+
+    @Override
+    public String getAvailableTimeSlotByRoom(String json) {
+        return null;
+    }
+
+    @Override
+    public String cancelBooking(String json) {
+        return null;
+    }
+
+    @Override
+    public String checkAdminId(String json) {
+        return null;
+    }
+
+
+    public List<List<TimeSlot>> createRoom(String roomIdentifier, Calendar date, List<TimeSlot> list, String adminID) {
         if (administrators.contains(adminID)) {
             List<List<TimeSlot>> ret;
             synchronized (roomLock) {
@@ -112,8 +196,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
         return null;
     }
 
-    @Override
-    public List<List<TimeSlot>> deleteRoom(String roomIdentifier, Calendar date, List<TimeSlot> list, String adminID) throws RemoteException {
+
+    public List<List<TimeSlot>> deleteRoom(String roomIdentifier, Calendar date, List<TimeSlot> list, String adminID) {
         if (administrators.contains(adminID.toLowerCase())) {
             List<List<TimeSlot>> ret;
             synchronized (roomLock) {
@@ -142,11 +226,11 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
      * @param timeSlot         the time slot
      * @param studentId        student id in form of int
      * @return response string Booking ID
-     * @throws RemoteException io exception
+     *  io exception
      */
-    @Override
+
     public String bookRoom(Campus campusOfInterest, String roomIdentifier,
-                           Calendar date, TimeSlot timeSlot, int studentId) throws RemoteException {
+                           Calendar date, TimeSlot timeSlot, int studentId) {
         /* Create a bookingID object */
 
         BookingInfo bookingInfo = new BookingInfo(
@@ -210,8 +294,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
         }
     }
 
-    @Override
-    public String cancelBooking(String bookingId, Campus campusOfStudent, int studentId) throws RemoteException {
+
+    public String cancelBooking(String bookingId, Campus campusOfStudent, int studentId) {
         String error;
         try {
             String msg = this.campus.name + ":cancel booking by : "
@@ -332,11 +416,11 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
      * @param timeSlot
      * @param studentID
      * @return
-     * @throws RemoteException
+     *
      */
-    @Override
+
     public Map<String, String> switchRoom(String bookingID, Campus campus, String roomIdentifier,
-                                          Calendar newDate, TimeSlot timeSlot, int studentID) throws RemoteException {
+                                          Calendar newDate, TimeSlot timeSlot, int studentID) {
         Map<String, String> ret = new HashMap<>();
         BookingInfo cancelBookingInfo = BookingInfo.decode(bookingID);
         if (cancelBookingInfo != null) {
@@ -468,8 +552,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
         }
     }
 
-    @Override
-    public Map<Campus, Integer> getAvailableTimeSlot(Calendar date) throws RemoteException {
+
+    public Map<Campus, Integer> getAvailableTimeSlot(Calendar date) {
         Map<Campus, Integer> ret = new HashMap<>();
         for (Campus campus : Campus.values()) {
             int count = 0;
@@ -486,8 +570,8 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
         return ret;
     }
 
-    @Override
-    public Map<String, Room> getAvailableTimeSlot(Calendar date, Campus campus) throws RemoteException{
+
+    public Map<String, Room> getAvailableTimeSlot(Calendar date, Campus campus) {
         if(campus.equals(this.campus)){
             synchronized(roomLock){
                 return roomRecords.getRecordsOfDate(date);
@@ -502,13 +586,14 @@ public class Server extends UnicastRemoteObject implements ServerInterface, Runn
         }
     }
 
-    @Override
-    public boolean checkIDAdmin(String fullID) throws RemoteException{
+
+    public boolean checkIDAdmin(String fullID) {
         System.out.println("reached with " + fullID);
         return administrators.contains(fullID);
     }
     public Logger getLogFile(){
         return log;
     }
+
 
 }

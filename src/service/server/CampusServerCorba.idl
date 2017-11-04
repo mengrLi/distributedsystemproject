@@ -1,0 +1,13 @@
+module CampusServerCorba{
+    interface CampusServerInterface{
+        long add(in long a, in long b);
+        string createRoom(in string json);
+        string deleteRoom(in string json);
+        string bookRoom(in string json);
+        string switchRoom(in string json);
+        string getAvailableTimeSlotCount(in string json);
+        string getAvailableTimeSlotByRoom(in string json);
+        string cancelBooking(in string json);
+        string checkAdminId(in string json);
+    };
+};
