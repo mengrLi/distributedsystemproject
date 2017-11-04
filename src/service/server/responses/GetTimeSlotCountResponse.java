@@ -1,20 +1,21 @@
 package service.server.responses;
 
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import domain.Campus;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
 
 @RequiredArgsConstructor
-@Getter
 public class GetTimeSlotCountResponse {
-    private final Map<Campus, Integer> resposne;
+    private final Map<Campus, Integer> roomCounts;
 
-    public GetTimeSlotCountResponse(String jsonMessage) {
-        resposne = new GsonBuilder().create().fromJson(jsonMessage, new TypeToken<Map<Campus, Integer>>() {
-        }.getType());
+    public static Map<Campus, Integer> parseResponse(String responseMessage) {
+        return new GsonBuilder().create().fromJson(responseMessage, GetTimeSlotCountResponse.class).roomCounts;
+    }
+
+    @Override
+    public String toString() {
+        return new GsonBuilder().create().toJson(this, GetTimeSlotCountResponse.class);
     }
 }

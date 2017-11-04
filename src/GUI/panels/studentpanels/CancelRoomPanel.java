@@ -60,7 +60,12 @@ class CancelRoomPanel extends JPanel{
         if(bookingID.equals("")) Message.optionPaneError("Please enter your booking ID", this);
         else{
             String response = gui.getClient().cancelBooking(bookingID);
-            resultField.setText(response);
+            if (response.startsWith("Error")) {
+                resultField.setText(response);
+            } else {
+                String[] data = response.split("////");
+                resultField.setText(data[1] + ", " + data[0] + " booking available for this week");
+            }
         }
     }
 }

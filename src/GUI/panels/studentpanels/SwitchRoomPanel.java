@@ -140,11 +140,6 @@ class SwitchRoomPanel extends JPanel {
         }
     }
 
-    //    private void timeslotComboBoxListener() {
-//        if(timeslotComboBox.getItemCount()!=0){
-//
-//        }
-//    }
     private void submitButtonListener() {
         String bookingID = bookingIDField.getText();
         int id = gui.getId();
@@ -153,10 +148,20 @@ class SwitchRoomPanel extends JPanel {
         String roomIdentifier = ((RoomNameBox) roomComboBox.getSelectedItem()).getRoom().getRoomNumber();
         Map<String, String> response = gui.getClient().switchRoom(bookingID, id, campus, calendar, slot, roomIdentifier);
 
-        System.out.println(response.get("cancel"));
-        System.out.println(response.get("book"));
-    }
+        String cancelMessage = response.get("cancel");
+        String bookingMessage = response.get("book");
 
+        if (cancelMessage.startsWith("Error")) {
+            Message.optionPaneError(cancelMessage, this);
+        } else if (bookingMessage.startsWith("Error")) {
+            Message.optionPaneError(bookingMessage, this);
+        } else {
+            Message.optionPanePlain(
+                    "Room bookings have been switched. New Booking ID is : " + bookingMessage,
+                    this);
+            System.out.println("Switched Booking ID :" + bookingMessage);
+        }
+    }
 
     private void enterBookingIdButtonListener() {
         if (bookingIDField.getText().equals(""))

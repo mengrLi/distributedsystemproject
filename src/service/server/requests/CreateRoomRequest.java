@@ -1,4 +1,4 @@
-package service.server.messages;
+package service.server.requests;
 
 import CampusServerCorba.CampusServerInterface;
 import com.google.gson.GsonBuilder;

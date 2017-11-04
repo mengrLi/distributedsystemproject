@@ -8,16 +8,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
 @RequiredArgsConstructor
-public class UdpListener{
+public class UdpListener implements Runnable {
     private final Campus campus;
     private final Server server;
-
-    public void init(){
-        System.out.println(campus.name + " setting udp listener");
-        udpListening();
-        System.out.println(campus.name + " creating upd listener");
-    }
-
 
     private void udpListening() {
         DatagramSocket socket = null;
@@ -36,5 +29,12 @@ public class UdpListener{
         } finally {
             if (socket != null) socket.close();
         }
+    }
+
+    @Override
+    public void run() {
+        System.out.println(campus.name + " setting udp listener");
+        udpListening();
+        System.out.println(campus.name + " creating upd listener");
     }
 }

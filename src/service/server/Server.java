@@ -19,11 +19,8 @@ import org.omg.PortableServer.POAHelper;
 import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
-import service.server.messages.BookRoomRequest;
-import service.server.messages.CreateRoomRequest;
-import service.server.messages.DeleteRoomRequest;
-import service.server.responses.CreateRoomResponse;
-import service.server.responses.DeleteRoomResponse;
+import service.server.requests.*;
+import service.server.responses.*;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -37,8 +34,6 @@ import java.util.logging.SimpleFormatter;
 import java.util.regex.PatternSyntaxException;
 
 public class Server extends CampusServerInterfacePOA implements Runnable {
-    private ORB orb;
-
     @Getter
     private final Campus campus;
     @Getter
@@ -47,7 +42,6 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
     private final RoomRecords roomRecords;
     @Getter
     private final StudentBookingRecords studentBookingRecords;
-
     private final Logger log;
     @Getter
     private final Lock roomLock = new Lock();
@@ -55,17 +49,13 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
     private final Lock logLock = new Lock();
 
     public Server(Campus campus) {
-
         this.campus = campus;
         administrators = new Administrators(campus);
-
         log = Logger.getLogger(campus.abrev+ Server.class.getName());
         initLogger();
-
         roomRecords = new RoomRecords(this, campus);
         studentBookingRecords = new StudentBookingRecords(this, campus);
     }
-
     private void initLogger() {
         try {
             String dir = "src/server_log/";
@@ -83,15 +73,13 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         }
     }
 
-
     public void run(){
         System.out.println(campus.name + " starting");
-
-        initializeORB();
-
         //setup udp listener
         UdpListener listener = new UdpListener(campus, this);
-        listener.init();
+        new Thread(listener).start();
+
+        initializeORB();
     }
 
     private void initializeORB() {
@@ -99,10 +87,9 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
             // create and initialize the ORB
             //get reference to rootpoa &amp; activate the POAManager
             String[] params = {"-ORBInitialPort", "6666", "-ORBInitialHost", "localhost"};
-            orb = ORB.init(params, null);
+            ORB orb = ORB.init(params, null);
             POA rootPOA = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
             rootPOA.the_POAManager().activate();
-
 
             //get object reference from the servant
             org.omg.CORBA.Object ref = rootPOA.servant_to_reference(this);
@@ -115,12 +102,12 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
             ncRef.rebind(path, href);
 
             System.out.println(campus.name + " ready");
-
             while (true) {
                 orb.run();
             }
 
-        } catch (InvalidName | AdapterInactive | org.omg.CosNaming.NamingContextPackage.InvalidName | ServantNotActive | WrongPolicy | CannotProceed | NotFound invalidName) {
+        } catch (InvalidName | AdapterInactive | org.omg.CosNaming.NamingContextPackage.InvalidName
+                | ServantNotActive | WrongPolicy | CannotProceed | NotFound invalidName) {
             invalidName.printStackTrace();
         }
     }
@@ -131,55 +118,62 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
     }
 
     @Override
+    public boolean checkAdminId(String json) {
+        CheckAdminIdRequest req = CheckAdminIdRequest.parseRequest(json);
+        return checkIDAdmin(req.getFullID());
+    }
+    @Override
     public String createRoom(String json) {
         CreateRoomRequest req = CreateRoomRequest.parseRequest(json);
-        CreateRoomResponse rsp = new CreateRoomResponse(createRoom(req.getRoomNumber(), req.getDate(), req.getList(), req.getFullID()));
+        CreateRoomResponse rsp = new CreateRoomResponse(
+                createRoom(req.getRoomNumber(), req.getDate(), req.getList(), req.getFullID()));
         return rsp.toString();
     }
 
     @Override
     public String deleteRoom(String json) {
         DeleteRoomRequest req = DeleteRoomRequest.parseRequest(json);
-        DeleteRoomResponse rsp = new DeleteRoomResponse(deleteRoom(req.getRoomNumber(), req.getDate(), req.getList(), req.getFullID()));
+        DeleteRoomResponse rsp = new DeleteRoomResponse(
+                deleteRoom(req.getRoomNumber(), req.getDate(), req.getList(), req.getFullID()));
+        return rsp.toString();
+    }
+    @Override
+    public String getAvailableTimeSlotCount(String json) {
+        GetTimeSlotCountRequest req = GetTimeSlotCountRequest.parseRequest(json);
+        GetTimeSlotCountResponse rsp = new GetTimeSlotCountResponse(getAvailableTimeSlot(req.getDate()));
+        return rsp.toString();
+    }
+    @Override
+    public String getAvailableTimeSlotByRoom(String json) {
+        GetTimeSlotByRoomRequest req = GetTimeSlotByRoomRequest.parseRequest(json);
+        GetTimeSlotByRoomResponse rsp = new GetTimeSlotByRoomResponse(
+                getAvailableTimeSlot(req.getDate(), req.getCampus())
+        );
         return rsp.toString();
     }
 
     @Override
     public String bookRoom(String json) {
-        BookRoomRequest message = BookRoomRequest.parseMessage(json);
-        return bookRoom(message.getCampusOfInterest(), message.getRoomNumber(),
-                message.getDate(), message.getTimeSlot(), message.getId());
+        BookRoomRequest req = BookRoomRequest.parseRequest(json);
+        return bookRoom(req.getCampusOfInterest(), req.getRoomNumber(),
+                req.getDate(), req.getTimeSlot(), req.getId());
     }
-
-    @Override
-    public String switchRoom(String json) {
-        return null;
-    }
-
-    @Override
-    public String getAvailableTimeSlotCount(String json) {
-        return null;
-    }
-
-    @Override
-    public String getAvailableTimeSlotByRoom(String json) {
-        return null;
-    }
-
     @Override
     public String cancelBooking(String json) {
-        return null;
+        CancelBookingRequest req = CancelBookingRequest.parseRequest(json);
+        return cancelBooking(req.getBookingId(), req.getCampus(), req.getId());
     }
-
     @Override
-    public boolean checkAdminId(String json) {
-
-
-        return checkIDAdmin();
+    public String switchRoom(String json) {
+        SwitchRoomRequest req = SwitchRoomRequest.parseRequest(json);
+        SwitchRoomResponse rsp = new SwitchRoomResponse(switchRoom(req.getBookingID(), req.getCampus(), req.getRoomIdentifier(),
+                req.getDate(), req.getSlot(), req.getStudentID()));
+        return rsp.toString();
     }
 
 
-    public List<List<TimeSlot>> createRoom(String roomIdentifier, Calendar date, List<TimeSlot> list, String adminID) {
+    public List<List<TimeSlot>> createRoom(String roomIdentifier, Calendar date,
+                                           List<TimeSlot> list, String adminID) {
         if (administrators.contains(adminID)) {
             List<List<TimeSlot>> ret;
             synchronized (roomLock) {
@@ -201,7 +195,8 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
     }
 
 
-    public List<List<TimeSlot>> deleteRoom(String roomIdentifier, Calendar date, List<TimeSlot> list, String adminID) {
+    public List<List<TimeSlot>> deleteRoom(String roomIdentifier, Calendar date,
+                                           List<TimeSlot> list, String adminID) {
         if (administrators.contains(adminID.toLowerCase())) {
             List<List<TimeSlot>> ret;
             synchronized (roomLock) {
@@ -232,11 +227,9 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
      * @return response string Booking ID
      *  io exception
      */
-
     public String bookRoom(Campus campusOfInterest, String roomIdentifier,
                            Calendar date, TimeSlot timeSlot, int studentId) {
         /* Create a bookingID object */
-
         BookingInfo bookingInfo = new BookingInfo(
                 campusOfInterest.abrev, campus.abrev,
                 studentId, date, roomIdentifier,
@@ -250,14 +243,14 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         campus first.
         //get the key to the week of interest in student record
         */
-
         synchronized (this.roomLock) {
             //check booking record
             int getWeekCount = studentBookingRecords.getWeeklyBookingRecords(date, studentId);
             System.out.println(getWeekCount);
             /*
             Strp 2: if count is less than 3, book the room
-            if the room is in the same campus as student's account, book directly, else connect and send bookingInfo to book
+            if the room is in the same campus as student's account, book directly,
+            else connect and send bookingInfo to book
             */
             if (getWeekCount < 3) {
                 String bookingId;
@@ -281,7 +274,8 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                     bookingId = message;
                 }
                 /* Update student's booking record in student's account server */
-                int remainingBookingOfWeek = studentBookingRecords.modifyBookingRecords(date, studentId, bookingId, true);
+                int remainingBookingOfWeek = studentBookingRecords
+                        .modifyBookingRecords(date, studentId, bookingId, true);
                 StringBuilder builder1 = new StringBuilder();
                 builder1.append("You can book ")
                         .append(remainingBookingOfWeek)
@@ -291,7 +285,8 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                 System.err.println(builder1.toString());
                 return remainingBookingOfWeek + "///" + bookingId;
             } else {
-                String msg = "Error: Booking limit reached for the week of " + CalendarHelpers.getStartOfWeek(date).getTime();
+                String msg = "Error: Booking limit reached for the week of "
+                        + CalendarHelpers.getStartOfWeek(date).getTime();
                 log.info(builder.append("\n").append(msg).toString());
                 return msg;
             }
@@ -337,11 +332,9 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                 System.out.println("Room " + bookingInfo.getRoomName());
                 System.out.println("Start time " + bookingInfo.getBookingStartTime().getTime());
                 System.out.println("End time" + bookingInfo.getBookingEndTime().getTime());
-
                 String result;
                 if (this.campus.abrev.equals(bookingInfo.getCampusOfInterestAbrev())) {
                     //booking record is on the student's server
-
                     synchronized (this.roomLock) {
                         result = roomRecords.cancelBooking(bookingInfo);
                     }
@@ -371,7 +364,10 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                 synchronized (this.roomLock) {
                     remainingBookingOfWeek = studentBookingRecords
                             .modifyBookingRecords(
-                                    bookingInfo.getBookingDate(), bookingInfo.getStudentID(), bookingId, false
+                                    bookingInfo.getBookingDate(),
+                                    bookingInfo.getStudentID(),
+                                    bookingId,
+                                    false
                             );
                 }
                 if (remainingBookingOfWeek == 4) {
@@ -422,7 +418,6 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
      * @return
      *
      */
-
     public Map<String, String> switchRoom(String bookingID, Campus campus, String roomIdentifier,
                                           Calendar newDate, TimeSlot timeSlot, int studentID) {
         Map<String, String> ret = new HashMap<>();
@@ -471,7 +466,8 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                         status = status(bookResponse);
 
                         if (status) {// booking successful
-                            udpRequest = new UdpRequest(this, cancelRequest, cancelBookingInfo.getCampusOfInterest());
+                            udpRequest = new UdpRequest(
+                                    this, cancelRequest, cancelBookingInfo.getCampusOfInterest());
                             udpResponse = udpRequest.sendRequest();
                             status = status(udpResponse);
                             if (!status) {/*
@@ -489,7 +485,8 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                         bookResponse = udpRequest.sendRequest();
                         status = status(bookResponse);
                         if (status) {
-                            udpRequest = new UdpRequest(this, cancelRequest, cancelBookingInfo.getCampusOfInterest());
+                            udpRequest = new UdpRequest(
+                                    this, cancelRequest, cancelBookingInfo.getCampusOfInterest());
                             cancelResponse = udpRequest.sendRequest();
                             if (!status(cancelResponse)) {
                             /*cancel in remote failed, cancel the booking just made in this server
@@ -513,7 +510,8 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                 newStartOfWeek = CalendarHelpers.getStartOfWeek(newDate);
                 if (!oldStartOfWeek.equals(newStartOfWeek)) {
                     synchronized (this.roomLock) {
-                        studentBookingRecords.modifyBookingRecords(cancelBookingInfo.getBookingDate(), studentID, bookingID, false);
+                        studentBookingRecords.modifyBookingRecords(
+                                cancelBookingInfo.getBookingDate(), studentID, bookingID, false);
                         studentBookingRecords.modifyBookingRecords(newDate, studentID, bookingID, true);
                     }
                 }
@@ -556,7 +554,6 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         }
     }
 
-
     public Map<Campus, Integer> getAvailableTimeSlot(Calendar date) {
         Map<Campus, Integer> ret = new HashMap<>();
         for (Campus campus : Campus.values()) {
@@ -574,7 +571,6 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         return ret;
     }
 
-
     public Map<String, Room> getAvailableTimeSlot(Calendar date, Campus campus) {
         if(campus.equals(this.campus)){
             synchronized(roomLock){
@@ -590,14 +586,11 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         }
     }
 
-
-    public boolean checkIDAdmin(String fullID) {
+    private boolean checkIDAdmin(String fullID) {
         System.out.println("reached with " + fullID);
         return administrators.contains(fullID);
     }
     public Logger getLogFile(){
         return log;
     }
-
-
 }
