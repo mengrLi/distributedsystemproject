@@ -1,12 +1,13 @@
+import CampusServerCorba.CampusServerInterface;
+import CampusServerCorba.CampusServerInterfaceHelper;
 import domain.Campus;
 import org.omg.CORBA.ORB;
 import org.omg.CosNaming.NamingContextExt;
 import org.omg.CosNaming.NamingContextExtHelper;
-import service.server.CampusServerCorba.CampusServerInterface;
-import service.server.CampusServerCorba.CampusServerInterfaceHelper;
 
 import java.util.Scanner;
 
+@Deprecated
 public class CampusClient {
     Campus campus;
 
@@ -22,13 +23,10 @@ public class CampusClient {
             Scanner c = new Scanner(System.in);
             System.out.println("Welcome to the addition system:");
             for (; ; ) {
-                System.out.println("Enter a:");
+                System.out.println("get udp port?");
                 String aa = c.nextLine();
-                System.out.println("Enter b:");
-                String bb = c.nextLine();
-                int a = Integer.parseInt(aa);
-                int b = Integer.parseInt(bb);
-                long r = addobj.add(a, b);
+                long r = 0;
+                if (aa.equals("yes")) r = addobj.getUdpPort();
                 System.out.println("The result for addition is : " + r);
                 System.out.println("-----------------------------------");
             }

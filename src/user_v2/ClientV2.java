@@ -1,11 +1,11 @@
 package user_v2;
 
+import CampusServerCorba.CampusServerInterface;
+import CampusServerCorba.CampusServerInterfaceHelper;
 import domain.Campus;
 import org.omg.CORBA.ORB;
 import org.omg.CosNaming.NamingContextExt;
 import org.omg.CosNaming.NamingContextExtHelper;
-import service.server.CampusServerCorba.CampusServerInterface;
-import service.server.CampusServerCorba.CampusServerInterfaceHelper;
 
 public abstract class ClientV2 implements Runnable{
     protected Campus campus;

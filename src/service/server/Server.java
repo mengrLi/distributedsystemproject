@@ -1,5 +1,8 @@
 package service.server;
 
+import CampusServerCorba.CampusServerInterface;
+import CampusServerCorba.CampusServerInterfaceHelper;
+import CampusServerCorba.CampusServerInterfacePOA;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import domain.*;
@@ -16,9 +19,11 @@ import org.omg.PortableServer.POAHelper;
 import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
-import service.server.CampusServerCorba.CampusServerInterface;
-import service.server.CampusServerCorba.CampusServerInterfaceHelper;
-import service.server.CampusServerCorba.CampusServerInterfacePOA;
+import service.server.messages.BookRoomRequest;
+import service.server.messages.CreateRoomRequest;
+import service.server.messages.DeleteRoomRequest;
+import service.server.responses.CreateRoomResponse;
+import service.server.responses.DeleteRoomResponse;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -120,33 +125,30 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         }
     }
 
-//    private void bindRegistry() {
-//        try{
-//            LocateRegistry.getRegistry(1099).bind(campus.serverName, this);
-//            System.out.println(campus.name + " bind to port 1099 RMI port");
-//        }catch(RemoteException | AlreadyBoundException e){
-//            e.printStackTrace();
-//        }
-//    }
-
     @Override
-    public int add(int a, int b) {
+    public int getUdpPort() {
         return campus.udpPort;
     }
 
     @Override
     public String createRoom(String json) {
-        return null;
+        CreateRoomRequest req = CreateRoomRequest.parseRequest(json);
+        CreateRoomResponse rsp = new CreateRoomResponse(createRoom(req.getRoomNumber(), req.getDate(), req.getList(), req.getFullID()));
+        return rsp.toString();
     }
 
     @Override
     public String deleteRoom(String json) {
-        return null;
+        DeleteRoomRequest req = DeleteRoomRequest.parseRequest(json);
+        DeleteRoomResponse rsp = new DeleteRoomResponse(deleteRoom(req.getRoomNumber(), req.getDate(), req.getList(), req.getFullID()));
+        return rsp.toString();
     }
 
     @Override
     public String bookRoom(String json) {
-        return null;
+        BookRoomRequest message = BookRoomRequest.parseMessage(json);
+        return bookRoom(message.getCampusOfInterest(), message.getRoomNumber(),
+                message.getDate(), message.getTimeSlot(), message.getId());
     }
 
     @Override
@@ -170,8 +172,10 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
     }
 
     @Override
-    public String checkAdminId(String json) {
-        return null;
+    public boolean checkAdminId(String json) {
+
+
+        return checkIDAdmin();
     }
 
 

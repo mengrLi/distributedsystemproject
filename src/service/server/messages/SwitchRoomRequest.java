@@ -1,5 +1,4 @@
 package service.server.messages;
 
-
-public class CheckAdminIdMessage {
+public class SwitchRoomRequest {
 }

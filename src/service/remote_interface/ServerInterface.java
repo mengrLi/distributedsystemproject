@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated
 public interface ServerInterface extends Remote{
 
     default List<List<TimeSlot>> createRoom(String roomNumber, Calendar date, List<TimeSlot> list, String adminID) throws RemoteException {

@@ -8,15 +8,15 @@ import java.util.Calendar;
 
 @RequiredArgsConstructor
 @Getter
-public class GetTimeSlotCountMessage {
+public class GetTimeSlotCountRequest {
     private final Calendar date;
 
-    public GetTimeSlotCountMessage(String jsonMessage) {
-        date = new GsonBuilder().create().fromJson(jsonMessage, GetTimeSlotCountMessage.class).date;
+    public GetTimeSlotCountRequest(String jsonMessage) {
+        date = new GsonBuilder().create().fromJson(jsonMessage, GetTimeSlotCountRequest.class).date;
     }
 
     @Override
     public String toString() {
-        return new GsonBuilder().create().toJson(this, GetTimeSlotCountMessage.class);
+        return new GsonBuilder().create().toJson(this, GetTimeSlotCountRequest.class);
     }
 }

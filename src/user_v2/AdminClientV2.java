@@ -4,10 +4,11 @@ import domain.Campus;
 import domain.Room;
 import domain.TimeSlot;
 import service.remote_interface.UserInterface;
+import service.server.messages.CheckAdminIdRequest;
+import service.server.messages.CreateRoomRequest;
+import service.server.messages.DeleteRoomRequest;
 
 import java.io.IOException;
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -41,26 +42,22 @@ public class AdminClientV2 extends ClientV2 implements UserInterface{
 
     @Override
     public boolean checkID(){
-        try {
-            System.out.println("checking ID "+ fullID+"from server");
-            if (connect().checkIDAdmin(fullID)) {
-                log.info(" Administrator " + fullID + " has logged into " + campus.name + " server");
-                return true;
-            }
-        } catch (RemoteException | NotBoundException e) {
-            e.printStackTrace();
-        }
-        return false;
+        boolean response = new CheckAdminIdRequest(fullID).sendRequest(campusInterface);
+
+        System.out.println("checking ID " + fullID + "from server");
+        if (response) log.info(" Administrator " + fullID + " has logged into " + campus.name + " server");
+        return response;
+
     }
 
     @Override
     public Map<String, Room> getAvailableTimeSlot(Calendar date, Campus campus){
-        try{
-            log.info(fullID + " checking available time slot of " + campus.name + " on " + date.getTime());
-            return connect().getAvailableTimeSlot(date, campus);
-        }catch(RemoteException | NotBoundException e){
-            System.err.println(e.getMessage());
-        }
+//        try{
+//            log.info(fullID + " checking available time slot of " + campus.name + " on " + date.getTime());
+//            return connect().getAvailableTimeSlot(date, campus);
+//        }catch(RemoteException | NotBoundException e){
+//            System.err.println(e.getMessage());
+//        }
         return null;
     }
 
@@ -73,31 +70,27 @@ public class AdminClientV2 extends ClientV2 implements UserInterface{
         for (TimeSlot slot : list) {
             builder.append(" from ").append(slot.getStartTime().getTime()).append(" to ").append(slot.getEndTime().getTime()).append("\n");
         }
-        try{
-            List<List<TimeSlot>> response = connect().createRoom(roomNumber, date, list, fullID);
-            if (response == null) {
-                log.info("ILLEGAL ACCESS OF SERVER USING INVALID ADMIN ID");
-                return false;
-            }
-            if(response.get(0).size() == 0){
-                log.info(builder.append(" SUCCEEDED").toString());
-                return true;
-            }else{
-                System.err.println("The following time slot was not successfully created");
-                builder.append(" Partially succeeded with the following exception\n");
-                for (TimeSlot slot : response.get(0))
-                    builder.append(" from ")
-                            .append(slot.getStartTime().getTime())
-                            .append(" to ")
-                            .append(slot.getEndTime().getTime())
-                            .append("\n");
 
-                log.info(builder.toString());
-                return false;
-            }
-        }catch(RemoteException | NotBoundException e){
-            log.info(builder.append(e.getMessage()).toString());
-            System.err.println(e.getMessage());
+        List<List<TimeSlot>> response = new CreateRoomRequest(roomNumber, date, list, fullID).sendRequest(campusInterface);
+
+        if (response == null) {
+            log.info("ILLEGAL ACCESS OF SERVER USING INVALID ADMIN ID");
+            return false;
+        }
+        if (response.get(0).size() == 0) {
+            log.info(builder.append(" SUCCEEDED").toString());
+            return true;
+        } else {
+            System.err.println("The following time slot was not successfully created");
+            builder.append(" Partially succeeded with the following exception\n");
+            for (TimeSlot slot : response.get(0))
+                builder.append(" from ")
+                        .append(slot.getStartTime().getTime())
+                        .append(" to ")
+                        .append(slot.getEndTime().getTime())
+                        .append("\n");
+
+            log.info(builder.toString());
             return false;
         }
     }
@@ -110,34 +103,28 @@ public class AdminClientV2 extends ClientV2 implements UserInterface{
                 .append(campus.name).append(" server ")
                 .append(" on ").append(date.getTime()).append(" for\n");
         for (TimeSlot slot : list) {
-            builder.append(" from ").append(slot.getStartTime().getTime()).append(" to ").append(slot.getEndTime().getTime()).append("\n");
+            builder.append(" from ").append(slot.getStartTime().getTime()).append(" to ")
+                    .append(slot.getEndTime().getTime()).append("\n");
         }
-        try{
-            List<List<TimeSlot>> response = connect().deleteRoom(roomNumber, date, list, fullID);
-            if (response == null) {
-                log.info("ILLEGAL ACCESS OF SERVER USING INCVALID ADMIN ID");
-                return false;
-            }
-            if(response.get(0).size() == 0){
-                log.info(builder.append(" SUCCEEDED").toString());
-                return true;
-            }else{
-                System.err.println("The following time slot was not successfully deleted");
-                builder.append("Partially succeeded with the following exception");
-                for (TimeSlot slot : response.get(0)) {
-                    builder.append(" from ").append(slot.getStartTime().getTime()).append(" to ").append(slot.getEndTime().getTime()).append("\n");
-                    System.err.println(slot.toString());
-                }
-                log.severe(builder.toString());
-                return false;
-            }
-        }catch(RemoteException | NotBoundException e){
-            System.err.println(e.getMessage());
-            log.severe(builder.append(" CONNECTION ERROR").toString());
+
+        List<List<TimeSlot>> response = new DeleteRoomRequest(roomNumber, date, list, fullID).sendRequest(campusInterface);
+        if (response == null) {
+            log.info("ILLEGAL ACCESS OF SERVER USING INVALID ADMIN ID");
             return false;
         }
-
-
+        if (response.get(0).size() == 0) {
+            log.info(builder.append(" SUCCEEDED").toString());
+            return true;
+        } else {
+            System.err.println("The following time slot was not successfully deleted");
+            builder.append("Partially succeeded with the following exception");
+            for (TimeSlot slot : response.get(0)) {
+                builder.append(" from ").append(slot.getStartTime().getTime()).append(" to ").append(slot.getEndTime().getTime()).append("\n");
+                System.err.println(slot.toString());
+            }
+            log.severe(builder.toString());
+            return false;
+        }
     }
 
     @Override
