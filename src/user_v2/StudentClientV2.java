@@ -4,6 +4,9 @@ import domain.Campus;
 import domain.Room;
 import domain.TimeSlot;
 import service.remote_interface.UserInterface;
+import service.server.messages.BookRoomMessage;
+import service.server.messages.GetTimeSlotCountMessage;
+import service.server.responses.GetTimeSlotCountResponse;
 
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -22,26 +25,14 @@ public class StudentClientV2 extends ClientV2 implements UserInterface {
 
     @Override
     public String bookRoom(Campus campusOfInterest, String roomNumber, Calendar date, TimeSlot timeSlot, Campus campusOfID, int id){
-        try {
-            return connect().bookRoom(campusOfInterest, roomNumber, date, timeSlot, id);
-        } catch (RemoteException | NotBoundException e) {
-            System.err.println(e.getMessage());
-            return "Student Client Error";
-        }
+        return campusInterface.bookRoom(new BookRoomMessage(campusOfInterest, roomNumber, date, timeSlot, id).toString());
     }
 
     @Override
     public Map<Campus, Integer> getAvailableTimeSlot(Calendar date) {
-        try {
-            return connect().getAvailableTimeSlot(date);
-        } catch (RemoteException | NotBoundException e) {
-            e.printStackTrace();
-            Map<Campus, Integer> ret = new HashMap<>();
-            for (Campus campus : Campus.values()) {
-                ret.put(campus, -1);
-            }
-            return ret;
-        }
+        return new GetTimeSlotCountResponse(
+                campusInterface.getAvailableTimeSlotCount(
+                        new GetTimeSlotCountMessage(date).toString())).getResposne();
     }
 
     @Override
