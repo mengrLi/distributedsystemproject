@@ -10,12 +10,13 @@ import java.util.List;
 public class DeleteRoomResponse {
     private final List<List<TimeSlot>> slots;
 
+    public static List<List<TimeSlot>> parseResponse(String responseMessage) {
+        return new GsonBuilder().create().fromJson(responseMessage, DeleteRoomResponse.class).slots;
+    }
     @Override
     public String toString() {
         return new GsonBuilder().create().toJson(this, DeleteRoomResponse.class);
     }
 
-    public static List<List<TimeSlot>> parseResponse(String responseMessage) {
-        return new GsonBuilder().create().fromJson(responseMessage, DeleteRoomResponse.class).slots;
-    }
+
 }

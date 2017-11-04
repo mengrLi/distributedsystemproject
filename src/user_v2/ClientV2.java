@@ -3,11 +3,17 @@ package user_v2;
 import CampusServerCorba.CampusServerInterface;
 import CampusServerCorba.CampusServerInterfaceHelper;
 import domain.Campus;
+import domain.Room;
 import org.omg.CORBA.ORB;
 import org.omg.CosNaming.NamingContextExt;
 import org.omg.CosNaming.NamingContextExtHelper;
+import service.remote_interface.UserInterface;
+import service.server.requests.GetTimeSlotByRoomRequest;
 
-public abstract class ClientV2 implements Runnable{
+import java.util.Calendar;
+import java.util.Map;
+
+public abstract class ClientV2 implements UserInterface {
     protected Campus campus;
     protected int id;
     protected String fullID;
@@ -30,5 +36,10 @@ public abstract class ClientV2 implements Runnable{
             System.out.println("Hello Client exception: " + e);
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public Map<String, Room> getAvailableTimeSlot(Calendar date, Campus campus) {
+        return new GetTimeSlotByRoomRequest(date, campus).sendRequest(campusInterface);
     }
 }
