@@ -442,8 +442,10 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                         synchronized (this.roomRecords) {
                             System.out.println("booking");
                             bookResponse = roomRecords.bookRoom(newBookingInfo);
-                            System.out.println("cancelling");
-                            cancelResponse = roomRecords.cancelBooking(cancelBookingInfo);
+                            if (status(bookResponse)) {
+                                System.out.println("cancelling");
+                                cancelResponse = roomRecords.cancelBooking(cancelBookingInfo);
+                            }
                         }
                     } else {//cancel in this server , book in other server
                         udpRequest = new UdpRequest(this, bookRequest, campus);
@@ -472,7 +474,7 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                             status = status(udpResponse);
                             if (!status) {/*
                             cancel in remote failed, cancel the booking just made in this server
-                            this should not be reached, since cancel should always succeed since the existance of the/
+                            this should not be reached, since cancel should always succeed since the existence of the
                             booking has been checked at the beginning
                             */
                                 synchronized (this.roomLock) {
@@ -504,15 +506,11 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                 ret.put("cancel", cancelResponse);
                 ret.put("book", bookResponse);
 
-                //change the booking accordingly
-                Calendar oldStartOfWeek, newStartOfWeek;
-                oldStartOfWeek = CalendarHelpers.getStartOfWeek(cancelBookingInfo.getBookingDate());
-                newStartOfWeek = CalendarHelpers.getStartOfWeek(newDate);
-                if (!oldStartOfWeek.equals(newStartOfWeek)) {
+                if (status(bookResponse) && status(cancelResponse)) {
                     synchronized (this.roomLock) {
                         studentBookingRecords.modifyBookingRecords(
                                 cancelBookingInfo.getBookingDate(), studentID, bookingID, false);
-                        studentBookingRecords.modifyBookingRecords(newDate, studentID, bookingID, true);
+                        studentBookingRecords.modifyBookingRecords(newDate, studentID, bookResponse, true);
                     }
                 }
                 return ret;

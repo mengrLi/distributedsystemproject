@@ -53,8 +53,8 @@ class BookRoomPanel extends JPanel{
 
         JPanel leftBookIdPanel = new JPanel(new GridLayout(2, 1));
         JPanel rightBookIdPanel = new JPanel(new GridLayout(2, 1));
-        HelperFunctions.setDimension(leftBookIdPanel, 200, 150);
-        HelperFunctions.setDimension(rightBookIdPanel, 450, 150);
+        HelperFunctions.setDimension(leftBookIdPanel, 160, 150);
+        HelperFunctions.setDimension(rightBookIdPanel, 650, 150);
         bookIdPanel.add(leftBookIdPanel, BorderLayout.WEST);
         bookIdPanel.add(rightBookIdPanel, BorderLayout.EAST);
 
