@@ -188,7 +188,7 @@ public class DeleteRoomPanel extends JPanel {
                         this);
             } else {
                 Message.optionPaneError(
-                        "Selected rooms cannot be removed, Please check server log for details",
+                        "Selected rooms cannot be removed, Please check server LOG for details",
                         this);
             }
             loadTimeSlotsButton.doClick();

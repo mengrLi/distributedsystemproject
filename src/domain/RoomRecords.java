@@ -154,14 +154,10 @@ public class RoomRecords{
             return false;
         }
         for (TimeSlot slot : room.getTimeSlots()) {
-
-            //todo null pointer checks for the cases where a "valid" id that is no longer valid
-
-
             if (slot.getStartTime().equals(bookingInfo.getBookingStartTime())
-                    && slot.getEndTime().equals(bookingInfo.getBookingEndTime())
-                    && slot.getBookingID().equals(bookingID)) {
-                return true;
+                    && slot.getEndTime().equals(bookingInfo.getBookingEndTime())) {
+                String storedId = slot.getBookingID();
+                if (storedId != null && storedId.equals(bookingID)) return true;
             }
         }
         return false;

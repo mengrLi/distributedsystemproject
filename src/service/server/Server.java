@@ -47,25 +47,27 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
     private final Lock roomLock = new Lock();
     @Getter
     private final Lock logLock = new Lock();
+    private final String[] orbParams;
 
-    public Server(Campus campus) {
+    public Server(Campus campus, String[] orbParams) {
         this.campus = campus;
         administrators = new Administrators(campus);
         log = Logger.getLogger(campus.abrev+ Server.class.getName());
         initLogger();
         roomRecords = new RoomRecords(this, campus);
         studentBookingRecords = new StudentBookingRecords(this, campus);
+        this.orbParams = orbParams;
     }
     private void initLogger() {
         try {
             String dir = "src/server_log/";
             log.setUseParentHandlers(false);
-            FileHandler fileHandler = new FileHandler(dir + campus.abrev + ".log", true);
+            FileHandler fileHandler = new FileHandler(dir + campus.abrev + ".LOG", true);
             log.addHandler(fileHandler);
             SimpleFormatter formatter = new SimpleFormatter();
             fileHandler.setFormatter(formatter);
             synchronized (this.logLock) {
-                log.info(campus.name + " log loaded");
+                log.info(campus.name + " LOG loaded");
                 log.info(campus.name + " has been initialized");
             }
         } catch (IOException e) {
@@ -86,8 +88,8 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         try {
             // create and initialize the ORB
             //get reference to rootpoa &amp; activate the POAManager
-            String[] params = {"-ORBInitialPort", "6666", "-ORBInitialHost", "localhost"};
-            ORB orb = ORB.init(params, null);
+
+            ORB orb = ORB.init(orbParams, null);
             POA rootPOA = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
             rootPOA.the_POAManager().activate();
 
@@ -219,7 +221,7 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
     /**
      * Booking method
      *
-     * @param campusOfInterest the campus where you want to book a room
+     * @param campusOfInterest the CAMPUS where you want to book a room
      * @param roomIdentifier   room number
      * @param date             Calendar date
      * @param timeSlot         the time slot
@@ -240,7 +242,7 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         builder.append(bookingInfo.toString());
         /*
         Step 1 : check if student can book a room at the week indicated, since student always connect to his own
-        campus first.
+        CAMPUS first.
         //get the key to the week of interest in student record
         */
         synchronized (this.roomLock) {
@@ -249,17 +251,17 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
             System.out.println(getWeekCount);
             /*
             Strp 2: if count is less than 3, book the room
-            if the room is in the same campus as student's account, book directly,
+            if the room is in the same CAMPUS as student's account, book directly,
             else connect and send bookingInfo to book
             */
             if (getWeekCount < 3) {
                 String bookingId;
                 String message;
-                /* Same campus */
+                /* Same CAMPUS */
                 if (campusOfInterest.equals(this.campus)) message = roomRecords.bookRoom(bookingInfo);
-                /* different campus */
+                /* different CAMPUS */
                 else {
-                    //The destination campus can directly book the remove without checking the number of booking
+                    //The destination CAMPUS can directly book the remove without checking the number of booking
                     //since it has been checked in the host server of the student
                     String udpMessage = bookingInfo.toString();
                     UdpRequest udpRequest = new UdpRequest(this, udpMessage, campusOfInterest);
@@ -326,8 +328,8 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                     error = "Error: Campus name invalid";
                     return error;
                 }
-                System.out.println("Booking campus " + destinationCampus.name);
-                System.out.println("Student ID campus " + studentIdCampus.name);
+                System.out.println("Booking CAMPUS " + destinationCampus.name);
+                System.out.println("Student ID CAMPUS " + studentIdCampus.name);
                 System.out.println("Date of reservation " + bookingInfo.getBookingDate().getTime());
                 System.out.println("Room " + bookingInfo.getRoomName());
                 System.out.println("Start time " + bookingInfo.getBookingStartTime().getTime());

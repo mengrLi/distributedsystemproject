@@ -71,14 +71,14 @@ public class Room implements Serializable{
 
                         boolean response;
                         if (studentCampus.equals(server.getCampus())) {
-                            System.out.println("same campus");
+                            System.out.println("same CAMPUS");
                             int count = server.getStudentBookingRecords().modifyBookingRecords(
                                     currSlot.getStartTime(), student_id, currSlot.getBookingID(), false
                             );
                             System.out.println("count:" + count);
                             response = count != -1 && count != 4;
                         } else {
-                            System.out.println("diff campus");
+                            System.out.println("diff CAMPUS");
                             String message = "**remove-" + currSlot.getStartTime().getTimeInMillis() + "-" + student_id
                                     + "-" + currSlot.getBookingID();
                             UdpRequest request = new UdpRequest(server, message, studentCampus);
@@ -87,13 +87,13 @@ public class Room implements Serializable{
                         if (!response) {
                             synchronized (server.getLogLock()) {
                                 //This should not be reached
-                                System.out.println("fail remove log");
+                                System.out.println("fail remove LOG");
                                 server.getLogFile().info("Deleting room from " + server.getCampus().name
                                         + " could not remove student booking in the hosting " + studentCampus.name);
                             }
                         } else {
                             synchronized (server.getLogLock()) {
-                                System.out.println("success remove log");
+                                System.out.println("success remove LOG");
                                 server.getLogFile().info("Room deleted from " + server.getCampus().name
                                         + " removed student booking in the hosting " + studentCampus.name);
                             }

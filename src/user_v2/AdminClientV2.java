@@ -6,64 +6,52 @@ import service.server.requests.CheckAdminIdRequest;
 import service.server.requests.CreateRoomRequest;
 import service.server.requests.DeleteRoomRequest;
 
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
-import java.util.logging.FileHandler;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 @SuppressWarnings("Duplicates")
 public class AdminClientV2 extends ClientV2 {
-    private final Logger log;
-    public AdminClientV2(Campus campus, int id){
-        super(campus, id);
-        System.out.println("admin client started with id " + campus.abrev + "a" + id);
-        fullID = campus.abrev + "a" + id;
-        log = Logger.getLogger(fullID + " " + AdminClientV2.class);
-        initLogger();
-    }
 
-    private void initLogger() {
-        try {
-            String dir = "src/client_log/";
-            log.setUseParentHandlers(false);
-            FileHandler fileHandler = new FileHandler(dir + campus.abrev + "A" + id + ".log", true);
-            log.addHandler(fileHandler);
-            SimpleFormatter simpleFormatter = new SimpleFormatter();
-            fileHandler.setFormatter(simpleFormatter);
-        } catch (IOException e) {
-            e.printStackTrace();
+    public AdminClientV2(Campus campus, int id){
+        super(campus, "a", id);
+        System.out.println("Admin client started with id " + FULL_ID);
+        synchronized (this.LOG_LOCK) {
+            LOG.info("Admin " + FULL_ID + " logged in");
         }
     }
-
     @Override
     public boolean checkID(){
-        boolean response = new CheckAdminIdRequest(fullID).sendRequest(campusInterface);
-        System.out.println("checking ID " + fullID + "from server");
-        if (response) log.info(" Administrator " + fullID + " has logged into " + campus.name + " server");
-        else log.info(fullID + "is trying to access " + campus.name + ": Access DENIED");
+        boolean response = new CheckAdminIdRequest(FULL_ID).sendRequest(campusInterface);
+        System.out.println("checking ID " + FULL_ID + "from server");
+        synchronized (this.LOG_LOCK) {
+            if (response) LOG.info(" Administrator " + FULL_ID + " has logged into " + CAMPUS.name + " server");
+            else LOG.info(FULL_ID + "is trying to access " + CAMPUS.name + ": Access DENIED");
+        }
         return response;
     }
 
     @Override
     public boolean createRoom(String roomNumber, Calendar date, List<TimeSlot> list){
         StringBuilder builder = new StringBuilder();
-        builder.append(" :").append(fullID)
-                .append(" create room at ").append(campus.name)
+        builder.append(" :").append(FULL_ID)
+                .append(" create room at ").append(CAMPUS.name)
                 .append(" for ").append(date.getTime()).append("\n");
         for (TimeSlot slot : list)
             builder.append(" from ")
                     .append(slot.getStartTime().getTime()).append(" to ")
                     .append(slot.getEndTime().getTime()).append("\n");
-        List<List<TimeSlot>> response = new CreateRoomRequest(roomNumber, date, list, fullID)
+        List<List<TimeSlot>> response = new CreateRoomRequest(roomNumber, date, list, FULL_ID)
                 .sendRequest(campusInterface);
         if (response == null) {
-            log.info("ILLEGAL ACCESS OF SERVER USING INVALID ADMIN ID");
+            synchronized (this.LOG_LOCK) {
+                LOG.info("ILLEGAL ACCESS OF SERVER USING INVALID ADMIN ID");
+            }
             return false;
         }
         if (response.get(0).size() == 0) {
-            log.info(builder.append(" SUCCEEDED").toString());
+            synchronized (this.LOG_LOCK) {
+                LOG.info(builder.append(" SUCCEEDED").toString());
+            }
             return true;
         } else {
             System.err.println("The following time slot was not successfully created");
@@ -74,27 +62,33 @@ public class AdminClientV2 extends ClientV2 {
                         .append(" to ")
                         .append(slot.getEndTime().getTime())
                         .append("\n");
-            log.info(builder.toString());
+            synchronized (this.LOG_LOCK) {
+                LOG.info(builder.toString());
+            }
             return false;
         }
     }
     @Override
     public boolean deleteRoom(String roomNumber, Calendar date, List<TimeSlot> list){
         StringBuilder builder = new StringBuilder();
-        builder.append(" Administrator ").append(fullID).append(" delete rooms from ")
-                .append(campus.name).append(" server ")
+        builder.append(" Administrator ").append(FULL_ID).append(" delete rooms from ")
+                .append(CAMPUS.name).append(" server ")
                 .append(" on ").append(date.getTime()).append(" for\n");
         for (TimeSlot slot : list)
             builder.append(" from ").append(slot.getStartTime().getTime()).append(" to ")
                     .append(slot.getEndTime().getTime()).append("\n");
-        List<List<TimeSlot>> response = new DeleteRoomRequest(roomNumber, date, list, fullID)
+        List<List<TimeSlot>> response = new DeleteRoomRequest(roomNumber, date, list, FULL_ID)
                 .sendRequest(campusInterface);
         if (response == null) {
-            log.info("ILLEGAL ACCESS OF SERVER USING INVALID ADMIN ID");
+            synchronized (LOG_LOCK) {
+                LOG.info("ILLEGAL ACCESS OF SERVER USING INVALID ADMIN ID");
+            }
             return false;
         }
         if (response.get(0).size() == 0) {
-            log.info(builder.append(" SUCCEEDED").toString());
+            synchronized (LOG_LOCK) {
+                LOG.info(builder.append(" SUCCEEDED").toString());
+            }
             return true;
         } else {
             System.err.println("The following time slot was not successfully deleted");
@@ -104,8 +98,11 @@ public class AdminClientV2 extends ClientV2 {
                         .append(slot.getEndTime().getTime()).append("\n");
                 System.err.println(slot.toString());
             }
-            log.severe(builder.toString());
+            synchronized (LOG_LOCK) {
+                LOG.severe(builder.toString());
+            }
             return false;
         }
     }
+
 }
