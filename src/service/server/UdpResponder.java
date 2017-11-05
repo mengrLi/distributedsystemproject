@@ -42,6 +42,7 @@ public class UdpResponder implements Runnable {
         String json = new String(request.getData()).trim();
         System.out.println(server.getCampus().name + "'s Responder received json message : " + json);
         String requestType = json.substring(2, 8);
+        String response;
         switch (requestType) {
             case "toBook": {
                 BookingInfo bookingInfo = new GsonBuilder().create().fromJson(json, BookingInfo.class);
@@ -49,13 +50,29 @@ public class UdpResponder implements Runnable {
                     //to book
                     synchronized (server.getRoomLock()) {
                         System.out.println(server.getCampus().name + ": booking request processing");
-                        return server.getRoomRecords().bookRoom(bookingInfo).getBytes();
+                        response = server.getRoomRecords().bookRoom(bookingInfo);
+                        synchronized (server.getLogLock()) {
+                            server.getLogFile().info(
+                                    "\n" + server.getCampus().name + " received booking request from "
+                                            + request.getSocketAddress()
+                                            + "\n" + response
+                            );
+                        }
+                        return response.getBytes();
                     }
                 } else {
                     //to cancel
                     synchronized (server.getRoomLock()) {
                         System.out.println(server.getCampus().name + ": cancel booking request processing");
-                        return server.getRoomRecords().cancelBooking(bookingInfo).getBytes();
+                        response = server.getRoomRecords().cancelBooking(bookingInfo);
+                        synchronized (server.getLogLock()) {
+                            server.getLogFile().info(
+                                    "\n" + server.getCampus().name + " received cancel booking request from "
+                                            + request.getSocketAddress()
+                                            + "\n" + response
+                            );
+                        }
+                        return response.getBytes();
                     }
                 }
             }
@@ -67,6 +84,14 @@ public class UdpResponder implements Runnable {
                     int get;
                     synchronized (server.getRoomLock()) {
                         get = server.getRoomRecords().getAvailableTimeSlotsCountOfDate(calendar);
+                    }
+                    synchronized (server.getLogLock()) {
+                        server.getLogFile().info(
+                                "\n" + server.getCampus().name
+                                        + " received available room count request from "
+                                        + request.getSocketAddress()
+                                        + "\n" + get + " rooms found"
+                        );
                     }
                     return String.valueOf(get).getBytes();
                 } catch (NumberFormatException e) {
@@ -81,10 +106,18 @@ public class UdpResponder implements Runnable {
                     calendar.setTimeInMillis(Long.parseLong(delim[1]));
                     Type type = new TypeToken<Map<String, Room>>() {
                     }.getType();
+                    Map<String, Room> ret;
                     synchronized (server.getRoomLock()) {
-                        Map<String, Room> ret = server.getRoomRecords().getRecordsOfDate(calendar);
-                        return new GsonBuilder().create().toJson(ret, type).getBytes();
+                        ret = server.getRoomRecords().getRecordsOfDate(calendar);
                     }
+                    synchronized (server.getLogLock()) {
+                        server.getLogFile().info(
+                                "\n" + server.getCampus().name + " received available room details request from "
+                                        + request.getSocketAddress()
+                                        + "\n" + ret.size() + " rooms have been found"
+                        );
+                    }
+                    return new GsonBuilder().create().toJson(ret, type).getBytes();
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                     return null;
@@ -96,12 +129,20 @@ public class UdpResponder implements Runnable {
                 try {
                     calendar.setTimeInMillis(Long.parseLong(delim[1]));
                     int id = Integer.parseInt(delim[2]);
+                    int modifyResult;
                     synchronized (server.getRoomLock()) {
-                        int response = server.getStudentBookingRecords().modifyBookingRecords(calendar, id, delim[3], false);
-                        if (response == -1 || response == 4) {
-                            return "false".getBytes();
-                        } else return "true".getBytes();
+                        modifyResult = server.getStudentBookingRecords()
+                                .modifyBookingRecords(calendar, id, delim[3], false);
                     }
+                    synchronized (server.getLogLock()) {
+                        server.getLogFile().info(
+                                "\n" + server.getCampus().name + " received remove student booking record from "
+                                        + request.getSocketAddress()
+                        );
+                    }
+                    if (modifyResult == -1 || modifyResult == 4) {
+                        return "false".getBytes();
+                    } else return "true".getBytes();
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
@@ -110,9 +151,19 @@ public class UdpResponder implements Runnable {
             case "chkCnl": {
                 String bookingID = json.substring(8);
                 BookingInfo info = BookingInfo.decode(bookingID);
+
+                boolean b;
                 synchronized (server.getRoomLock()) {
-                    return String.valueOf(server.getRoomRecords().validateBooking(info, bookingID)).getBytes();
+                    b = server.getRoomRecords().validateBooking(info, bookingID);
                 }
+                synchronized (server.getLogLock()) {
+                    server.getLogFile().info(
+                            "\n" + server.getCampus().name + " received room cancellation check request from "
+                                    + request.getSocketAddress()
+                                    + "\nBooking" + (b ? " " : " not ") + "found"
+                    );
+                }
+                return String.valueOf(b).getBytes();
             }
             default: {
                 System.err.println("Invalid udp request message");

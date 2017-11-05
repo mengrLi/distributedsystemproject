@@ -66,7 +66,7 @@ public abstract class ClientV2 implements UserInterface {
     @Override
     public Map<String, Room> getAvailableTimeSlot(Calendar date, Campus campus) {
         synchronized (this.LOG_LOCK) {
-            LOG.info(FULL_ID + " check all available time slots on " + date.getTime() + " in " + campus.name);
+            LOG.info("\n" + FULL_ID + " check all available time slots on " + date.getTime() + " in " + campus.name);
         }
         return new GetTimeSlotByRoomRequest(date, campus).sendRequest(campusInterface);
     }
@@ -74,7 +74,7 @@ public abstract class ClientV2 implements UserInterface {
     @Override
     public void logout() {
         synchronized (this.LOG_LOCK) {
-            LOG.info(FULL_ID + "Logged out");
+            LOG.info("\n" + FULL_ID + "Logged out");
         }
         fileHandler.close();
     }
