@@ -120,12 +120,12 @@ class BookRoomPanel extends JPanel{
                     0, 0, 0);
             calendar.set(Calendar.MILLISECOND, 0);
 
-            //get the selected campus name
+            //get the selected CAMPUS name
             campus = ((CampusBoxItem) campusBox.getSelectedItem()).getCampus();
-            //set the campus of interested in gui
+            //set the CAMPUS of interested in gui
             gui.setCampusOfInterest(campus);
 
-            //get all the available rooms using date and campus of interested
+            //get all the available rooms using date and CAMPUS of interested
             availableRooms = gui.getClient().getAvailableTimeSlot(calendar, campus);
 
             if (availableRooms == null) {

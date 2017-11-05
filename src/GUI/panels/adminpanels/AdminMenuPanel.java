@@ -51,7 +51,10 @@ public class AdminMenuPanel extends JPanel {
     }
 
     private void setBackButton(int index) {
-        backButton.addActionListener(e -> gui.getBasePanel().getCardLayout().show(gui.getBasePanel(), "login"));
+        backButton.addActionListener(e -> {
+            gui.getBasePanel().getCardLayout().show(gui.getBasePanel(), "login");
+            gui.getClient().logout();
+        });
         buttonPanel.add(backButton, index);
     }
 }

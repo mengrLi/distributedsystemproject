@@ -7,11 +7,10 @@ import java.rmi.RemoteException;
 
 public class StartServers{
     public static void turnOnServerNew() throws RemoteException{
-//        LocateRegistry.createRegistry(1099);
-//        System.out.println("Registry at 1099 created");
-        Server dorval = new Server(Campus.DORVAL);
-        Server kirkland = new Server(Campus.KIRKLAND);
-        Server westmount = new Server(Campus.WESTMOUNT);
+        String[] params = {"-ORBInitialPort", "6666", "-ORBInitialHost", "localhost"};
+        Server dorval = new Server(Campus.DORVAL, params);
+        Server kirkland = new Server(Campus.KIRKLAND, params);
+        Server westmount = new Server(Campus.WESTMOUNT, params);
 
         Thread thread1 = new Thread(dorval);
         Thread thread2 = new Thread(westmount);

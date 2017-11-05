@@ -42,4 +42,10 @@ public interface UserInterface{
     default Map<String, String> switchRoom(String bookingID, int studentID, Campus campus, Calendar date, TimeSlot slot, String roomIdentifier) {
         throw new NotImplementedException();
     }
+
+    void logout();
+
+    default void closeLogFileHandler() {
+        throw new NotImplementedException();
+    }
 }

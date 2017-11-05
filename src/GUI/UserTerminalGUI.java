@@ -26,11 +26,11 @@ public class UserTerminalGUI {
     private boolean admin;
 
     /**
-     * the campus at which student or admin is bound to
+     * the CAMPUS at which student or admin is bound to
      */
     private Campus campusOfTheID = null;
     /**
-     * the campus that the student is trying to connect to
+     * the CAMPUS that the student is trying to connect to
      */
     private Campus campusOfInterest = null;
 

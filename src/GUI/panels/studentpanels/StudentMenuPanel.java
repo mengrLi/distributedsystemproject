@@ -77,6 +77,7 @@ public class StudentMenuPanel extends JPanel {
         backButton.addActionListener(e -> {
             BasePanel base = gui.getBasePanel();
             base.getCardLayout().show(base, "login");
+            gui.getClient().logout();
         });
         buttonPanel.add(backButton, index);
     }

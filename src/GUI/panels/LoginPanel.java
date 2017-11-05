@@ -111,6 +111,7 @@ public class LoginPanel extends JPanel {
                 return true;
             }else{
                 Message.optionPaneError("Invalid Admin username", gui.getBasePanel());
+                client.closeLogFileHandler();
                 client = null;
                 return false;
             }

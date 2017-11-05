@@ -169,7 +169,7 @@ public class CreateRoomPanel extends JPanel {
                             gui.getCampusOfTheID().name + " on " +
                             calendar.getTime(),
                     this);
-        else Message.optionPaneError("Create room error, please check server log", this);
+        else Message.optionPaneError("Create room error, please check server LOG", this);
 
         //reset the list at the end
         list.clear();
