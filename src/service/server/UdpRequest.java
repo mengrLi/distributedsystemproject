@@ -16,6 +16,11 @@ public class UdpRequest{
     private final Campus destinationCampus;
 
     public String sendRequest() {
+        synchronized (server.getLogLock()) {
+            server.getLogFile().info("\nSending udp request from " + server.getCampus().name
+                    + " to " + destinationCampus.name + " through port " + destinationCampus.udpPort
+                    + " request : " + request);
+        }
         byte[] messageInByte = request.getBytes();
         int length = messageInByte.length;
         DatagramSocket socket;

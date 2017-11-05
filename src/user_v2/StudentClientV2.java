@@ -19,13 +19,13 @@ public class StudentClientV2 extends ClientV2 {
         super(campus, "s", id);
         System.out.println("Student client started with id " + FULL_ID);
         synchronized (LOG_LOCK) {
-            LOG.info("Student " + FULL_ID + " logged in");
+            LOG.info("\nStudent " + FULL_ID + " logged in");
         }
     }
     @Override
     public Map<Campus, Integer> getAvailableTimeSlot(Calendar date) {
         synchronized (LOG_LOCK) {
-            LOG.info(FULL_ID + " check available time slots count of all campus on " + date.getTime());
+            LOG.info("\n" + FULL_ID + " check available time slots count of all campus on " + date.getTime());
         }
         return new GetTimeSlotCountRequest(date).sendRequest(campusInterface);
     }
@@ -46,7 +46,7 @@ public class StudentClientV2 extends ClientV2 {
                 id)
                 .sendRequest(campusInterface);
         synchronized (LOG_LOCK) {
-            LOG.info("Student " + FULL_ID
+            LOG.info("\nStudent " + FULL_ID
                     + "\nbooking room " + roomNumber
                     + "\nfrom " + timeSlot.getStartTime().getTime()
                     + "\nto " + timeSlot.getEndTime().getTime()
@@ -62,7 +62,7 @@ public class StudentClientV2 extends ClientV2 {
         String response = new CancelBookingRequest(bookingId, CAMPUS, ID).sendResquest(campusInterface);
         BookingInfo info = BookingInfo.decode(bookingId);
         synchronized (LOG_LOCK) {
-            LOG.info("Student " + FULL_ID
+            LOG.info("\nStudent " + FULL_ID
                     + "\ncanceling room " + info.getRoomName()
                     + "\nfrom " + info.getBookingStartTime().getTime()
                     + "\nto " + info.getBookingEndTime().getTime()
@@ -91,7 +91,7 @@ public class StudentClientV2 extends ClientV2 {
         BookingInfo info = BookingInfo.decode(bookingID);
 
         synchronized (LOG_LOCK) {
-            LOG.info("Student " + FULL_ID
+            LOG.info("\nStudent " + FULL_ID
                     + "\nswitching room from " + info.getRoomName()
                     + "\nbetween " + info.getBookingStartTime().getTime()
                     + "\nand " + info.getBookingEndTime().getTime()

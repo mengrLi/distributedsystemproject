@@ -67,8 +67,7 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
             SimpleFormatter formatter = new SimpleFormatter();
             fileHandler.setFormatter(formatter);
             synchronized (this.logLock) {
-                log.info(campus.name + " LOG loaded");
-                log.info(campus.name + " has been initialized");
+                log.info("\n" + campus.name + " LOG loaded");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -80,7 +79,9 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         //setup udp listener
         UdpListener listener = new UdpListener(campus, this);
         new Thread(listener).start();
-
+        synchronized (this.logLock) {
+            log.info("\n" + campus.name + " UDP listening port initialized and listening at " + campus.udpPort);
+        }
         initializeORB();
     }
 
@@ -104,10 +105,13 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
             ncRef.rebind(path, href);
 
             System.out.println(campus.name + " ready");
+            synchronized (this.logLock) {
+                log.info("\n" + campus.name + " ORB initialized and listening"
+                        + "\n" + campus.name + " has been initialized");
+            }
             while (true) {
                 orb.run();
             }
-
         } catch (InvalidName | AdapterInactive | org.omg.CosNaming.NamingContextPackage.InvalidName
                 | ServantNotActive | WrongPolicy | CannotProceed | NotFound invalidName) {
             invalidName.printStackTrace();
@@ -269,10 +273,14 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                 }
                 //  Error message break the booking process, returns the error message
                 if (message.substring(0, 6).equals("Error:")) {
-                    log.info(builder.append("\n").append(message).toString());
+                    synchronized (this.logLock) {
+                        log.info(builder.append("\n").append(message).toString());
+                    }
                     return message;
                 } else {
-                    log.info(builder.append("-SUCCESS").toString());
+                    synchronized (this.logLock) {
+                        log.info(builder.append("-SUCCESS").toString());
+                    }
                     bookingId = message;
                 }
                 /* Update student's booking record in student's account server */
@@ -289,7 +297,9 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
             } else {
                 String msg = "Error: Booking limit reached for the week of "
                         + CalendarHelpers.getStartOfWeek(date).getTime();
-                log.info(builder.append("\n").append(msg).toString());
+                synchronized (this.logLock) {
+                    log.info(builder.append("\n").append(msg).toString());
+                }
                 return msg;
             }
         }
@@ -514,6 +524,21 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                                 cancelBookingInfo.getBookingDate(), studentID, bookingID, false);
                         studentBookingRecords.modifyBookingRecords(newDate, studentID, bookResponse, true);
                     }
+
+                }
+                synchronized (this.logLock) {
+                    log.info("\nSwitching room " + cancelBookingInfo.getRoomName()
+                            + "\nin " + cancelBookingInfo.getCampusOfInterest().name
+                            + "\non " + cancelBookingInfo.getBookingDate().getTime()
+                            + "\nbetween " + cancelBookingInfo.getBookingStartTime().getTime()
+                            + "\nand " + cancelBookingInfo.getBookingEndTime().getTime()
+                            + "\nto " + roomIdentifier
+                            + "\nin " + campus.name
+                            + "\non " + newDate.getTime()
+                            + "\nbetween " + timeSlot.getStartTime().getTime()
+                            + "\nand " + timeSlot.getEndTime().getTime()
+                            + "\n" + (status(bookResponse) && status(cancelResponse) ? "SUCCEEDED" : "FAILED")
+                    );
                 }
                 return ret;
             } else {
@@ -572,8 +597,13 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
     }
 
     public Map<String, Room> getAvailableTimeSlot(Calendar date, Campus campus) {
+        synchronized (this.logLock) {
+            log.info(this.campus.name + " checking time slot availability on "
+                    + date.getTime() + " of " + campus.name);
+        }
         if(campus.equals(this.campus)){
-            synchronized(roomLock){
+
+            synchronized (this.roomLock) {
                 return roomRecords.getRecordsOfDate(date);
             }
         }else{
@@ -587,8 +617,11 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
     }
 
     private boolean checkIDAdmin(String fullID) {
-        System.out.println("reached with " + fullID);
-        return administrators.contains(fullID);
+        boolean isAdmin = administrators.contains(fullID);
+        synchronized (this.logLock) {
+            log.info(fullID + " logs into " + campus.name + (isAdmin ? " allowed" : " denied"));
+        }
+        return isAdmin;
     }
     public Logger getLogFile(){
         return log;
