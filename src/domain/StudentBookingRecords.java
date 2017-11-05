@@ -14,6 +14,11 @@ public class StudentBookingRecords{
         this.records = new HashMap<>();
     }
 
+    @Override
+    public String toString() {
+        return records.toString();
+    }
+
     /**
      * get or default to 0
      *

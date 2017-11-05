@@ -20,7 +20,10 @@ class BookRoomPanel extends JPanel{
     private final StudentPanels parentPanel;
     private final UserTerminalGUI gui;
     private final JPanel selectionPanel;
-    private final JTextField bookIdField;
+    private final JPanel bookIdPanel;
+    private final JLabel bookingStatusLabel;
+    private final JLabel systemMessageLabel;
+    private final JTextField bookingIDField;
     private final JComboBox<CampusBoxItem> campusBox;
     private final JComboBox<String> roomBox;
     private final JComboBox<TimeSlotItem> timeslotBox;
@@ -44,9 +47,27 @@ class BookRoomPanel extends JPanel{
         this.add(title, BorderLayout.NORTH);
         HelperFunctions.setDimension(this, parentPanel.getWidth(), parentPanel.getHeight());
 
-        bookIdField = new JTextField();
-        HelperFunctions.setDimension(bookIdField, parentPanel.getWidth(), 150);
-        this.add(bookIdField, BorderLayout.CENTER);
+        bookIdPanel = new JPanel(new BorderLayout());
+        HelperFunctions.setDimension(bookIdPanel, parentPanel.getWidth(), 150);
+        this.add(bookIdPanel, BorderLayout.CENTER);
+
+        JPanel leftBookIdPanel = new JPanel(new GridLayout(2, 1));
+        JPanel rightBookIdPanel = new JPanel(new GridLayout(2, 1));
+        HelperFunctions.setDimension(leftBookIdPanel, 160, 150);
+        HelperFunctions.setDimension(rightBookIdPanel, 650, 150);
+        bookIdPanel.add(leftBookIdPanel, BorderLayout.WEST);
+        bookIdPanel.add(rightBookIdPanel, BorderLayout.EAST);
+
+        JLabel countLabel = new JLabel("System message : ");
+        bookingStatusLabel = new JLabel("Choose a room");
+        leftBookIdPanel.add(countLabel);
+        leftBookIdPanel.add(bookingStatusLabel);
+
+        systemMessageLabel = new JLabel("");
+        bookingIDField = new JTextField();
+
+        rightBookIdPanel.add(systemMessageLabel);
+        rightBookIdPanel.add(bookingIDField);
 
         selectionPanel = new JPanel(new GridLayout(6, 1));
         HelperFunctions.setDimension(selectionPanel, parentPanel.getWidth(), 300);
@@ -164,9 +185,16 @@ class BookRoomPanel extends JPanel{
                 Message.optionPaneError("Please select data, room and time slot first", this);
             else{
                 String result = gui.getClient().bookRoom(campus, room, calendar, slot, gui.getCampusOfTheID(), gui.getId());
-                if(!result.startsWith("Error")) result = "Booking ID : " + result;
-
-                bookIdField.setText(result);
+                if (!result.startsWith("Error")) {
+                    String[] data = result.split("///");
+                    bookingStatusLabel.setText("Booking ID : ");
+                    systemMessageLabel.setText("Booking successful, " + data[0] + " more bookings available for this week");
+                    bookingIDField.setText(data[1]);
+                } else {
+                    bookingStatusLabel.setText("Error");
+                    systemMessageLabel.setText("Booking failed");
+                    bookingIDField.setText(result.substring(6));
+                }
 
                 //reset all
                 roomBox.removeAllItems();

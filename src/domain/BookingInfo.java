@@ -66,6 +66,10 @@ public class BookingInfo {
         return ret;
     }
 
+    public BookingInfo parseJson(String json) {
+        return new GsonBuilder().create().fromJson(json, BookingInfo.class);
+    }
+
     public String toString() {
         return new GsonBuilder().create().toJson(this, BookingInfo.class);
     }
