@@ -7,6 +7,7 @@ import java.rmi.RemoteException;
 
 public class StartServers{
     public static void turnOnServerNew() throws RemoteException{
+        //final project
         String[] params = {"-ORBInitialPort", "6666", "-ORBInitialHost", "localhost"};
         Server dorval = new Server(Campus.DORVAL, params);
         Server kirkland = new Server(Campus.KIRKLAND, params);
