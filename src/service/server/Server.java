@@ -1,24 +1,9 @@
 package service.server;
 
-import CampusServerCorba.CampusServerInterface;
-import CampusServerCorba.CampusServerInterfaceHelper;
-import CampusServerCorba.CampusServerInterfacePOA;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import domain.*;
 import lombok.Getter;
-import org.omg.CORBA.ORB;
-import org.omg.CORBA.ORBPackage.InvalidName;
-import org.omg.CosNaming.NameComponent;
-import org.omg.CosNaming.NamingContextExt;
-import org.omg.CosNaming.NamingContextExtHelper;
-import org.omg.CosNaming.NamingContextPackage.CannotProceed;
-import org.omg.CosNaming.NamingContextPackage.NotFound;
-import org.omg.PortableServer.POA;
-import org.omg.PortableServer.POAHelper;
-import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
-import org.omg.PortableServer.POAPackage.ServantNotActive;
-import org.omg.PortableServer.POAPackage.WrongPolicy;
 import service.server.requests.*;
 import service.server.responses.*;
 
@@ -82,47 +67,7 @@ public class Server implements Runnable {
         synchronized (this.logLock) {
             log.info("\n" + campus.name + " UDP listening port initialized and listening at " + campus.udpPort);
         }
-//        initializeORB();
     }
-
-//    private void initializeORB() {
-//        try {
-//            // create and initialize the ORB
-//            //getInboundMessage reference to rootpoa &amp; activate the POAManager
-//
-//            ORB orb = ORB.init(orbParams, null);
-//            POA rootPOA = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
-//            rootPOA.the_POAManager().activate();
-//
-//            //getInboundMessage object reference from the servant
-//            org.omg.CORBA.Object ref = rootPOA.servant_to_reference(this);
-//            CampusServerInterface href = CampusServerInterfaceHelper.narrow(ref);
-//
-//            org.omg.CORBA.Object objRef = orb.resolve_initial_references("NameService");
-//            NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
-//
-//            NameComponent path[] = ncRef.to_name(campus.abrev);
-//            ncRef.rebind(path, href);
-//
-//            System.out.println(campus.name + " ready");
-//            synchronized (this.logLock) {
-//                log.info("\n" + campus.name + " ORB initialized and listening"
-//                        + "\n" + campus.name + " has been initialized");
-//            }
-//            while (true) {
-//                orb.run();
-//            }
-//        } catch (InvalidName | AdapterInactive | org.omg.CosNaming.NamingContextPackage.InvalidName
-//                | ServantNotActive | WrongPolicy | CannotProceed | NotFound invalidName) {
-//            invalidName.printStackTrace();
-//        }
-//    }
-
-
-    public int getUdpPort() {
-        return campus.udpPort;
-    }
-
 
     public boolean checkAdminId(String json) {
         CheckAdminIdRequest req = CheckAdminIdRequest.parseRequest(json);
@@ -583,14 +528,16 @@ public class Server implements Runnable {
         Map<Campus, Integer> ret = new HashMap<>();
         for (Campus campus : Campus.values()) {
             int count = 0;
-            if (this.campus.equals(campus)) {
-                count = roomRecords.getAvailableTimeSlotsCountOfDate(date);
-            } else {
-                String request = "**getInt-" + date.getTimeInMillis();
-                UdpRequest udpRequest = new UdpRequest(this, request, campus);
-                String udpResponse = udpRequest.sendRequest();
-                count = Integer.parseInt(udpResponse);
-            }
+
+//            if (this.campus.equals(campus)) {
+//                count = roomRecords.getAvailableTimeSlotsCountOfDate(date);
+//            } else {
+            //updated for FP
+            String request = "**getInt-" + date.getTimeInMillis();
+            UdpRequest udpRequest = new UdpRequest(this, request, campus);
+            String udpResponse = udpRequest.sendRequest();
+            count = Integer.parseInt(udpResponse);
+//            }
             ret.put(campus, count);
         }
         return ret;

@@ -2,12 +2,14 @@ package user_v2;
 
 import CampusServerCorba.CampusServerInterface;
 import CampusServerCorba.CampusServerInterfaceHelper;
+import com.sun.corba.se.impl.activation.ORBD;
 import domain.Campus;
 import domain.Lock;
 import domain.Room;
 import org.omg.CORBA.ORB;
 import org.omg.CosNaming.NamingContextExt;
 import org.omg.CosNaming.NamingContextExtHelper;
+import service.Properties;
 import service.remote_interface.UserInterface;
 import service.server.requests.GetTimeSlotByRoomRequest;
 
@@ -25,8 +27,8 @@ public abstract class ClientV2 implements UserInterface {
     protected CampusServerInterface campusInterface;
     protected final Logger LOG;
     private FileHandler fileHandler;
-    private final String ORB_PORT = "6666";
     protected final Lock LOG_LOCK = new Lock();
+
 
     ClientV2(Campus campus, String type, int id) {
         this.CAMPUS = campus;
@@ -39,11 +41,11 @@ public abstract class ClientV2 implements UserInterface {
 
     private void setConnection() {
         try {
-            String[] params = {"-ORBInitialPort", ORB_PORT, "-ORBInitialHost", "localhost"};
+            String[] params = {"-ORBInitialPort", Properties.ORB_PORT, "-ORBInitialHost", "localhost"};
             ORB orb = ORB.init(params, null);
             org.omg.CORBA.Object objRef = orb.resolve_initial_references("NameService");
             NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
-            campusInterface = CampusServerInterfaceHelper.narrow(ncRef.resolve_str(CAMPUS.abrev));
+            campusInterface = CampusServerInterfaceHelper.narrow(ncRef.resolve_str(Properties.ORB_SERVER_NAME));
         } catch (Exception e) {
             System.out.println("Hello Client exception: " + e);
             e.printStackTrace();

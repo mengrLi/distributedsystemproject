@@ -3,7 +3,7 @@ package service.frontend;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MessageRecords{
+public class MessageBook {
     Map<String, ClientInboundMessage> map;
 
 
@@ -13,12 +13,8 @@ public class MessageRecords{
         return map.get(key);
     }
 
-    public MessageRecords(){
+    public MessageBook(){
         this.map = new HashMap<>();
-    }
-
-    public int getCount(String seqId){
-        return map.get(seqId).getCount();
     }
 
     public void put(String key, ClientInboundMessage message){
