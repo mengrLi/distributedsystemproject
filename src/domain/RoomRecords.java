@@ -45,9 +45,9 @@ public class RoomRecords{
 //        List<String> keyList;
 //        while(iterator.hasNext()){
 //            keyList = new LinkedList<>();
-//            keyList.add(iterator.next());
-//            if(iterator.hasNext()) keyList.add(iterator.next());
-//            if(iterator.hasNext()) keyList.add(iterator.next());
+//            keyList.addRmResponseToInboundMessage(iterator.next());
+//            if(iterator.hasNext()) keyList.addRmResponseToInboundMessage(iterator.next());
+//            if(iterator.hasNext()) keyList.addRmResponseToInboundMessage(iterator.next());
 //
 //            RoomCounter roomCounter = new RoomCounter(roomOfDate, keyList);
 //            new Thread(roomCounter);

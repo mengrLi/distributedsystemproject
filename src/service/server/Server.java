@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.util.regex.PatternSyntaxException;
 
-public class Server extends CampusServerInterfacePOA implements Runnable {
+public class Server implements Runnable {
     @Getter
     private final Campus campus;
     @Getter
@@ -82,53 +82,53 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         synchronized (this.logLock) {
             log.info("\n" + campus.name + " UDP listening port initialized and listening at " + campus.udpPort);
         }
-        initializeORB();
+//        initializeORB();
     }
 
-    private void initializeORB() {
-        try {
-            // create and initialize the ORB
-            //get reference to rootpoa &amp; activate the POAManager
+//    private void initializeORB() {
+//        try {
+//            // create and initialize the ORB
+//            //getInboundMessage reference to rootpoa &amp; activate the POAManager
+//
+//            ORB orb = ORB.init(orbParams, null);
+//            POA rootPOA = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
+//            rootPOA.the_POAManager().activate();
+//
+//            //getInboundMessage object reference from the servant
+//            org.omg.CORBA.Object ref = rootPOA.servant_to_reference(this);
+//            CampusServerInterface href = CampusServerInterfaceHelper.narrow(ref);
+//
+//            org.omg.CORBA.Object objRef = orb.resolve_initial_references("NameService");
+//            NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
+//
+//            NameComponent path[] = ncRef.to_name(campus.abrev);
+//            ncRef.rebind(path, href);
+//
+//            System.out.println(campus.name + " ready");
+//            synchronized (this.logLock) {
+//                log.info("\n" + campus.name + " ORB initialized and listening"
+//                        + "\n" + campus.name + " has been initialized");
+//            }
+//            while (true) {
+//                orb.run();
+//            }
+//        } catch (InvalidName | AdapterInactive | org.omg.CosNaming.NamingContextPackage.InvalidName
+//                | ServantNotActive | WrongPolicy | CannotProceed | NotFound invalidName) {
+//            invalidName.printStackTrace();
+//        }
+//    }
 
-            ORB orb = ORB.init(orbParams, null);
-            POA rootPOA = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
-            rootPOA.the_POAManager().activate();
 
-            //get object reference from the servant
-            org.omg.CORBA.Object ref = rootPOA.servant_to_reference(this);
-            CampusServerInterface href = CampusServerInterfaceHelper.narrow(ref);
-
-            org.omg.CORBA.Object objRef = orb.resolve_initial_references("NameService");
-            NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
-
-            NameComponent path[] = ncRef.to_name(campus.abrev);
-            ncRef.rebind(path, href);
-
-            System.out.println(campus.name + " ready");
-            synchronized (this.logLock) {
-                log.info("\n" + campus.name + " ORB initialized and listening"
-                        + "\n" + campus.name + " has been initialized");
-            }
-            while (true) {
-                orb.run();
-            }
-        } catch (InvalidName | AdapterInactive | org.omg.CosNaming.NamingContextPackage.InvalidName
-                | ServantNotActive | WrongPolicy | CannotProceed | NotFound invalidName) {
-            invalidName.printStackTrace();
-        }
-    }
-
-    @Override
     public int getUdpPort() {
         return campus.udpPort;
     }
 
-    @Override
+
     public boolean checkAdminId(String json) {
         CheckAdminIdRequest req = CheckAdminIdRequest.parseRequest(json);
         return checkIDAdmin(req.getFullID());
     }
-    @Override
+
     public String createRoom(String json) {
         CreateRoomRequest req = CreateRoomRequest.parseRequest(json);
         CreateRoomResponse rsp = new CreateRoomResponse(
@@ -136,20 +136,20 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         return rsp.toString();
     }
 
-    @Override
+
     public String deleteRoom(String json) {
         DeleteRoomRequest req = DeleteRoomRequest.parseRequest(json);
         DeleteRoomResponse rsp = new DeleteRoomResponse(
                 deleteRoom(req.getRoomNumber(), req.getDate(), req.getList(), req.getFullID()));
         return rsp.toString();
     }
-    @Override
+
     public String getAvailableTimeSlotCount(String json) {
         GetTimeSlotCountRequest req = GetTimeSlotCountRequest.parseRequest(json);
         GetTimeSlotCountResponse rsp = new GetTimeSlotCountResponse(getAvailableTimeSlot(req.getDate()));
         return rsp.toString();
     }
-    @Override
+
     public String getAvailableTimeSlotByRoom(String json) {
         GetTimeSlotByRoomRequest req = GetTimeSlotByRoomRequest.parseRequest(json);
         GetTimeSlotByRoomResponse rsp = new GetTimeSlotByRoomResponse(
@@ -158,18 +158,18 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         return rsp.toString();
     }
 
-    @Override
+
     public String bookRoom(String json) {
         BookRoomRequest req = BookRoomRequest.parseRequest(json);
         return bookRoom(req.getCampusOfInterest(), req.getRoomNumber(),
                 req.getDate(), req.getTimeSlot(), req.getId());
     }
-    @Override
+
     public String cancelBooking(String json) {
         CancelBookingRequest req = CancelBookingRequest.parseRequest(json);
         return cancelBooking(req.getBookingId(), req.getCampus(), req.getId());
     }
-    @Override
+
     public String switchRoom(String json) {
         SwitchRoomRequest req = SwitchRoomRequest.parseRequest(json);
         SwitchRoomResponse rsp = new SwitchRoomResponse(switchRoom(req.getBookingID(), req.getCampus(), req.getRoomIdentifier(),
@@ -247,7 +247,7 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         /*
         Step 1 : check if student can book a room at the week indicated, since student always connect to his own
         CAMPUS first.
-        //get the key to the week of interest in student record
+        //getInboundMessage the key to the week of interest in student record
         */
         synchronized (this.roomLock) {
             //check booking record

@@ -20,20 +20,20 @@ public class AdminClientTest {
 //        Client wstStudent3331 = new StudentClient(Campus.WESTMOUNT, 3331);
 //        Client wstStudent3332 = new StudentClient(Campus.WESTMOUNT, 3332);
 //        Client wstStudent3333 = new StudentClient(Campus.WESTMOUNT, 3333);
-//        clientList.add(kklAdmin);
-//        clientList.add(kklStudent1111);
-//        clientList.add(kklStudent1112);
-//        clientList.add(kklStudent1113);
+//        clientList.addRmResponseToInboundMessage(kklAdmin);
+//        clientList.addRmResponseToInboundMessage(kklStudent1111);
+//        clientList.addRmResponseToInboundMessage(kklStudent1112);
+//        clientList.addRmResponseToInboundMessage(kklStudent1113);
 //
-//        clientList.add(dvlAdmin);
-//        clientList.add(dvlStudent2221);
-//        clientList.add(dvlStudent2222);
-//        clientList.add(dvlStudent2223);
+//        clientList.addRmResponseToInboundMessage(dvlAdmin);
+//        clientList.addRmResponseToInboundMessage(dvlStudent2221);
+//        clientList.addRmResponseToInboundMessage(dvlStudent2222);
+//        clientList.addRmResponseToInboundMessage(dvlStudent2223);
 
-//        clientList.add(wstAdmin);
-//        clientList.add(wstStudent3331);
-//        clientList.add(wstStudent3332);
-//        clientList.add(wstStudent3333);
+//        clientList.addRmResponseToInboundMessage(wstAdmin);
+//        clientList.addRmResponseToInboundMessage(wstStudent3331);
+//        clientList.addRmResponseToInboundMessage(wstStudent3332);
+//        clientList.addRmResponseToInboundMessage(wstStudent3333);
 
 //        for (Client client : clientList) {
 //            new Thread(client).start();

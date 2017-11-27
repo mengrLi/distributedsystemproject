@@ -20,7 +20,7 @@ public class StudentBookingRecords{
     }
 
     /**
-     * get or default to 0
+     * getInboundMessage or default to 0
      *
      * @param date
      * @param studentID
