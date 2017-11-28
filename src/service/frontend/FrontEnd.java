@@ -24,6 +24,7 @@ import service.domain.RmResponse;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.util.Calendar;
 
 public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
     /**
@@ -54,7 +55,6 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
         messageBook = new MessageBook();
 //        log = Logger.getLogger(Server.class.toString());//todo
         initLogger();
-
     }
     @Override
     public void run(){
@@ -71,7 +71,7 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
         try {
             // create and initialize the ORB
             //getInboundMessage reference to rootpoa &amp; activate the POAManager
-
+            System.out.println("Front end initializing CORBA");
             ORB orb = ORB.init(params, null);
             POA rootPOA = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
             rootPOA.the_POAManager().activate();
@@ -109,48 +109,56 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
 
     @Override
     public String createRoom(String json){
+        System.out.println("Front end receives the client request for room creation " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "create", this);
         return message.process();
     }
 
     @Override
     public String deleteRoom(String json){
+        System.out.println("Front end receives the client request for room deletion " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "delete", this);
         return message.process();
     }
 
     @Override
     public String bookRoom(String json){
+        System.out.println("Front end receives the client request for room booking " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "book", this);
         return message.process();
     }
 
     @Override
     public String switchRoom(String json){
+        System.out.println("Front end receives the client request for room switch " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "switch", this);
         return message.process();
     }
 
     @Override
     public String getAvailableTimeSlotCount(String json){
+        System.out.println("Front end receives the client request for room count" + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "count", this);
         return message.process();
     }
 
     @Override
     public String getAvailableTimeSlotByRoom(String json){
+        System.out.println("Front end receives the client request for room info " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "room", this);
         return message.process();
     }
 
     @Override
     public String cancelBooking(String json){
+        System.out.println("Front end receives the client request for room cancellation " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "cancel", this);
         return message.process();
     }
 
     @Override
     public boolean checkAdminId(String json){
+        System.out.println("Front end receives the client request for admin check " + Calendar.getInstance().getTime());
 //        ClientInboundMessage message = new ClientInboundMessage(json, "check", this);
 //        String response = message.process();
 //        return Boolean.parseBoolean(response);
@@ -161,30 +169,8 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
      * listen to RM responses
      */
     private void initUdpListeningPort(){
-        DatagramSocket socket = null;
-        try {
-            socket = new DatagramSocket(Properties.FRONTEND_UDP_LISTENING_PORT);
-            byte[] buffer;
-            DatagramPacket request;
-            while (true) {
-                buffer = new byte[100000];
-                request = new DatagramPacket(buffer, buffer.length);
-                socket.receive(request);
-
-                //getInboundMessage message from rm response, transform to string
-                String rmResponseJson = new String(request.getData());
-                //transform from json string to object
-                RmResponse rmResponse = new GsonBuilder().create().fromJson(rmResponseJson, RmResponse.class);
-                String msgId = rmResponse.getSequencerId();
-
-                synchronized(mapLock){
-                    messageBook.getInboundMessage(msgId).addRmResponseToInboundMessage(rmResponse);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (socket != null) socket.close();
-        }
+        System.out.println("Front End initializing Udp Listener at port " + Properties.FRONTEND_UDP_LISTENING_PORT);
+        new Thread(new FrontEndUdpListener(this)).start();
+        System.out.println("Front End Udp listener initialized");
     }
 }

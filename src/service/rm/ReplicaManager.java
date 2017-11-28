@@ -1,6 +1,6 @@
 package service.rm;
 
-import service.sequencer.InternalRequest;
+import service.domain.InternalRequest;
 
 import java.util.Map;
 

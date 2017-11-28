@@ -5,7 +5,7 @@ import domain.SequencerId;
 import service.Properties;
 import service.domain.RmResponse;
 import service.rm.ReplicaManager;
-import service.sequencer.InternalRequest;
+import service.domain.InternalRequest;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -21,7 +21,7 @@ import java.util.List;
  4. determine correctness
  5. return to client
  */
-public class ClientInboundMessage implements Runnable{
+public class ClientInboundMessage{
     /**
      * Json format incoming message from client
      */
@@ -80,27 +80,16 @@ public class ClientInboundMessage implements Runnable{
     }
 
     /**
-     * Only public method
-     * Process the message
-     * @return json string to be returned to client
-     */
-    String process(){
-        sendToSequencer();
-        Thread thread = new Thread(this);
-        thread.run();
-        //return when thread finish running
-        return returnMessage;
-    }
-
-    /**
      * Thread Run
      * 1. wrap method with client request
      * 2. forward to sequencer
      * 3. get sequencer ID
      * 4. Process RM response when one of the two conditions fulfilled
+     * Only public method
+     * Process the message
+     * @return json string to be returned to client
      */
-    @Override
-    public void run() {
+    String process(){
         sendToSequencer();
 
         if(!returnMessage.startsWith("Error")){
@@ -109,6 +98,9 @@ public class ClientInboundMessage implements Runnable{
             }
             processReturnData();
         }
+        //return when thread finish running
+        System.out.println(returnMessage);
+        return returnMessage;
     }
 
     /**
@@ -135,9 +127,11 @@ public class ClientInboundMessage implements Runnable{
             DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
             socket.receive(reply);
             sequencerId = new SequencerId(new String(reply.getData()).trim());
+
             synchronized (frontEnd.getMapLock()){
                 frontEnd.getMessageBook().put(sequencerId.getId(), this);
             }
+
         } catch (IOException e) {
             e.printStackTrace();
             returnMessage = "Error: I/O Exception";

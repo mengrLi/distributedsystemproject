@@ -1,4 +1,4 @@
-package service.sequencer;
+package service.domain;
 
 
 import com.google.gson.GsonBuilder;
@@ -8,11 +8,11 @@ import lombok.Getter;
 public class InternalRequest{
     @Getter private final String method;
     @Getter private final SequencerId sequencerId;
-    @Getter private final String clientResquestJson;
+    @Getter private final String clientRequestJson;
 
     public InternalRequest(String method, String clientResquestJson){
         this.method = method;
-        this.clientResquestJson = clientResquestJson;
+        this.clientRequestJson = clientResquestJson;
         sequencerId = new SequencerId("new");
     }
 
