@@ -103,10 +103,10 @@ public class BookingInfo {
     }
 
     public Campus getCampusOfInterest() {
-        return Campus.getCampusName(campusOfInterestAbrev);
+        return Campus.getCampus(campusOfInterestAbrev);
     }
 
     public Campus getCampusOfStudent() {
-        return Campus.getCampusName(studentCampusAbrev);
+        return Campus.getCampus(studentCampusAbrev);
     }
 }

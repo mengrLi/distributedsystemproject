@@ -3,7 +3,6 @@ package service.frontend;
 import CampusServerCorba.CampusServerInterface;
 import CampusServerCorba.CampusServerInterfaceHelper;
 import CampusServerCorba.CampusServerInterfacePOA;
-import com.google.gson.GsonBuilder;
 import domain.Lock;
 import lombok.Getter;
 import org.omg.CORBA.ORB;
@@ -19,11 +18,6 @@ import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 import service.Properties;
-import service.domain.RmResponse;
-
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.util.Calendar;
 
 public class FrontEnd extends CampusServerInterfacePOA implements Runnable{

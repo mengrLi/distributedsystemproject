@@ -101,7 +101,7 @@ public class RoomRecords{
                 if (slot.getStudentID() == null) {
                     String bookingID = bookingInfo.encodeBookingID();
                     slot.setStudentID(
-                            Campus.getCampusName(bookingInfo.getStudentCampusAbrev()),
+                            Campus.getCampus(bookingInfo.getStudentCampusAbrev()),
                             bookingInfo.getStudentID(),
                             bookingID
                     );

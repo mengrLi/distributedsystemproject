@@ -94,7 +94,7 @@ public class LoginPanel extends JPanel {
             Message.optionPaneError("Invalid username - Number format invalid", gui.getBasePanel());
             return false;
         }
-        Campus campusOfTheID = Campus.getCampusName(campus);
+        Campus campusOfTheID = Campus.getCampus(campus);
         if(campusOfTheID == null){
             Message.optionPaneError("Invalid username - Campus name invalid", gui.getBasePanel());
             return false;

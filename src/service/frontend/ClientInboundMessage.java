@@ -209,30 +209,6 @@ public class ClientInboundMessage{
     private void alertMistakes(ReplicaManager ... replicaManagers){
         //TODO
     }
-    /*
-     * determine campus
-     */
-//    private void parseInboundMessage(){
-//        switch (method){
-//            case "create":
-//                break;
-//            case "delete":
-//                break;
-//            case "book":
-//                break;
-//            case "switch":
-//                break;
-//            case "count":
-//                break;
-//            case "room":
-//                break;
-//            case "cancel":
-//                break;
-//            case "check":
-//                break;
-//        }
-//    }
-
 
     /**
      * add response to list ONLY

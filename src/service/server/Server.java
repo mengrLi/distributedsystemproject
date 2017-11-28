@@ -4,6 +4,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import domain.*;
 import lombok.Getter;
+import service.rm.ReplicaManager;
 import service.server.requests.*;
 import service.server.responses.*;
 
@@ -32,16 +33,18 @@ public class Server implements Runnable {
     private final Lock roomLock = new Lock();
     @Getter
     private final Lock logLock = new Lock();
-    private final String[] orbParams;
 
-    public Server(Campus campus, String[] orbParams) {
+    private final ReplicaManager replicaManager;
+
+    public Server(Campus campus, ReplicaManager replicaManager) {
         this.campus = campus;
+        this.replicaManager = replicaManager;
+
         administrators = new Administrators(campus);
         log = Logger.getLogger(campus.abrev+ Server.class.getName());
         initLogger();
         roomRecords = new RoomRecords(this, campus);
         studentBookingRecords = new StudentBookingRecords(this, campus);
-        this.orbParams = orbParams;
     }
     private void initLogger() {
         try {
@@ -67,6 +70,9 @@ public class Server implements Runnable {
         synchronized (this.logLock) {
             log.info("\n" + campus.name + " UDP listening port initialized and listening at " + campus.udpPort);
         }
+        ServerRmListener rmListener = new ServerRmListener(this);
+        new Thread(rmListener).start();
+        System.out.println(campus.name + " is ready");
     }
 
     public boolean checkAdminId(String json) {
