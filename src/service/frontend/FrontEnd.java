@@ -42,10 +42,7 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
      */
     @Getter
     private final Lock mapLock = new Lock();
-    /**
-     * upd port that listens to RM responses
-     */
-    private final int udpListeningPort;
+
 
 
     /**
@@ -57,11 +54,11 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
         messageBook = new MessageBook();
 //        log = Logger.getLogger(Server.class.toString());//todo
         initLogger();
-        this.udpListeningPort = Properties.FRONTEND_UDP_LISTENING_PORT;
 
     }
     @Override
     public void run(){
+        initUdpListeningPort();
         initializeORB();
     }
     /**
@@ -166,7 +163,7 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
     private void initUdpListeningPort(){
         DatagramSocket socket = null;
         try {
-            socket = new DatagramSocket(udpListeningPort);
+            socket = new DatagramSocket(Properties.FRONTEND_UDP_LISTENING_PORT);
             byte[] buffer;
             DatagramPacket request;
             while (true) {

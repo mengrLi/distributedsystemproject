@@ -5,6 +5,7 @@ import domain.SequencerId;
 import service.Properties;
 import service.domain.RmResponse;
 import service.rm.ReplicaManager;
+import service.sequencer.InternalRequest;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -40,7 +41,7 @@ public class ClientInboundMessage implements Runnable{
     /**
      * Message to be returned to client
      */
-    private String returnMessage = null;
+    private String returnMessage = "";
     /**
      * Message received time
      */
@@ -101,6 +102,7 @@ public class ClientInboundMessage implements Runnable{
     @Override
     public void run() {
         sendToSequencer();
+
         if(!returnMessage.startsWith("Error")){
             while(System.currentTimeMillis()<timeOutTime && rmResponseList.size()!=3){
                 //hold thread before one of the condition reaches
@@ -116,7 +118,11 @@ public class ClientInboundMessage implements Runnable{
      */
     private void sendToSequencer(){
         //udp call and get Inbound Message's sequencerId
-        byte[] messageInByte = inboundMessage.getBytes();
+        //create internal request object
+        InternalRequest internalRequest = new InternalRequest(method, inboundMessage);
+        //to json and to byte[]
+        byte[] messageInByte = internalRequest.toString().getBytes();
+        //get length of the message
         int length = messageInByte.length;
         DatagramSocket socket;
         try {
@@ -254,14 +260,4 @@ public class ClientInboundMessage implements Runnable{
             rmResponseList.add(rmResponse);
         }
     }
-
-
-
-
-
-
-
-
-
-
 }

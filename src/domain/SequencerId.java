@@ -1,12 +1,14 @@
 package domain;
 
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
-@RequiredArgsConstructor
 public class SequencerId{
-    private final String id;
+    @Getter
+    @Setter
+    private String id;
 
-    public String getId() {
-        return id;
+    public SequencerId(String id){
+        this.id = id;
     }
 }

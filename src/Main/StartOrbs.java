@@ -1,6 +1,5 @@
 package Main;
 
-import org.omg.CORBA.PRIVATE_MEMBER;
 import service.Properties;
 import service.frontend.FrontEnd;
 import java.rmi.RemoteException;
@@ -16,7 +15,6 @@ public class StartOrbs{
 
         Thread serverMainThread = new Thread(api);
         serverMainThread.run();
-
 
     }
 

@@ -1,6 +1,6 @@
 package service.rm;
 
-import service.sequencer.SeqRequest;
+import service.sequencer.InternalRequest;
 
 import java.util.Map;
 
@@ -10,5 +10,5 @@ import java.util.Map;
  */
 public class ReplicaManager {
     private long nonce = 0;
-    Map<Long, SeqRequest> seqRequestMap;
+    Map<Long, InternalRequest> seqRequestMap;
 }
