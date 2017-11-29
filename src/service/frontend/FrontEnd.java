@@ -153,10 +153,9 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
     @Override
     public boolean checkAdminId(String json){
         System.out.println("Front end receives the client request for admin check " + Calendar.getInstance().getTime());
-//        ClientInboundMessage message = new ClientInboundMessage(json, "check", this);
-//        String response = message.process();
-//        return Boolean.parseBoolean(response);
-        return true;
+        ClientInboundMessage message = new ClientInboundMessage(json, "check", this);
+        String response = message.process();
+        return Boolean.parseBoolean(response);
     }
 
     /**

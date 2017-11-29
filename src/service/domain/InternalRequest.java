@@ -25,4 +25,7 @@ public class InternalRequest{
         return new GsonBuilder().create().toJson(this, InternalRequest.class);
     }
 
+    public long getId() {
+        return Long.parseLong(sequencerId.getId());
+    }
 }

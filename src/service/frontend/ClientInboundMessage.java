@@ -165,7 +165,14 @@ public class ClientInboundMessage{
             alertMistakes();
         }else if(responseCount == 1){
             //only one gave response, check
-            alertMistakes(r1.getReplicaManager());
+//            alertMistakes(r1.getReplicaManager());
+
+            /*
+            FOR TESTING
+             */
+            returnMessage = r1.getResponseMessage();
+
+
         }else if(responseCount == 2){
             //2 responses
             if(!r1.getResponseMessage().equals(r2.getResponseMessage())){
@@ -173,7 +180,7 @@ public class ClientInboundMessage{
                 alertMistakes();
             }else{
                 //both match, confident
-                alertMistakes(r1.getReplicaManager(), r2.getReplicaManager());
+//                alertMistakes(r1.getReplicaManager(), r2.getReplicaManager());
                 returnMessage = r1.getResponseMessage();
             }
         }else{
@@ -185,15 +192,15 @@ public class ClientInboundMessage{
 
             }else if(r1.getResponseMessage().equals(r2.getResponseMessage())){ //1 and 2 match
                 returnMessage = r1.getResponseMessage();
-                alertMistakes(r1.getReplicaManager(), r2.getReplicaManager());
+//                alertMistakes(r1.getReplicaManager(), r2.getReplicaManager());
 
             }else if(r1.getResponseMessage().equals(r3.getResponseMessage())){ //1 and 3 match
                 returnMessage = r1.getResponseMessage();
-                alertMistakes(r1.getReplicaManager(), r3.getReplicaManager());
+//                alertMistakes(r1.getReplicaManager(), r3.getReplicaManager());
 
             }else if(r2.getResponseMessage().equals(r3.getResponseMessage())){ //2 and 3 match
                 returnMessage = r2.getResponseMessage();
-                alertMistakes(r2.getReplicaManager(), r3.getReplicaManager());
+//                alertMistakes(r2.getReplicaManager(), r3.getReplicaManager());
 
             }else{
                 //no match in three, server recover

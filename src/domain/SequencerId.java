@@ -11,4 +11,7 @@ public class SequencerId{
     public SequencerId(String id){
         this.id = id;
     }
+    public long getIdLong(){
+        return Long.parseLong(id);
+    }
 }

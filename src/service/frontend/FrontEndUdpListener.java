@@ -29,7 +29,7 @@ public class FrontEndUdpListener implements Runnable {
                  * TODO change to thread..
                  */
                 //getInboundMessage message from rm response, transform to string
-                String rmResponseJson = new String(request.getData());
+                String rmResponseJson = new String(request.getData()).trim();
                 //transform from json string to object
                 RmResponse rmResponse = new GsonBuilder().create().fromJson(rmResponseJson, RmResponse.class);
                 String msgId = rmResponse.getSequencerId();

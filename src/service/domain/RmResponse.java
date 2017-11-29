@@ -1,45 +1,25 @@
 package service.domain;
 
+import com.google.gson.GsonBuilder;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import service.rm.ReplicaManager;
 
+@RequiredArgsConstructor
+@Getter
+@Setter
 public class RmResponse{
     /**
      * Reference to the RM
      */
-    private ReplicaManager replicaManager;
-    private String sequencerId;
+//    private final ReplicaManager replicaManager;
+    private final String sequencerId;
+    private final String responseMessage;
     private boolean onTime;
-    private String responseMessage;
-
-    public String getResponseMessage() {
-        return responseMessage;
+    @Override
+    public String toString(){
+        return new GsonBuilder().create().toJson(this, RmResponse.class);
     }
 
-    public void setResponseMessage(String responseMessage) {
-        this.responseMessage = responseMessage;
-    }
-
-    public void setSequencerId(String sequencerId){
-        this.sequencerId = sequencerId;
-    }
-
-    public boolean isOnTime(){
-        return onTime;
-    }
-
-    public void setOnTime(boolean onTime){
-        this.onTime = onTime;
-    }
-
-    public String getSequencerId(){
-        return sequencerId;
-    }
-
-    public ReplicaManager getReplicaManager() {
-        return replicaManager;
-    }
-
-    public void setReplicaManager(ReplicaManager replicaManager) {
-        this.replicaManager = replicaManager;
-    }
 }

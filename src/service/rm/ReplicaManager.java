@@ -1,11 +1,13 @@
 package service.rm;
 
 import domain.Campus;
+import domain.Lock;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import service.domain.InternalRequest;
 import service.server.Server;
 
-import javax.print.attribute.standard.PrinterURI;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,24 +18,25 @@ import java.util.Map;
 
 @RequiredArgsConstructor
 public class ReplicaManager implements Runnable{
-    private final String rmName;
-    private final String inet;
-    private final int rmListeningPort;
+    @Getter private final String rmName;
+    @Getter private final String inet;
+    @Getter private final int rmListeningPort;
 
     private Server dvlServer;
     private Server wstServer;
     private Server kklServer;
 
     private long nonce = 1;
+    private final Lock nonceLock = new Lock();
     private final Map<Long, InternalRequest> seqRequestMap = new HashMap<>();
-
+    private final Lock mapLock = new Lock();
     private int errorCount = 0;
+    private final Lock errorCountLock = new Lock();
 
     @Override
     public void run() {
         initReplicaManager();
         initUdpListenPort();
-
     }
 
 
@@ -59,5 +62,37 @@ public class ReplicaManager implements Runnable{
         new Thread(new ReplicaManagerListener(this, rmListeningPort)).start();
 
         System.out.println(rmName + " listening udp messages from sequencer");
+    }
+    public long getNonce(){
+        synchronized (this.nonceLock){
+            return nonce;
+        }
+    }
+    public long increaseNonce(){
+        synchronized ((this.nonceLock)){
+            return ++nonce;
+        }
+    }
+
+    public int increaseErrorCount(){
+        synchronized (this.errorCountLock){
+            return ++errorCount;
+        }
+    }
+    public int getErrorCount(){
+        synchronized (this.errorCountLock){
+            return errorCount;
+        }
+    }
+
+    public InternalRequest getInternalMessage(long id) {
+        synchronized (this.mapLock) {
+            return seqRequestMap.get(id);
+        }
+    }
+    public void putInternalMessage(InternalRequest internalRequest){
+        synchronized (this.mapLock){
+            seqRequestMap.put(internalRequest.getId(), internalRequest);
+        }
     }
 }

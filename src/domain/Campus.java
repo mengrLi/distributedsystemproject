@@ -31,4 +31,10 @@ public enum Campus{
         System.err.println("Campus invalid");
         return -1;
     }
+    public static int getRmPort(String campusOfId){
+        Campus campus = getCampus(campusOfId);
+        if(campus != null) return campus.rmPort;
+        System.err.println("Campus invalid");
+        return -1;
+    }
 }

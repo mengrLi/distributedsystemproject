@@ -1,28 +1,43 @@
 package service.rm;
 
+import domain.BookingInfo;
+import domain.Campus;
+import domain.SequencerId;
 import lombok.RequiredArgsConstructor;
+import service.Properties;
 import service.domain.InternalRequest;
-import service.server.requests.CreateRoomRequest;
-import service.server.requests.GetTimeSlotCountRequest;
+import service.domain.RmResponse;
+import service.server.requests.*;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 
 @RequiredArgsConstructor
 public class ReplicaManagerResponder implements Runnable {
     private final DatagramSocket socket;
     private final DatagramPacket request;
-    private final InternalRequest internalRequest;
+    private final ReplicaManager replicaManager;
+    private final SequencerId sequencerId;
     private String clientMessage;
+    private InternalRequest internalRequest;
+
+    private String responseToFrontEnd = "Error: No response from ";
+    private String campusAbrev;
 
     @Override
     public void run() {
+        internalRequest = replicaManager.getInternalMessage(sequencerId.getIdLong());
         //since sequencer does not need response.
         //only need to process this message and forward to the correct server
         clientMessage = internalRequest.getClientRequestJson();
+        while(replicaManager.getNonce() != sequencerId.getIdLong()){
+        }
         parseInboundMessage();
-
-
+        forwardMessage();
+        sendResponseToFrontEnd(responseToFrontEnd);
+        replicaManager.increaseNonce();
     }
     /**
      *  determine campus
@@ -32,62 +47,62 @@ public class ReplicaManagerResponder implements Runnable {
         //need to determine which server the client belongs to
         switch (internalRequest.getMethod()){
             case "create":
-                createRoomForwarder();
+                campusAbrev = CreateRoomRequest.parseRequest(clientMessage).getFullID().substring(0,3);
                 break;
             case "delete":
-                deleteRoomForwarder();
+                campusAbrev = DeleteRoomRequest.parseRequest(clientMessage).getFullID().substring(0,3);
                 break;
             case "book":
-                bookRoomForwarder();
+                campusAbrev = BookRoomRequest.parseRequest(clientMessage).getCampusOfId().abrev;
                 break;
             case "switch":
-                switchRoomForwarder();
+                campusAbrev = BookingInfo.decode(SwitchRoomRequest.parseRequest(clientMessage)
+                        .getBookingID()).getStudentCampusAbrev();
                 break;
             case "count":
-                getTimeSlotCountForwarder();
+                campusAbrev = "DVL";
                 break;
             case "room":
-                getTimeSlotByRoomForwarder();
+                campusAbrev = GetTimeSlotByRoomRequest.parseRequest(clientMessage).getCampus().abrev;
                 break;
             case "cancel":
-                cancelBookingForwarder();
+                campusAbrev = CancelBookingRequest.parseRequest(clientMessage).getCampus().abrev;
                 break;
             case "check":
-                checkAdminIdForwarder();
+                campusAbrev = CheckAdminIdRequest.parseRequest(clientMessage).getFullID().substring(0,3);
                 break;
         }
     }
-    private void createRoomForwarder() {
+
+    /**
+     * forward message after determined the which campus is needed
+     */
+    private void forwardMessage() {
+        Campus campus = Campus.getCampus(campusAbrev);
+        responseToFrontEnd+=campus.name;
+        String response = new ReplicaManagerRequest(internalRequest, replicaManager, campus).sendToServer();
+        if(response!=null) responseToFrontEnd = response;
     }
 
-    private void deleteRoomForwarder() {
+    /**
+     * One way message to FE, no response needed
+     * @param responseToFrontEnd message to be sent to front end
+     */
+    private void sendResponseToFrontEnd(String responseToFrontEnd) {
+        System.out.println("sending to response to fe : ");
+
+        RmResponse rmResponse = new RmResponse(sequencerId.getId(), responseToFrontEnd);
+
+        byte[] data = rmResponse.toString().getBytes();
+        int length = data.length;
+        DatagramSocket socket;
+        try{
+            socket = new DatagramSocket();
+            InetAddress address = InetAddress.getByName(Properties.FRONTEND_INET);
+            DatagramPacket request = new DatagramPacket(data, length, address, Properties.FRONTEND_UDP_LISTENING_PORT);
+            socket.send(request);
+        }catch (IOException e){
+            e.printStackTrace();
+        }
     }
-
-    private void bookRoomForwarder() {
-
-    }
-
-    private void switchRoomForwarder() {
-
-    }
-
-    private void getTimeSlotCountForwarder() {
-
-    }
-
-    private void getTimeSlotByRoomForwarder() {
-
-    }
-
-    private void cancelBookingForwarder() {
-    }
-
-    private void checkAdminIdForwarder() {
-
-    }
-
-
-
-
-
 }
