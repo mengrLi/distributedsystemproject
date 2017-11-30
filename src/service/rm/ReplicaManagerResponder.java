@@ -34,16 +34,24 @@ public class ReplicaManagerResponder implements Runnable {
         //since sequencer does not need response.
         //only need to process this message and forward to the correct server
         clientMessage = internalRequest.getClientRequestJson();
-        while(replicaManager.getNonce() != sequencerId.getIdLong()){
+        while(replicaManager.getNonce() < sequencerId.getIdLong()){
+            //if nonce smaller than seq ID wait
+            //if nonce == seq ID process
+            //if nonce > seq ID duplicate
         }
-        if(internalRequest.getMethod().equals("test")){
-            System.out.println(internalRequest.getClientRequestJson());
+        if(internalRequest.getId() < replicaManager.getNonce()){
+            //DUPLICATE MESSAGE!
+            System.err.println("Duplicate Message Received- Message Dropped");
         }else{
-            parseInboundMessage();
-            forwardMessage();
-            sendResponseToFrontEnd(responseToFrontEnd);
+            if(internalRequest.getMethod().equals("test")){
+                System.out.println(internalRequest.getClientRequestJson());
+            }else{
+                parseInboundMessage();
+                forwardMessage();
+                sendResponseToFrontEnd(responseToFrontEnd);
+            }
+            replicaManager.increaseNonce();
         }
-        replicaManager.increaseNonce();
     }
     /**
      *  determine campus
