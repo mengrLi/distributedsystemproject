@@ -1,6 +1,7 @@
 package service.server;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 import com.google.gson.reflect.TypeToken;
 import domain.*;
 import lombok.Getter;
@@ -20,15 +21,19 @@ import java.util.logging.SimpleFormatter;
 import java.util.regex.PatternSyntaxException;
 
 public class Server implements Runnable {
+    @Expose
     @Getter
     private final Campus campus;
+    @Expose
     @Getter
-    private final Administrators administrators;
+    private Administrators administrators;
+    @Expose
     @Getter
-    private final RoomRecords roomRecords;
+    private RoomRecords roomRecords;
+    @Expose
     @Getter
-    private final StudentBookingRecords studentBookingRecords;
-    private final Logger log;
+    private StudentBookingRecords studentBookingRecords;
+    private Logger log;
     @Getter
     private final Lock roomLock = new Lock();
     @Getter
@@ -45,6 +50,21 @@ public class Server implements Runnable {
         initLogger();
         roomRecords = new RoomRecords(this, campus);
         studentBookingRecords = new StudentBookingRecords(this, campus);
+
+
+    }
+
+    /**
+     * Constructor for server rebuild
+     * @param serverJson server json representation
+     */
+    public void loadData(String serverJson){
+        //get server data
+        Server temp = new GsonBuilder().enableComplexMapKeySerialization().create().fromJson(serverJson, Server.class);
+        administrators = temp.getAdministrators();
+        roomRecords = temp.roomRecords;
+        roomRecords.setServer(this);
+        studentBookingRecords = temp.getStudentBookingRecords();
     }
     private void initLogger() {
         try {
@@ -73,6 +93,14 @@ public class Server implements Runnable {
         ServerRmListener rmListener = new ServerRmListener(this);
         new Thread(rmListener).start();
         System.out.println(campus.name + " is ready");
+    }
+    @Override
+    public String toString(){
+        return new GsonBuilder()
+                .enableComplexMapKeySerialization()
+                .excludeFieldsWithoutExposeAnnotation()
+                .create()
+                .toJson(this, Server.class);
     }
 
     public boolean checkAdminId(String json) {

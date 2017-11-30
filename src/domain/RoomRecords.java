@@ -1,5 +1,6 @@
 package domain;
 
+import com.google.gson.annotations.Expose;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import service.server.Server;
@@ -9,10 +10,10 @@ import java.util.*;
 public class RoomRecords{
 //    private final Server server;
 
-    private final Campus campus;
-    private final Server server;
+    @Expose private final Campus campus;
+    private Server server;
 
-    private final Map<Calendar, Map<String, Room>> records;
+    @Expose private final Map<Calendar, Map<String, Room>> records;
 
     public RoomRecords(Server server, Campus campus){
         this.server = server;
@@ -163,6 +164,10 @@ public class RoomRecords{
         return false;
     }
 
+    public void setServer(Server server) {
+        this.server = server;
+    }
+
     //TODO there is probably some problems here
     @RequiredArgsConstructor
     private class RoomCounter implements Runnable{
@@ -191,7 +196,7 @@ public class RoomRecords{
         int month = Calendar.NOVEMBER;
         int minutes = 119;
 
-        for (int day = 1; day <= 30; ++day) {
+        for (int day = 23; day <= 30; ++day) {
             Room room;
             Map<String, Room> rooms;
             String roomName;

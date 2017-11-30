@@ -4,7 +4,6 @@ import domain.Lock;
 import domain.SequencerId;
 import service.Properties;
 import service.domain.RmResponse;
-import service.rm.ReplicaManager;
 import service.domain.InternalRequest;
 
 import java.io.IOException;
@@ -73,7 +72,7 @@ public class ClientInboundMessage{
         this.method = method;
         this.frontEnd = frontEnd;
         this.receiveTime = System.currentTimeMillis();
-        this.timeOutTime = receiveTime+10000;//max waiting 10 sec
+        this.timeOutTime = receiveTime+Properties.timeOutLimit;//max waiting 10 sec
 
         //instantiate Replica manager response list. max size 3
         rmResponseList = new LinkedList<>();
@@ -161,27 +160,26 @@ public class ClientInboundMessage{
         }
         returnMessage = "Error : Server time out";
         if(responseCount == 0){
-            //no responses, server recover?
+            //no responses, server recover
             alertMistakes();
         }else if(responseCount == 1){
-            //only one gave response, check
-//            alertMistakes(r1.getReplicaManager());
-
             /*
             FOR TESTING
              */
             returnMessage = r1.getResponseMessage();
 
+            //only one gave response, assume that is the good one for now, check the others
+            alertMistakes(r1);
 
         }else if(responseCount == 2){
             //2 responses
             if(!r1.getResponseMessage().equals(r2.getResponseMessage())){
-                //not equal + 1 not on time, => server recover
+                //not equal + 1 not on time, => server recover from the last time
                 alertMistakes();
             }else{
-                //both match, confident
-//                alertMistakes(r1.getReplicaManager(), r2.getReplicaManager());
+                //both match, confident, alert about the last one
                 returnMessage = r1.getResponseMessage();
+                alertMistakes(r1, r2);
             }
         }else{
             //3 responses
@@ -192,18 +190,18 @@ public class ClientInboundMessage{
 
             }else if(r1.getResponseMessage().equals(r2.getResponseMessage())){ //1 and 2 match
                 returnMessage = r1.getResponseMessage();
-//                alertMistakes(r1.getReplicaManager(), r2.getReplicaManager());
+                alertMistakes(r1, r2);
 
             }else if(r1.getResponseMessage().equals(r3.getResponseMessage())){ //1 and 3 match
                 returnMessage = r1.getResponseMessage();
-//                alertMistakes(r1.getReplicaManager(), r3.getReplicaManager());
+                alertMistakes(r1, r3);
 
             }else if(r2.getResponseMessage().equals(r3.getResponseMessage())){ //2 and 3 match
                 returnMessage = r2.getResponseMessage();
-//                alertMistakes(r2.getReplicaManager(), r3.getReplicaManager());
+                alertMistakes(r2, r3);
 
             }else{
-                //no match in three, server recover
+                //no match in three, server recover from the last time
                 alertMistakes();
             }
         }
@@ -211,10 +209,12 @@ public class ClientInboundMessage{
 
     /**
      * Alert mistake has been detected
-     * @param replicaManagers the corrected ones !!!!!
+     * ALWAYS send message to the good ones only
+     * @param responses the corrected ones !!!!!
      */
-    private void alertMistakes(ReplicaManager ... replicaManagers){
-        //TODO
+    private void alertMistakes(RmResponse ... responses){
+        System.err.println("SERVER ERROR OCCURRED IN " + (3-responses.length) + " SERVER" + (3-responses.length>1 ? "S" :""));
+        new Thread(new FrontEndAlert(responses)).run();
     }
 
     /**

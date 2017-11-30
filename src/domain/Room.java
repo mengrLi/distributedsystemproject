@@ -1,5 +1,6 @@
 package domain;
 
+import com.google.gson.annotations.Expose;
 import service.server.Server;
 import service.server.UdpRequest;
 
@@ -10,8 +11,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Room implements Serializable{
-    private final String roomNumber;
-    private List<TimeSlot> timeSlots;
+    @Expose private final String roomNumber;
+    @Expose private List<TimeSlot> timeSlots;
 //    private final Lock timeSlotLock = new Lock();
 
     public Room(String roomNumber){

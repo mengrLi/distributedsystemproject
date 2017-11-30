@@ -1,12 +1,20 @@
 package service.rm;
 
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
-@RequiredArgsConstructor
+
 public class FailureJudge implements Runnable{
-    private final ReplicaManager replicaManager1;
-    private final ReplicaManager replicaManager2;
-    private final ReplicaManager replicaManager3;
+    @Getter @Setter private String dvl;
+    @Getter @Setter private String kkl;
+    @Getter @Setter private String wst;
+
+
+    public FailureJudge(String dvl, String kkl, String wst) {
+        this.dvl = dvl;
+        this.kkl = kkl;
+        this.wst = wst;
+    }
 
     @Override
     public void run() {

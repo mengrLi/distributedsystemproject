@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
 
 public class StartOrbs{
 
-    public static void turnOnServerNew() throws RemoteException{
+    public static void turnOnServerNew() throws RemoteException, InterruptedException {
 
         System.out.println("CORBA initializing at " + Properties.ORB_PORT);
         //start at the last step
@@ -29,16 +29,10 @@ public class StartOrbs{
         //are located on three computers
 
         //RM1
-        System.out.println("Initializing " + Properties.rm1Name
-                + " at " + Properties.RM_1_INET + ":" + Properties.RM_1_LISTENING_PORT);
-
-        ReplicaManager replicaManager1 = new ReplicaManager(
-                Properties.rm1Name, Properties.RM_1_INET, Properties.RM_1_LISTENING_PORT);
-
+        ReplicaManager replicaManager1 = new ReplicaManager(Properties.rm1Name, Properties.RM_1_INET, Properties.RM_1_LISTENING_PORT);
         new Thread(replicaManager1).start();
 
-        System.out.println(Properties.rm1Name + " at " + Properties.RM_1_INET
-                + ":" + Properties.RM_1_LISTENING_PORT + " initialized");
+
 
 //        //RM2
 //        System.out.println("Initializing " + Properties.rm2Name
@@ -65,15 +59,18 @@ public class StartOrbs{
 //                + ":" + Properties.RM_3_LISTENING_PORT + " initialized");
 
 //        //Judge
-//        System.out.println("Initializing Failure Judge");
-//
-//        FailureJudge failureJudge = new FailureJudge(replicaManager1, replicaManager2, replicaManager3);
-//        new Thread(failureJudge).start();
-//
-//        System.out.println("Failure judge initiated");
+        System.out.println("Initializing Failure Judge");
+
+        FailureJudge failureJudge = new FailureJudge(
+                replicaManager1.getDvlServer().toString(),
+                replicaManager1.getKklServer().toString(),
+                replicaManager1.getWstServer().toString());
+        new Thread(failureJudge).start();
+
+        System.out.println("Failure judge initiated");
     }
 
-    public static void main(String[] args) throws RemoteException{
+    public static void main(String[] args) throws RemoteException, InterruptedException {
         turnOnServerNew();
     }
 

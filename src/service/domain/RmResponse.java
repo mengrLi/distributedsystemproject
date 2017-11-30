@@ -4,7 +4,6 @@ import com.google.gson.GsonBuilder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import service.rm.ReplicaManager;
 
 @RequiredArgsConstructor
 @Getter
@@ -13,7 +12,8 @@ public class RmResponse{
     /**
      * Reference to the RM
      */
-//    private final ReplicaManager replicaManager;
+    private final String inet;
+    private final int rmPort;
     private final String sequencerId;
     private final String responseMessage;
     private boolean onTime;

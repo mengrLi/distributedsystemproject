@@ -91,7 +91,8 @@ public class ReplicaManagerResponder implements Runnable {
     private void sendResponseToFrontEnd(String responseToFrontEnd) {
         System.out.println("sending to response to fe : ");
 
-        RmResponse rmResponse = new RmResponse(sequencerId.getId(), responseToFrontEnd);
+        RmResponse rmResponse = new RmResponse(replicaManager.getInet(), replicaManager.getRmListeningPort(),
+                sequencerId.getId(), responseToFrontEnd);
 
         byte[] data = rmResponse.toString().getBytes();
         int length = data.length;

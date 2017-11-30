@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import service.domain.InternalRequest;
 import service.server.Server;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,9 +21,9 @@ public class ReplicaManager implements Runnable{
     @Getter private final String inet;
     @Getter private final int rmListeningPort;
 
-    private Server dvlServer;
-    private Server wstServer;
-    private Server kklServer;
+    @Getter private Server dvlServer;
+    @Getter private Server wstServer;
+    @Getter private Server kklServer;
 
     private long nonce = 1;
     private final Lock nonceLock = new Lock();
@@ -51,6 +50,20 @@ public class ReplicaManager implements Runnable{
         new Thread(dvlServer).start();
         new Thread(wstServer).start();
         new Thread(kklServer).start();
+
+    }
+
+    public void restartServers(long nonce, String dvlJson, String kklJson, String wstJson){
+        synchronized (this){
+            this.nonce = nonce;
+
+            this.dvlServer.loadData(dvlJson);
+            this.kklServer.loadData(kklJson);
+            this.wstServer.loadData(wstJson);
+
+
+            //Server variable in RoomRecord needs to be reset
+        }
     }
 
     /**

@@ -23,4 +23,5 @@ public class Properties {
     public static final int RM_3_LISTENING_PORT = 8893;
 
 
+    public static long timeOutLimit = 5000;
 }
