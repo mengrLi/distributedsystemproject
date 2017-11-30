@@ -28,15 +28,21 @@ public class ReplicaManagerResponder implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("current nonce = " + replicaManager.getNonce());
         internalRequest = replicaManager.getInternalMessage(sequencerId.getIdLong());
+        System.out.println("Processing " + internalRequest.getId());
         //since sequencer does not need response.
         //only need to process this message and forward to the correct server
         clientMessage = internalRequest.getClientRequestJson();
         while(replicaManager.getNonce() != sequencerId.getIdLong()){
         }
-        parseInboundMessage();
-        forwardMessage();
-        sendResponseToFrontEnd(responseToFrontEnd);
+        if(internalRequest.getMethod().equals("test")){
+            System.out.println(internalRequest.getClientRequestJson());
+        }else{
+            parseInboundMessage();
+            forwardMessage();
+            sendResponseToFrontEnd(responseToFrontEnd);
+        }
         replicaManager.increaseNonce();
     }
     /**

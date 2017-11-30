@@ -51,11 +51,10 @@ public class Server implements Runnable {
         roomRecords = new RoomRecords(this, campus);
         studentBookingRecords = new StudentBookingRecords(this, campus);
 
-
     }
 
     /**
-     * Constructor for server rebuild
+     * Method for server rebuild from json message
      * @param serverJson server json representation
      */
     public void loadData(String serverJson){
@@ -65,6 +64,10 @@ public class Server implements Runnable {
         roomRecords = temp.roomRecords;
         roomRecords.setServer(this);
         studentBookingRecords = temp.getStudentBookingRecords();
+
+        synchronized (this.logLock){
+            log.severe("System rebooted");
+        }
     }
     private void initLogger() {
         try {

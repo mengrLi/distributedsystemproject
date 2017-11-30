@@ -81,9 +81,9 @@ public class ReplicaManager implements Runnable{
             return nonce;
         }
     }
-    public long increaseNonce(){
+    public void increaseNonce(){
         synchronized ((this.nonceLock)){
-            return ++nonce;
+            ++nonce;
         }
     }
 

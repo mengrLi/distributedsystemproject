@@ -39,16 +39,17 @@ public class ReplicaManagerListener implements Runnable {
 
                     replicaManager.restartServers(replicaManager.getNonce(), dvl, kkl, wst);
 
-
                 }else{
                     InternalRequest internalRequest = new GsonBuilder().create().fromJson(seqRequest, InternalRequest.class);
 
+                    System.out.println("Received id " + internalRequest.getId());
                     //save to request list, and increase the nonce counter
                     //note: synchronization is done in the getters
                     replicaManager.putInternalMessage(internalRequest);
 
                     new Thread(new ReplicaManagerResponder(socket, request, replicaManager, internalRequest.getSequencerId())).start();
-                    System.out.println("Replica Manager has sent the new request to process");
+
+                    System.out.println("Replica Manager has sent the new request " + internalRequest.getId() + " to process");
                 }
 
             }
