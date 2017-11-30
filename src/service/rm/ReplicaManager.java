@@ -108,4 +108,14 @@ public class ReplicaManager implements Runnable{
             seqRequestMap.put(internalRequest.getId(), internalRequest);
         }
     }
+    public void saveResponseMessage(long id, String responseMessage){
+        synchronized (this.mapLock){
+            if(seqRequestMap.get(id).getServerResponse()==null){
+                seqRequestMap.get(id).setServerResponse(responseMessage);
+            }else{
+                //should not reach here.
+                System.err.println("Response message existed, new incoming message has been ignored");
+            }
+        }
+    }
 }

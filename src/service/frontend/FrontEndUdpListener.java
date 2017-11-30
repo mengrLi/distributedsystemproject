@@ -37,6 +37,7 @@ public class FrontEndUdpListener implements Runnable {
                 synchronized(frontEnd.getMapLock()){
                     frontEnd.getMessageBook().getInboundMessage(msgId).addRmResponseToInboundMessage(rmResponse);
                 }
+                System.err.println("RM message from " + rmResponse.getInet());
             }
         } catch (IOException e) {
             e.printStackTrace();

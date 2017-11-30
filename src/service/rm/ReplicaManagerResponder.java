@@ -90,12 +90,17 @@ public class ReplicaManagerResponder implements Runnable {
 
     /**
      * forward message after determined the which campus is needed
+     *
+     * save the server responses to the message map
      */
     private void forwardMessage() {
         Campus campus = Campus.getCampus(campusAbrev);
         responseToFrontEnd+=campus.name;
         String response = new ReplicaManagerRequest(internalRequest, replicaManager, campus).sendToServer();
-        if(response!=null) responseToFrontEnd = response;
+        if(response!=null) {
+            responseToFrontEnd = response;
+            replicaManager.saveResponseMessage(internalRequest.getId(), responseToFrontEnd);
+        }
     }
 
     /**

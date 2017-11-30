@@ -96,7 +96,7 @@ public class BookingInfo {
                 .append("-")
                 .append(bookingEndTime.getTimeInMillis())
                 .append("-")
-                .append(System.currentTimeMillis());
+                .append(System.currentTimeMillis()/1000);
         char[] chars = builder.toString().toCharArray();
         for (int i = 0; i < chars.length; ++i) chars[i] += i;
         return new String(chars);

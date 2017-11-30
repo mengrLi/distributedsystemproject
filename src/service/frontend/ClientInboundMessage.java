@@ -175,9 +175,14 @@ public class ClientInboundMessage{
             //2 responses
             if(!r1.getResponseMessage().equals(r2.getResponseMessage())){
                 //not equal + 1 not on time, => server recover from the last time
+                System.err.println(r1.getResponseMessage());
+                System.err.println(r2.getResponseMessage());
+                returnMessage = r1.getResponseMessage();
                 alertMistakes();
             }else{
                 //both match, confident, alert about the last one
+                System.out.println(r1.getInet());
+                System.out.println(r2.getInet());
                 returnMessage = r1.getResponseMessage();
                 alertMistakes(r1, r2);
             }

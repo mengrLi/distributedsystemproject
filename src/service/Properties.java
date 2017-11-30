@@ -15,8 +15,8 @@ public class Properties {
     public static final String rm1Name = "Replica Manager 1";
     public static final String rm2Name = "Replica Manager 2";
     public static final String rm3Name = "Replica Manager 3";
-    public static final String RM_1_INET = "localhost";
-    public static final String RM_2_INET = "localhost";
+    public static final String RM_1_INET = "192.168.2.18";
+    public static final String RM_2_INET = "192.168.2.13";
     public static final String RM_3_INET = "localhost";
     public static final int RM_1_LISTENING_PORT = 8891;
     public static final int RM_2_LISTENING_PORT = 8892;
