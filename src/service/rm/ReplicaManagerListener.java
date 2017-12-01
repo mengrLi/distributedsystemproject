@@ -74,39 +74,29 @@ public class ReplicaManagerListener implements Runnable {
                                 //error occurred
                                 String errorConsequence;
                                 byte[] errorBytes;
-                                boolean flag = true; // success indicator
-                                int count = 0; // try 3 times
+
                                 /*
                                 Each server
                                  */
                                 int currErrorCount = Integer.parseInt(delimError[0]);
-                                while(flag && count<3){
-                                    if(currErrorCount<4) errorConsequence = "increase"; //Increase error count
-                                    else errorConsequence = "reboot"
-                                            +"-/-"+tempNonce
-                                            +"-/-"+dvl
-                                            +"-/-" +kkl
-                                            +"-/-"+wst; //threshold reached, kill it!
 
-                                    errorBytes = errorConsequence.getBytes();
-                                    packet1 = new DatagramPacket(errorBytes, errorBytes.length, address, errorRmPort);
-                                    socket1.send(packet1);
-                                    response = new byte[1000000];
-                                    reply = new DatagramPacket(response, 1000000);
-                                    socket1.receive(reply);
-                                    messageFromError = new String(reply.getData()).trim();
+                                if(currErrorCount<4) errorConsequence = "increase"; //Increase error count
+                                else errorConsequence = "reboot"
+                                        +"-/-"+tempNonce
+                                        +"-/-"+dvl
+                                        +"-/-" +kkl
+                                        +"-/-"+wst; //threshold reached, kill it!
 
-                                    if(currErrorCount<4) {
-                                        //if response is not the proper value, increase again
-                                        //should not reach normally, unless the server crashed
-                                        if(messageFromError.equals("increased")) flag = false;
-                                    }else {
-                                        //if response is not "killed", double kill or triple kill it,
-                                        //should not reach normally, unless the server crashed
-                                        if(messageFromError.equals("killed")) flag = false;
-                                    }
-                                    if(++count==3) System.err.println("Server "+ delim[1]+" has no response");
-                                }
+                                errorBytes = errorConsequence.getBytes();
+                                packet1 = new DatagramPacket(errorBytes, errorBytes.length, address, errorRmPort);
+                                socket1.send(packet1);
+                                response = new byte[1000000];
+                                reply = new DatagramPacket(response, 1000000);
+                                socket1.receive(reply);
+                                messageFromError = new String(reply.getData()).trim();
+
+                                System.out.println(messageFromError);
+
                             }else{
                                 //No error
                                 System.out.println("Error was due to udp delay, servers have given a valid response");
