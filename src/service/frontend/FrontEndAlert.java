@@ -68,19 +68,19 @@ public class FrontEndAlert implements Runnable {
         try {
             String m = message + "-"+rr2.getInet()+"-" +rr2.getRmPort();
             byte[] mByte = m.getBytes();
-            System.err.println("Alerting "+rr1.getInet()+" about the error");
             DatagramSocket socket = new DatagramSocket();
             InetAddress address = InetAddress.getByName(rr1.getInet());
             DatagramPacket packet = new DatagramPacket(mByte, mByte.length, address, rr1.getRmPort());
             socket.send(packet);
+            System.err.println("Alerting "+rr1.getInet()+" about the error");
 
             m = message + "-"+rr1.getInet()+"-" +rr1.getRmPort();
             mByte = m.getBytes();
-            System.err.println("Alerting "+rr2.getInet()+" about the error");
             socket = new DatagramSocket();
             address = InetAddress.getByName(rr2.getInet());
             packet = new DatagramPacket(mByte, mByte.length, address, rr2.getRmPort());
             socket.send(packet);
+            System.err.println("Alerting "+rr2.getInet()+" about the error");
 
         }catch (IOException e){
             e.printStackTrace();

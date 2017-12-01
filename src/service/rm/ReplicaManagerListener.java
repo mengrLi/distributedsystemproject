@@ -45,7 +45,6 @@ public class ReplicaManagerListener implements Runnable {
                         System.err.println("THIS SHOULD NOT BE REACHED, INVALID ERROR ALERT MESSAGE");
                     }else{
                         //check for error
-                        synchronized (this){
                             //use this object as lock, to stop all message from accessing
 
                             //immediately, get a image of the server and nonce
@@ -102,7 +101,7 @@ public class ReplicaManagerListener implements Runnable {
                                 //No error
                                 System.out.println("Error was due to udp delay, servers have given a valid response");
                             }
-                        }
+
                     }
                 }else if(seqRequest.substring(0,8).equals("sequence")){
                     System.out.println(seqRequest);
