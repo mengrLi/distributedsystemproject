@@ -47,7 +47,7 @@ public class ReplicaManager implements Runnable{
     private final Lock errorCountLock = new Lock();
 
     public boolean delayTest = false;
-    public boolean errorTest = true;
+    public boolean errorTest = false;
     private int testErrorCounter = 0;
     private int testDelayCounter = 0;
 
@@ -141,11 +141,9 @@ public class ReplicaManager implements Runnable{
     }
 
     public String getServerResponse(long sequencerId) {
-        synchronized (this.mapLock){
-            InternalRequest request = seqRequestMap.get(sequencerId);
-            if(request == null) return "Not Found";
-            return request.getServerResponse();
-        }
+        InternalRequest request = seqRequestMap.get(sequencerId);
+        if(request == null) return "Not Found";
+        return request.getServerResponse();
     }
 
     public boolean getErrorTest() {
