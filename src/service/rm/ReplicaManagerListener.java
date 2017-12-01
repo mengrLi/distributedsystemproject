@@ -116,7 +116,7 @@ public class ReplicaManagerListener implements Runnable {
                 }else if(seqRequest.substring(0,8).equals("sequence")){
                     String[] delim = seqRequest.split("-");
                     long id = Long.parseLong(delim[1]);
-                    byte[] data = replicaManager.getServerResponse(id).getBytes();
+                    byte[] data = (replicaManager.getErrorCount()+"-"+replicaManager.getServerResponse(id)).getBytes();
                     DatagramPacket response = new DatagramPacket(data, data.length, rmListenerRequest.getAddress(), rmListenerRequest.getPort());
                     RmListenerSocket.send(response);
 
@@ -149,7 +149,7 @@ public class ReplicaManagerListener implements Runnable {
                     //note: synchronization is done in the getters
                     replicaManager.putInternalMessage(internalRequest);
 
-                    new Thread(new ReplicaManagerResponder(RmListenerSocket, rmListenerRequest, replicaManager, internalRequest.getSequencerId())).start();
+                    new Thread(new ReplicaManagerResponder(replicaManager, internalRequest.getSequencerId())).start();
 
                     System.out.println("Replica Manager has sent the new request " + internalRequest.getId() + " to process");
                 }
