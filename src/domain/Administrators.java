@@ -33,4 +33,8 @@ public class Administrators{
         }
         return false;
     }
+
+    public int size(){
+        return administrators.size();
+    }
 }

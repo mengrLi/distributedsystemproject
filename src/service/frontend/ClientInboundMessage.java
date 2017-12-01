@@ -148,13 +148,11 @@ public class ClientInboundMessage{
         RmResponse r3 = null;
 
         int responseCount;
-        /*
-        At this point, all responses must be on time, because the moment this method is called either all received
-        or time out limit have been reached
-        Except, if a lock delayed the process, but in this case, I feel ok to include this response
-         */
+
         synchronized (this.rrLock) {
             responseCount = rmResponseList.size();
+
+            System.out.println(responseCount + " Message received for processing");
 
             if(responseCount > 0) r1 = rmResponseList.get(0);
             if(responseCount > 1) r2 = rmResponseList.get(1);
@@ -180,7 +178,7 @@ public class ClientInboundMessage{
                 System.err.println(r1.getResponseMessage());
                 System.err.println(r2.getResponseMessage());
                 returnMessage = r1.getResponseMessage();
-                alertMistakes();
+                System.out.println(responseCount + " received " + " 1 delayed");
             }else{
                 //both match, confident, alert about the last one
                 System.out.println(r1.getInet());
@@ -232,16 +230,15 @@ public class ClientInboundMessage{
      */
     void addRmResponseToInboundMessage(RmResponse rmResponse){
         synchronized (this.rrLock){
-            if(rmResponseList.size()==0){
-                //first insert response
-                firstResponseTime = System.currentTimeMillis();
-                timeOutTime = firstResponseTime + 2 * (firstResponseTime - receiveTime);
-                rmResponse.setOnTime(true);
-            }else{
-                if(System.currentTimeMillis() < timeOutTime) rmResponse.setOnTime(true);//on time
-                else rmResponse.setOnTime(false); // late
-            }
             rmResponseList.add(rmResponse);
+
+//            if(rmResponseList.size()==0){
+//                //first insert response
+//                firstResponseTime = System.currentTimeMillis();
+//                timeOutTime = firstResponseTime + 2 * (firstResponseTime - receiveTime);
+//                System.out.println(timeOutTime-firstResponseTime);
+//            }
+            System.out.println("Message received FE : "+rmResponseList.size());
         }
     }
 }

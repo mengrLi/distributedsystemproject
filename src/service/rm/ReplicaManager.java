@@ -32,6 +32,11 @@ public class ReplicaManager implements Runnable{
     private int errorCount = 0;
     private final Lock errorCountLock = new Lock();
 
+    public boolean delayTest = false;
+    public boolean errorTest = false;
+    private int testErrorCounter = 0;
+    private int testDelayCounter = 0;
+
     @Override
     public void run() {
         initReplicaManager();
@@ -54,10 +59,11 @@ public class ReplicaManager implements Runnable{
     }
 
     public void restartServers(long nonce, String dvlJson, String kklJson, String wstJson){
+        synchronized (errorCountLock){
+            this.errorCount = 0;
+        }
         synchronized (this){
             this.nonce = nonce;
-            this.errorCount = 0;
-
             this.dvlServer.loadData(dvlJson);
             this.kklServer.loadData(kklJson);
             this.wstServer.loadData(wstJson);
@@ -124,5 +130,37 @@ public class ReplicaManager implements Runnable{
         synchronized (this.mapLock){
             return seqRequestMap.get(sequencerId).getServerResponse();
         }
+    }
+
+    public boolean getErrorTest() {
+
+            if(errorTest) {
+                if (testErrorCounter == 3) {
+                    errorTest = false;
+                    testErrorCounter = 0;
+                } else {
+                    testErrorCounter++;
+                }
+                System.err.println("ERROR TEST " + errorTest);
+                System.err.println("CURRENT ERROR TEST COUNTER IS " + testErrorCounter);
+            }
+            return errorTest;
+    }
+
+    public boolean getDelayTest() {
+
+            if(delayTest) {
+                if (testDelayCounter == 3) {
+                    delayTest = false;
+                    testDelayCounter = 0;
+                } else {
+                    testDelayCounter++;
+                }
+                System.err.println("DELAY TEST " + delayTest);
+                System.err.println("CURRENT DELAY TEST COUNTER IS " + testDelayCounter);
+
+            }
+            return delayTest;
+
     }
 }

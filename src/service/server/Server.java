@@ -61,13 +61,17 @@ public class Server implements Runnable {
         //get server data
         Server temp = new GsonBuilder().enableComplexMapKeySerialization().create().fromJson(serverJson, Server.class);
         administrators = temp.getAdministrators();
+        System.out.println(administrators.size() + " imported");
         roomRecords = temp.roomRecords;
+        System.out.println(roomRecords.getDateCount());
         roomRecords.setServer(this);
         studentBookingRecords = temp.getStudentBookingRecords();
+        System.out.println(studentBookingRecords.getRecords().size());
 
         synchronized (this.logLock){
             log.severe("System rebooted");
         }
+        System.out.println("Reboot completed");
     }
     private void initLogger() {
         try {

@@ -79,7 +79,7 @@ public class ReplicaManagerListener implements Runnable {
                                 /*
                                 Each server
                                  */
-                                int currErrorCount = Integer.parseInt(delimError[1]);
+                                int currErrorCount = Integer.parseInt(delimError[0]);
                                 while(flag && count<3){
                                     if(currErrorCount<4) errorConsequence = "increase"; //Increase error count
                                     else errorConsequence = "reboot"
@@ -114,6 +114,8 @@ public class ReplicaManagerListener implements Runnable {
                         }
                     }
                 }else if(seqRequest.substring(0,8).equals("sequence")){
+                    System.out.println(seqRequest);
+
                     String[] delim = seqRequest.split("-");
                     long id = Long.parseLong(delim[1]);
                     byte[] data = (replicaManager.getErrorCount()+"-"+replicaManager.getServerResponse(id)).getBytes();
@@ -127,19 +129,30 @@ public class ReplicaManagerListener implements Runnable {
                     DatagramPacket response = new DatagramPacket(data, data.length, rmListenerRequest.getAddress(), rmListenerRequest.getPort());
                     RmListenerSocket.send(response);
 
+                    System.err.println(replicaManager.getErrorCount());
+
                 }else if(seqRequest.substring(0,6).equals("reboot")){
                     //since both good servers send the reboot message, only the first one is performed,
                     //determined by the error count, if ec == 0, server has been restarted
+
+                    System.err.println("REBOOT REQUEST RECEIVED");
+
+                    if(replicaManager.getErrorCount()==0){
+                        System.out.println("killed by the other campus");
+                        byte[] data = "killed".getBytes();
+                        DatagramPacket response = new DatagramPacket(data, data.length, rmListenerRequest.getAddress(), rmListenerRequest.getPort());
+                        RmListenerSocket.send(response);
+                    }
+
                     if(replicaManager.getErrorCount()>=4){
                         String delim[] = seqRequest.split("-/-");
                         System.err.println("REBOOTING");
                         replicaManager.restartServers(Integer.parseInt(delim[1]), delim[2], delim[3], delim[4]);
-                    }
-                    //send the confirmation to the good ones
-                    if(replicaManager.getErrorCount()==0){
+
                         byte[] data = "killed".getBytes();
                         DatagramPacket response = new DatagramPacket(data, data.length, rmListenerRequest.getAddress(), rmListenerRequest.getPort());
                         RmListenerSocket.send(response);
+                        System.out.println("Rebooted");
                     }
                 }else{
                     InternalRequest internalRequest = new GsonBuilder().create().fromJson(seqRequest, InternalRequest.class);

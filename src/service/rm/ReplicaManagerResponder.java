@@ -26,8 +26,6 @@ public class ReplicaManagerResponder implements Runnable {
     private String responseToFrontEnd = "Error: No response from ";
     private String campusAbrev;
 
-    private boolean delayTest = false;
-    private boolean errorTest = false;
 
     @Override
     public void run() {
@@ -100,19 +98,17 @@ public class ReplicaManagerResponder implements Runnable {
         Campus campus = Campus.getCampus(campusAbrev);
         responseToFrontEnd+=campus.name;
         String response = new ReplicaManagerRequest(internalRequest, replicaManager, campus).sendToServer();
-
         if(response!=null) {
             responseToFrontEnd = response;
 
             //ERROR TEST!!! THIS MUST SET TO THE ERROR PRODUCING SERVER MANUALLY
-            if(errorTest){
-                responseToFrontEnd+="errorOccured";
-                errorTest = false;
+            if(replicaManager.getErrorTest()){
+
+                responseToFrontEnd+="ErrorOccured";
             }
-            if(delayTest){
+            if(replicaManager.getDelayTest()){
                 try {
                     Thread.currentThread().wait(2000);
-                    delayTest = false;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

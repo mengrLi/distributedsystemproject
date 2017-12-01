@@ -24,32 +24,11 @@ public class FrontEndAlert implements Runnable {
 
     @Override
     public void run() {
-        if(responses.length == 0){
+        if(responses.length <2) {
             //all bad
             //not implemented
             System.err.println("System freak out and does not know what to do");
-            throw new NotImplementedException();
-        }else if(responses.length == 1){
-            //THIS CONDITION IS FOR TESTING ONLY
-
-//            String inet = responses[0].getInet();
-//            int port = responses[0].getRmPort();
-
-//            String message = "reboot";
-//            byte[] mByte = message.getBytes();
-//
-//            try {
-//                System.err.println("Alerting RM about the error");
-//                DatagramSocket socket = new DatagramSocket();
-//                InetAddress address = InetAddress.getByName(inet);
-//                DatagramPacket packet = new DatagramPacket(mByte, mByte.length, address, port);
-//
-//                socket.send(packet);
-//
-//            }catch (IOException e){
-//                e.printStackTrace();
-//            }
-
+            System.err.println("RECEIVED " +responses.length);
         }else{
             //two goods
             //This is the only case that is required to be considered, I would not leave the other two empty normally

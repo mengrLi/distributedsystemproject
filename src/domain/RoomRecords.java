@@ -168,6 +168,10 @@ public class RoomRecords{
         this.server = server;
     }
 
+    public int getDateCount() {
+        return records.size();
+    }
+
     //TODO there is probably some problems here
     @RequiredArgsConstructor
     private class RoomCounter implements Runnable{

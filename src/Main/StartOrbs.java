@@ -58,16 +58,6 @@ public class StartOrbs{
 //        System.out.println(Properties.rm3Name + " at " + Properties.RM_3_INET
 //                + ":" + Properties.RM_3_LISTENING_PORT + " initialized");
 
-//        //Judge
-        System.out.println("Initializing Failure Judge");
-
-        FailureJudge failureJudge = new FailureJudge(
-                replicaManager1.getDvlServer().toString(),
-                replicaManager1.getKklServer().toString(),
-                replicaManager1.getWstServer().toString());
-        new Thread(failureJudge).start();
-
-        System.out.println("Failure judge initiated");
     }
 
     public static void main(String[] args) throws RemoteException, InterruptedException {
