@@ -56,6 +56,7 @@ public class ReplicaManager implements Runnable{
     public void restartServers(long nonce, String dvlJson, String kklJson, String wstJson){
         synchronized (this){
             this.nonce = nonce;
+            this.errorCount = 0;
 
             this.dvlServer.loadData(dvlJson);
             this.kklServer.loadData(kklJson);
@@ -116,6 +117,12 @@ public class ReplicaManager implements Runnable{
                 //should not reach here.
                 System.err.println("Response message existed, new incoming message has been ignored");
             }
+        }
+    }
+
+    public String getServerResponse(long sequencerId) {
+        synchronized (this.mapLock){
+            return seqRequestMap.get(sequencerId).getServerResponse();
         }
     }
 }

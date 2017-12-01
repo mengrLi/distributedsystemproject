@@ -92,8 +92,10 @@ public class ClientInboundMessage{
         sendToSequencer();
 
         if(!returnMessage.startsWith("Error")){
-            while(System.currentTimeMillis()<timeOutTime && rmResponseList.size()!=3){
+            boolean flag = true;
+            while(flag){
                 //hold thread before one of the condition reaches
+                if(System.currentTimeMillis()>timeOutTime || rmResponseList.size()==3) flag = false;
             }
             processReturnData();
         }
@@ -219,7 +221,7 @@ public class ClientInboundMessage{
      */
     private void alertMistakes(RmResponse ... responses){
         System.err.println("SERVER ERROR OCCURRED IN " + (3-responses.length) + " SERVER" + (3-responses.length>1 ? "S" :""));
-        new Thread(new FrontEndAlert(responses)).run();
+        new Thread(new FrontEndAlert(responses, sequencerId)).run();
     }
 
     /**

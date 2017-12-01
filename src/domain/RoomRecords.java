@@ -208,11 +208,11 @@ public class RoomRecords{
 
             rooms = new HashMap<>();
 
-            for(int roomN = 1; roomN < 11; ++roomN){
+            for(int roomN = 1; roomN < 3; ++roomN){
                 roomName = String.valueOf(roomN);
                 room = new Room(roomName);
                 slots = new LinkedList<>();
-                for(int hour = 8; hour < 21; hour += 3){
+                for(int hour = 8; hour < 21; hour += 5){
                     Calendar calendar1, calendar2;
                     calendar1 = (Calendar) calendar.clone();
                     calendar1.add(Calendar.HOUR, hour);
