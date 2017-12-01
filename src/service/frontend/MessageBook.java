@@ -1,6 +1,6 @@
 package service.frontend;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class MessageBook {
@@ -14,7 +14,7 @@ public class MessageBook {
     }
 
     public MessageBook(){
-        this.map = new HashMap<>();
+        this.map = new LinkedHashMap<>();
     }
 
     public void put(String key, ClientInboundMessage message){

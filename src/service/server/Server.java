@@ -11,10 +11,7 @@ import service.server.responses.*;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
@@ -418,7 +415,7 @@ public class Server implements Runnable {
      */
     public Map<String, String> switchRoom(String bookingID, Campus campus, String roomIdentifier,
                                           Calendar newDate, TimeSlot timeSlot, int studentID) {
-        Map<String, String> ret = new HashMap<>();
+        Map<String, String> ret = new LinkedHashMap<>();
         BookingInfo cancelBookingInfo = BookingInfo.decode(bookingID);
         if (cancelBookingInfo != null) {
             cancelBookingInfo.setToBook(false);
@@ -566,7 +563,7 @@ public class Server implements Runnable {
     }
 
     public Map<Campus, Integer> getAvailableTimeSlot(Calendar date) {
-        Map<Campus, Integer> ret = new HashMap<>();
+        Map<Campus, Integer> ret = new LinkedHashMap<>();
         for (Campus campus : Campus.values()) {
             int count = 0;
 

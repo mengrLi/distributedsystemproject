@@ -18,14 +18,14 @@ public class RoomRecords{
     public RoomRecords(Server server, Campus campus){
         this.server = server;
         this.campus = campus;
-        records = new HashMap<>();
+        records = new LinkedHashMap<>();
         initRoomsAndTimeSlots();
     }
 
 
     public Map<String, Room> getRecordsOfDate(Calendar date){
         System.out.println("Accessing room availability of " + date.getTime() + " in " + campus.name);
-        return records.getOrDefault(date, new HashMap<>());
+        return records.getOrDefault(date, new LinkedHashMap<>());
     }
 
     public Room getRoomRecordOfDate(Calendar date, String roomIdentifier){
@@ -71,7 +71,7 @@ public class RoomRecords{
     private List<List<TimeSlot>> modifyRoom(String roomIdentifier, Calendar date, List<TimeSlot> list, boolean add){
         List<List<TimeSlot>> ret;
 
-        Map<String, Room> rooms = this.records.getOrDefault(date, new HashMap<>());
+        Map<String, Room> rooms = this.records.getOrDefault(date, new LinkedHashMap<>());
         Room room = rooms.getOrDefault(roomIdentifier, new Room(roomIdentifier));
 
         if (add) ret = room.addTimeSlots(list);
@@ -210,7 +210,7 @@ public class RoomRecords{
             calendar.set(year, month, day, 0, 0, 0);
             calendar.set(Calendar.MILLISECOND, 0);
 
-            rooms = new HashMap<>();
+            rooms = new LinkedHashMap<>();
 
             for(int roomN = 1; roomN < 3; ++roomN){
                 roomName = String.valueOf(roomN);

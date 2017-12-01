@@ -12,7 +12,7 @@ public class StudentBookingRecords{
 
     public StudentBookingRecords(Server server, Campus campus){
         this.campus = campus;
-        this.records = new HashMap<>();
+        this.records = new LinkedHashMap<>();
     }
 
     @Override
@@ -57,7 +57,7 @@ public class StudentBookingRecords{
 
 
         synchronized (this) {
-            Map<Integer, List<String>> week = records.getOrDefault(startOfWeek, new HashMap<>());
+            Map<Integer, List<String>> week = records.getOrDefault(startOfWeek, new LinkedHashMap<>());
             List<String> bookingIdList = week.getOrDefault(studentID, new LinkedList<>());
             if (add) {
                 bookingIdList.add(bookingID);

@@ -15,6 +15,17 @@ import java.util.Map;
  * send the original request to each server
  */
 
+/*
+
+TODO need  to copy RM's record upon reboot
+
+
+
+ */
+
+
+
+
 @RequiredArgsConstructor
 public class ReplicaManager implements Runnable{
     @Getter private final String rmName;
