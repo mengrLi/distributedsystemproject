@@ -25,19 +25,7 @@ public class FrontEndUdpListener implements Runnable {
                 request = new DatagramPacket(buffer, buffer.length);
                 socket.receive(request);
 
-                /**
-                 * TODO change to thread..
-                 */
-                //getInboundMessage message from rm response, transform to string
-                String rmResponseJson = new String(request.getData()).trim();
-                //transform from json string to object
-                RmResponse rmResponse = new GsonBuilder().create().fromJson(rmResponseJson, RmResponse.class);
-                String msgId = rmResponse.getSequencerId();
-
-                synchronized(frontEnd.getMapLock()){
-                    frontEnd.getMessageBook().getInboundMessage(msgId).addRmResponseToInboundMessage(rmResponse);
-                }
-                System.err.println("RM message received from " + rmResponse.getInet());
+                new Thread(new FrontEndResponder(request, frontEnd)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -1,5 +1,7 @@
 package service.rm;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import domain.Campus;
 import domain.Lock;
 import lombok.Getter;
@@ -7,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import service.domain.InternalRequest;
 import service.server.Server;
 
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,7 +41,7 @@ public class ReplicaManager implements Runnable{
 
     private long nonce = 1;
     private final Lock nonceLock = new Lock();
-    private final Map<Long, InternalRequest> seqRequestMap = new HashMap<>();
+    private Map<Long, InternalRequest> seqRequestMap = new HashMap<>();
     private final Lock mapLock = new Lock();
     private int errorCount = 0;
     private final Lock errorCountLock = new Lock();
@@ -59,9 +62,9 @@ public class ReplicaManager implements Runnable{
      * initiate all the servers
      */
     private void initReplicaManager(){
-        dvlServer = new Server(Campus.DORVAL, this);
-        kklServer = new Server(Campus.KIRKLAND, this);
-        wstServer = new Server(Campus.WESTMOUNT, this);
+        dvlServer = new Server(Campus.DORVAL);
+        kklServer = new Server(Campus.KIRKLAND);
+        wstServer = new Server(Campus.WESTMOUNT);
 
         new Thread(dvlServer).start();
         new Thread(wstServer).start();
@@ -173,5 +176,21 @@ public class ReplicaManager implements Runnable{
             }
             return delayTest;
 
+    }
+
+    public void loadRequestMap(String mapJson) {
+        Type type = new TypeToken<Map<Long, InternalRequest>>(){}.getType();
+        Map<Long, InternalRequest> map = new GsonBuilder().create().fromJson(mapJson, type);
+        synchronized (this.mapLock){
+            this.seqRequestMap = map;
+        }
+        System.out.println("Request map reloaded");
+    }
+
+    public String getRecords() {
+        Type type = new TypeToken<Map<Long, InternalRequest>>(){}.getType();
+        synchronized (this.mapLock){
+            return new GsonBuilder().create().toJson(seqRequestMap, type);
+        }
     }
 }

@@ -36,18 +36,15 @@ public class Server implements Runnable {
     @Getter
     private final Lock logLock = new Lock();
 
-    private final ReplicaManager replicaManager;
 
-    public Server(Campus campus, ReplicaManager replicaManager) {
+    public Server(Campus campus) {
         this.campus = campus;
-        this.replicaManager = replicaManager;
 
         administrators = new Administrators(campus);
         log = Logger.getLogger(campus.abrev+ Server.class.getName());
         initLogger();
         roomRecords = new RoomRecords(this, campus);
         studentBookingRecords = new StudentBookingRecords(this, campus);
-
     }
 
     /**
@@ -58,13 +55,13 @@ public class Server implements Runnable {
         //get server data
         Server temp = new GsonBuilder().enableComplexMapKeySerialization().create().fromJson(serverJson, Server.class);
         administrators = temp.getAdministrators();
-        System.out.println(administrators.size() + " imported");
         roomRecords = temp.roomRecords;
-        System.out.println(roomRecords.getDateCount());
         roomRecords.setServer(this);
         studentBookingRecords = temp.getStudentBookingRecords();
-        System.out.println(studentBookingRecords.getRecords().size());
 
+        System.out.println(administrators.size() + " administrator imported");
+        System.out.println(roomRecords.getDateCount() + "days of room record imported");
+        System.out.println(studentBookingRecords.getRecords().size() + " student records imported");
         synchronized (this.logLock){
             log.severe("System rebooted");
         }

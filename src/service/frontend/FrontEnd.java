@@ -18,6 +18,8 @@ import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 import service.Properties;
+import service.domain.RmResponse;
+
 import java.util.Calendar;
 
 public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
@@ -165,5 +167,11 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
         System.out.println("Front End initializing Udp Listener at port " + Properties.FRONTEND_UDP_LISTENING_PORT);
         new Thread(new FrontEndUdpListener(this)).start();
         System.out.println("Front End Udp listener initialized");
+    }
+
+    public void addRmResponseToInboundMessage(String msgId, RmResponse rmResponse) {
+        synchronized (this.getMapLock()){
+            messageBook.getInboundMessage(msgId).addRmResponseToInboundMessage(rmResponse);
+        }
     }
 }
