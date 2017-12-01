@@ -88,7 +88,8 @@ public class ReplicaManagerListener implements Runnable {
                                         +"-/-"+tempNonce
                                         +"-/-"+dvl
                                         +"-/-"+kkl
-                                        +"-/-"+wst; //threshold reached, kill it!
+                                        +"-/-"+wst
+                                        +"-/-"+requestMap; //threshold reached, kill it!
 
                                 errorBytes = errorConsequence.getBytes();
                                 packet1 = new DatagramPacket(errorBytes, errorBytes.length, address, errorRmPort);
