@@ -26,6 +26,7 @@ public class SequencerUdpListener implements Runnable{
             byte[] buffer;
             DatagramPacket request;
             while (true) {
+                System.out.println("3. Sequencer receives FE request");
                 buffer = new byte[100000];
                 request = new DatagramPacket(buffer, buffer.length);
                 socket.receive(request);
@@ -41,7 +42,6 @@ public class SequencerUdpListener implements Runnable{
 
                 //in a new thread send feedback to FE and send request to RM
                 new Thread(new SequencerResponder(socket, request,internalRequest)).start();
-                System.out.println("Sequencer has sent the new client message to process");
             }
         } catch (IOException e) {
             e.printStackTrace();

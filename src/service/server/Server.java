@@ -52,6 +52,7 @@ public class Server implements Runnable {
      * @param serverJson server json representation
      */
     public void loadData(String serverJson){
+        System.out.println("8.8.3 loading servers ");
         //get server data
         Server temp = new GsonBuilder().enableComplexMapKeySerialization().create().fromJson(serverJson, Server.class);
         administrators = temp.getAdministrators();
@@ -62,10 +63,9 @@ public class Server implements Runnable {
         System.out.println(administrators.size() + " administrator imported");
         System.out.println(roomRecords.getDateCount() + "days of room record imported");
         System.out.println(studentBookingRecords.getRecords().size() + " student records imported");
-        synchronized (this.logLock){
-            log.severe("System rebooted");
-        }
-        System.out.println("Reboot completed");
+        log.severe("System rebooted");
+
+        System.out.println("8.8.4 Reboot completed");
     }
     private void initLogger() {
         try {
@@ -75,9 +75,8 @@ public class Server implements Runnable {
             log.addHandler(fileHandler);
             SimpleFormatter formatter = new SimpleFormatter();
             fileHandler.setFormatter(formatter);
-            synchronized (this.logLock) {
-                log.info("\n" + campus.name + " LOG loaded");
-            }
+
+            log.info("\n" + campus.name + " LOG loaded");
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -46,7 +46,7 @@ public class SequencerUdpRequest {
         int length = messageInByte.length;
         DatagramSocket socket;
         try{
-            System.out.println("Sequencer is sending message to "+ serverName + " at " + rmAddress +":"+rmPort);
+            System.out.println("7. Sequencer is sending message to "+ serverName + " at " + rmAddress +":"+rmPort);
             socket = new DatagramSocket();
             InetAddress address = InetAddress.getByName(rmAddress);
             DatagramPacket request = new DatagramPacket(messageInByte, length, address, rmPort);

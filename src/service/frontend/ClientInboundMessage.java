@@ -89,6 +89,7 @@ public class ClientInboundMessage{
      * @return json string to be returned to client
      */
     String process(){
+
         sendToSequencer();
 
         if(!returnMessage.startsWith("Error")){
@@ -119,7 +120,7 @@ public class ClientInboundMessage{
         int length = messageInByte.length;
         DatagramSocket socket;
         try {
-            System.out.println("Forwarding request from Front End to Sequencer");
+            System.out.println("2. Forwarding request from Front End to Sequencer");
             socket = new DatagramSocket();
             InetAddress address = InetAddress.getByName(Properties.LOCALHOST);
             DatagramPacket request = new DatagramPacket(messageInByte, length, address, Properties.SEQUENCER_LISTENING_PORT);
@@ -128,7 +129,7 @@ public class ClientInboundMessage{
             DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
             socket.receive(reply);
             sequencerId = new SequencerId(new String(reply.getData()).trim());
-
+            System.out.println(" 6. Receive sequencer id ");
             synchronized (frontEnd.getMapLock()){
                 frontEnd.getMessageBook().put(sequencerId.getId(), this);
             }

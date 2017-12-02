@@ -57,7 +57,6 @@ public class ReplicaManager implements Runnable{
         initUdpListenPort();
     }
 
-
     /**
      * initiate all the servers
      */
@@ -69,7 +68,6 @@ public class ReplicaManager implements Runnable{
         new Thread(dvlServer).start();
         new Thread(wstServer).start();
         new Thread(kklServer).start();
-
     }
 
     public void restartServers(long nonce, String dvlJson, String kklJson, String wstJson){
@@ -77,6 +75,7 @@ public class ReplicaManager implements Runnable{
             this.errorCount = 0;
         }
         synchronized (this){
+            System.out.println("8.8.2 error reset, loading servers");
             this.nonce = nonce;
             this.dvlServer.loadData(dvlJson);
             this.kklServer.loadData(kklJson);
@@ -127,6 +126,7 @@ public class ReplicaManager implements Runnable{
     public void putInternalMessage(InternalRequest internalRequest){
         synchronized (this.mapLock){
             seqRequestMap.put(internalRequest.getId(), internalRequest);
+            System.out.println("8.3 RM message saved to rm seq map");
         }
     }
     public void saveResponseMessage(long id, String responseMessage){

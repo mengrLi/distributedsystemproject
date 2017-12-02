@@ -29,28 +29,50 @@ public class ReplicaManagerResponder implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("current nonce = " + replicaManager.getNonce());
         internalRequest = replicaManager.getInternalMessage(sequencerId.getIdLong());
-        System.out.println("Processing " + internalRequest.getId());
+        System.out.println("8.3 RM responder processing " + internalRequest.getId());
+
         //since sequencer does not need response.
         //only need to process this message and forward to the correct server
         clientMessage = internalRequest.getClientRequestJson();
-        while(replicaManager.getNonce() < sequencerId.getIdLong()){
+
+        int counter = 0;
+        int releaseAt = 100;
+        long currNonce = replicaManager.getNonce();
+
+        /*
+        ISSUE : MANY REQUEST WAITING, NEED TO WAIT 100 TIMES FOR EACH OF THOSE REQUEST. TODO FIX THIS
+         */
+        while(currNonce < sequencerId.getIdLong() && counter<releaseAt){
+            currNonce = replicaManager.getNonce();
             //if nonce smaller than seq ID wait
             //if nonce == seq ID process
             //if nonce > seq ID duplicate
-        }
-        if(internalRequest.getId() < replicaManager.getNonce()){
-            //DUPLICATE MESSAGE!
-            System.err.println("Duplicate Message Received- Message Dropped");
-        }else{
-            if(internalRequest.getMethod().equals("test")){
-                System.out.println(internalRequest.getClientRequestJson());
-            }else{
-                parseInboundMessage();
-                forwardMessage();
-                sendResponseToFrontEnd(responseToFrontEnd);
+            System.out.println("8.4 waiting for nonce counter to reach " + internalRequest.getId()
+                    + " - current nonce : " + currNonce);
+//            System.err.println("trial " + counter);
+            ++counter;
+            //try 100 times, to release block in case of loss of packet
+            if(counter==releaseAt){
+                //put an error in that slot
+                System.err.println("8.4.1 message is lost, empty message added to " + replicaManager);
+                InternalRequest missingMessage = new InternalRequest("missing", "missing message");
+                missingMessage.setSequencerId(String.valueOf(currNonce));
+                replicaManager.putInternalMessage(missingMessage);
+                replicaManager.increaseNonce();
+                System.err.println("8.4.2 " + currNonce + " is released without a message - packet lost");
             }
+        }
+        if(replicaManager.getNonce() > internalRequest.getId()){
+            //DUPLICATE MESSAGE!
+            System.err.println("8.4 Duplicate Message Received- Message Dropped");
+        }else{
+            //== CASE
+            System.err.println("8.5 processing current nonce " + currNonce);
+            parseInboundMessage();
+            forwardMessage();
+            sendResponseToFrontEnd(responseToFrontEnd);
+
             replicaManager.increaseNonce();
         }
     }
@@ -58,6 +80,7 @@ public class ReplicaManagerResponder implements Runnable {
      *  determine campus
      */
     private void parseInboundMessage(){
+        System.out.println("8.5.1 parse inbound message");
 
         //need to determine which server the client belongs to
         switch (internalRequest.getMethod()){
@@ -86,6 +109,10 @@ public class ReplicaManagerResponder implements Runnable {
             case "check":
                 campusAbrev = CheckAdminIdRequest.parseRequest(clientMessage).getFullID().substring(0,3);
                 break;
+            case "missing":
+                //TODO how to fix this
+                campusAbrev = "ERROR";
+                break;
         }
     }
 
@@ -95,25 +122,35 @@ public class ReplicaManagerResponder implements Runnable {
      * save the server responses to the message map
      */
     private void forwardMessage() {
-        Campus campus = Campus.getCampus(campusAbrev);
-        responseToFrontEnd+=campus.name;
-        String response = new ReplicaManagerRequest(internalRequest, replicaManager, campus).sendToServer();
-        if(response!=null) {
-            responseToFrontEnd = response;
+        if(campusAbrev.equals("ERROR")){
+            System.err.println("8.6 ERROR message missing");
+            replicaManager.saveResponseMessage(internalRequest.getId(), "Error : Message Missing");
+        }else{
+            Campus campus = Campus.getCampus(campusAbrev);
+            responseToFrontEnd+=campus.name;
 
-            //ERROR TEST!!! THIS MUST SET TO THE ERROR PRODUCING SERVER MANUALLY
-            if(replicaManager.getErrorTest()){
+            System.out.println(8.);
 
-                responseToFrontEnd+="ErrorOccured";
-            }
-            if(replicaManager.getDelayTest()){
-                try {
-                    Thread.currentThread().wait(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+
+
+            String response = new ReplicaManagerRequest(internalRequest, replicaManager, campus).sendToServer();
+            if(response!=null) {
+                responseToFrontEnd = response;
+
+                //ERROR TEST!!! THIS MUST SET TO THE ERROR PRODUCING SERVER MANUALLY
+                if(replicaManager.getErrorTest()){
+
+                    responseToFrontEnd+="ErrorOccured";
                 }
+                if(replicaManager.getDelayTest()){
+                    try {
+                        Thread.currentThread().wait(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                replicaManager.saveResponseMessage(internalRequest.getId(), responseToFrontEnd);
             }
-            replicaManager.saveResponseMessage(internalRequest.getId(), responseToFrontEnd);
         }
     }
 

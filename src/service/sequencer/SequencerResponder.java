@@ -15,7 +15,7 @@ public class SequencerResponder implements Runnable{
 
     @Override
     public void run(){
-        System.out.println("Sequencer responder is processing the new incoming message");
+        System.out.println("4. Sequencer responder is processing the new incoming message");
 
         // 1 tell FE about the seq ID
         // 2 tell RM about the new message
@@ -24,6 +24,8 @@ public class SequencerResponder implements Runnable{
             byte[] data = internalRequest.getSequencerId().getId().getBytes();
             DatagramPacket response = new DatagramPacket(data, data.length, request.getAddress(), request.getPort());
             socket.send(response);
+
+            System.out.println("5. Sequencer responder replies to FE for seq Id");
 
             //tell RM about the new message
             new SequencerUdpRequest(internalRequest).sendRequest();

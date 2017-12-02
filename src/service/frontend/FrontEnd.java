@@ -105,56 +105,56 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
 
     @Override
     public String createRoom(String json){
-        System.out.println("Front end receives the client request for room creation " + Calendar.getInstance().getTime());
+        System.out.println("1. Front end receives the client request for room creation " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "create", this);
         return message.process();
     }
 
     @Override
     public String deleteRoom(String json){
-        System.out.println("Front end receives the client request for room deletion " + Calendar.getInstance().getTime());
+        System.out.println("1. Front end receives the client request for room deletion " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "delete", this);
         return message.process();
     }
 
     @Override
     public String bookRoom(String json){
-        System.out.println("Front end receives the client request for room booking " + Calendar.getInstance().getTime());
+        System.out.println("1. Front end receives the client request for room booking " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "book", this);
         return message.process();
     }
 
     @Override
     public String switchRoom(String json){
-        System.out.println("Front end receives the client request for room switch " + Calendar.getInstance().getTime());
+        System.out.println("1. Front end receives the client request for room switch " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "switch", this);
         return message.process();
     }
 
     @Override
     public String getAvailableTimeSlotCount(String json){
-        System.out.println("Front end receives the client request for room count" + Calendar.getInstance().getTime());
+        System.out.println("1. Front end receives the client request for room count" + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "count", this);
         return message.process();
     }
 
     @Override
     public String getAvailableTimeSlotByRoom(String json){
-        System.out.println("Front end receives the client request for room info " + Calendar.getInstance().getTime());
+        System.out.println("1. Front end receives the client request for room info " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "room", this);
         return message.process();
     }
 
     @Override
     public String cancelBooking(String json){
-        System.out.println("Front end receives the client request for room cancellation " + Calendar.getInstance().getTime());
+        System.out.println("1. Front end receives the client request for room cancellation " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "cancel", this);
         return message.process();
     }
 
     @Override
     public boolean checkAdminId(String json){
-        System.out.println("Front end receives the client request for admin check " + Calendar.getInstance().getTime());
+        System.out.println("1. Front end receives the client request for admin check " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "check", this);
         String response = message.process();
         return Boolean.parseBoolean(response);
