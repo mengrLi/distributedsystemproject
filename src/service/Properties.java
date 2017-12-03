@@ -26,11 +26,11 @@ public class Properties {
 
 
     public static long timeOutLimit = 1500;
-    public static long minTimeDiff = 300;
+    public static long minTimeDiff = 750;
 
 
     public static List<String> inetList = new LinkedList<>();
-    public static int maxUdpWaitingTime = 1000;
+    public static int maxUdpWaitingTime = 5000;
 
     static{
         inetList.add(Properties.RM_1_INET);

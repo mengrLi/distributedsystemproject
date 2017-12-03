@@ -231,7 +231,7 @@ public class Server implements Runnable {
         synchronized (this.roomLock) {
             //check booking record
             int getWeekCount = studentBookingRecords.getWeeklyBookingRecords(date, studentId);
-            System.out.println(getWeekCount);
+            System.out.println(studentId +" has booked "+getWeekCount + " rooms ");
             /*
             Strp 2: if count is less than 3, book the room
             if the room is in the same CAMPUS as student's account, book directly,

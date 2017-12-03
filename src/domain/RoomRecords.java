@@ -197,10 +197,10 @@ public class RoomRecords{
 
     public void initRoomsAndTimeSlots(){
         int year = 2017;
-        int month = Calendar.NOVEMBER;
+        int month = Calendar.DECEMBER;
         int minutes = 119;
 
-        for (int day = 23; day <= 30; ++day) {
+        for (int day = 1; day <= 8; ++day) {
             Room room;
             Map<String, Room> rooms;
             String roomName;

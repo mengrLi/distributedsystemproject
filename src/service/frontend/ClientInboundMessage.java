@@ -101,7 +101,7 @@ public class ClientInboundMessage{
             processReturnData();
         }
         //return when thread finish running
-        System.out.println("12/// response to client : "+returnMessage);
+        System.out.println("12/// response to client : " + returnMessage);
         return returnMessage;
     }
 
@@ -151,7 +151,7 @@ public class ClientInboundMessage{
      * process the data returned by RM
      */
     private void processReturnData(){
-        returnMessage = DEFAULT_ERROR;
+
         RmResponse r1 = null;
         RmResponse r2 = null;
         RmResponse r3 = null;
@@ -209,6 +209,9 @@ public class ClientInboundMessage{
                 returnMessage = r1.getResponseMessage();
                 alertMistakes(r2, r3);
             }
+        }else{
+            System.err.println("CIM ERROR : NO MESSAGE RECEIVED");
+            returnMessage = DEFAULT_ERROR;
         }
     }
 
