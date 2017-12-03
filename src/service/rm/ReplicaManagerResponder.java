@@ -23,7 +23,7 @@ public class ReplicaManagerResponder implements Runnable {
     private String clientMessage;
     private InternalRequest internalRequest;
 
-    private String responseToFrontEnd = "Error: No response from ";
+    private String responseToFrontEnd;
     private String campusAbrev;
 
 
@@ -74,6 +74,7 @@ public class ReplicaManagerResponder implements Runnable {
             sendResponseToFrontEnd(responseToFrontEnd);
 
             replicaManager.increaseNonce();
+            System.out.println("8.9/ Replica Manager nonce increased");
         }
     }
     /**
@@ -110,7 +111,6 @@ public class ReplicaManagerResponder implements Runnable {
                 campusAbrev = CheckAdminIdRequest.parseRequest(clientMessage).getFullID().substring(0,3);
                 break;
             case "missing":
-                //TODO how to fix this
                 campusAbrev = "ERROR";
                 break;
         }
@@ -123,33 +123,30 @@ public class ReplicaManagerResponder implements Runnable {
      */
     private void forwardMessage() {
         if(campusAbrev.equals("ERROR")){
-            System.err.println("8.6 ERROR message missing");
+            System.err.println("8.6-8.7/ ERROR : message missing");
             replicaManager.saveResponseMessage(internalRequest.getId(), "Error : Message Missing");
+            responseToFrontEnd+="Error : message missing";
         }else{
             Campus campus = Campus.getCampus(campusAbrev);
-            responseToFrontEnd+=campus.name;
 
-            System.out.println(8.);
+            responseToFrontEnd = new ReplicaManagerRequest(internalRequest, replicaManager, campus).sendToServer();
 
-
-
-            String response = new ReplicaManagerRequest(internalRequest, replicaManager, campus).sendToServer();
-            if(response!=null) {
-                responseToFrontEnd = response;
-
-                //ERROR TEST!!! THIS MUST SET TO THE ERROR PRODUCING SERVER MANUALLY
-                if(replicaManager.getErrorTest()){
-
-                    responseToFrontEnd+="ErrorOccured";
+            /*
+            ERROR TEST!!! THIS MUST SET TO THE ERROR PRODUCING SERVER MANUALLY
+             */
+            if(replicaManager.getErrorTest()) {
+                System.err.println("8.7-test Generate error for testing");
+                responseToFrontEnd+="ErrorOccurred";
+            }
+            replicaManager.saveResponseMessage(internalRequest.getId(), responseToFrontEnd);
+            if(replicaManager.getDelayTest()){
+                try {
+                    System.err.println("8.7-test-1 Delay test: waiting");
+                    this.wait(2000);
+                    System.err.println("8.7-test-2 Delay test: resumed");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                if(replicaManager.getDelayTest()){
-                    try {
-                        Thread.currentThread().wait(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                replicaManager.saveResponseMessage(internalRequest.getId(), responseToFrontEnd);
             }
         }
     }
@@ -159,7 +156,7 @@ public class ReplicaManagerResponder implements Runnable {
      * @param responseToFrontEnd message to be sent to front end
      */
     private void sendResponseToFrontEnd(String responseToFrontEnd) {
-        System.out.println("sending to response to fe : ");
+        System.out.println("8.8.1 sending to response to FE");
 
         RmResponse rmResponse = new RmResponse(replicaManager.getInet(), replicaManager.getRmListeningPort(),
                 sequencerId.getId(), responseToFrontEnd);
@@ -172,6 +169,8 @@ public class ReplicaManagerResponder implements Runnable {
             InetAddress address = InetAddress.getByName(Properties.FRONTEND_INET);
             DatagramPacket request = new DatagramPacket(data, length, address, Properties.FRONTEND_UDP_LISTENING_PORT);
             socket.send(request);
+            socket.close();
+            System.out.println("8.8.2/ message send to FE");
         }catch (IOException e){
             e.printStackTrace();
         }

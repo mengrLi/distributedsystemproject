@@ -117,7 +117,7 @@ public class Room implements Serializable{
 
     /**
      * start before
-     * - end before start -> addRmResponseToInboundMessage and return
+     * - end before start -> addRmResponseToInboundMessageFE and return
      * - end after start -> combine and ignore the new end time and return
      * start within
      * - end before end -> ignored, current one is bigger and return
@@ -126,7 +126,7 @@ public class Room implements Serializable{
      * ---start before the next one, combine and ignore the new start and return
      * ---start after the next one, use the next start as end and return
      * start after
-     * -last one -> addRmResponseToInboundMessage
+     * -last one -> addRmResponseToInboundMessageFE
      * -not last one -> check with the next
      *
      * @param slot new time slot to be inserted
@@ -142,7 +142,7 @@ public class Room implements Serializable{
             //time slots are sorted
             if(slot.getStartMilli() < get.getStartMilli()){
                 if(slot.getEndMilli() < get.getStartMilli()){
-                    //addRmResponseToInboundMessage in front
+                    //addRmResponseToInboundMessageFE in front
                     timeSlots.add(slot);
                     return true;
                 }else{

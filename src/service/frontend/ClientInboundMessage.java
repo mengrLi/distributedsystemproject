@@ -7,9 +7,7 @@ import service.domain.RmResponse;
 import service.domain.InternalRequest;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.net.*;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -60,9 +58,11 @@ public class ClientInboundMessage{
 
     public final Lock rrLock = new Lock();
 
+    private final String DEFAULT_ERROR = "Error : Server time out";
+
     /**
      * Constructor
-     * Initiate received time and time out max limit to 10 sec
+     * Initiate received time and time out max limit to 1 sec
      * @param inboundMessage json format client request
      * @param method method of which the client request should be processed
      * @param frontEnd reference to the singleton front end
@@ -101,7 +101,7 @@ public class ClientInboundMessage{
             processReturnData();
         }
         //return when thread finish running
-        System.out.println(returnMessage);
+        System.out.println("12/// response to client : "+returnMessage);
         return returnMessage;
     }
 
@@ -125,17 +125,24 @@ public class ClientInboundMessage{
             InetAddress address = InetAddress.getByName(Properties.LOCALHOST);
             DatagramPacket request = new DatagramPacket(messageInByte, length, address, Properties.SEQUENCER_LISTENING_PORT);
             socket.send(request);
+            socket.setSoTimeout(Properties.maxUdpWaitingTime);
             byte[] buffer = new byte[100000];
             DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
-            socket.receive(reply);
+            try{
+                socket.receive(reply);
+            }catch (SocketTimeoutException ste){
+                System.err.println("6. Sequencer time out");
+                returnMessage = "Error : sequencer response timeout";
+                return;
+            }
             sequencerId = new SequencerId(new String(reply.getData()).trim());
-            System.out.println(" 6. Receive sequencer id ");
+            System.out.println("6. Receive sequencer id ");
             synchronized (frontEnd.getMapLock()){
                 frontEnd.getMessageBook().put(sequencerId.getId(), this);
             }
-
         } catch (IOException e) {
             e.printStackTrace();
+            System.err.println("6. FE inbound message IO exception");
             returnMessage = "Error: I/O Exception";
         }
     }
@@ -144,50 +151,38 @@ public class ClientInboundMessage{
      * process the data returned by RM
      */
     private void processReturnData(){
+        returnMessage = DEFAULT_ERROR;
         RmResponse r1 = null;
         RmResponse r2 = null;
         RmResponse r3 = null;
-
         int responseCount;
 
         synchronized (this.rrLock) {
             responseCount = rmResponseList.size();
-
-            System.out.println(responseCount + " Message received for processing");
-
             if(responseCount > 0) r1 = rmResponseList.get(0);
             if(responseCount > 1) r2 = rmResponseList.get(1);
             if(responseCount > 2) r3 = rmResponseList.get(2);
         }
-        returnMessage = "Error : Server time out";
-        if(responseCount == 0){
-            //no responses, server recover
-            alertMistakes();
-        }else if(responseCount == 1){
-            /*
-            FOR TESTING
-             */
-            returnMessage = r1.getResponseMessage();
+        System.out.println("11 "+responseCount + " Message received for processing");
 
+        if(responseCount == 1){
             //only one gave response, assume that is the good one for now, check the others
+            returnMessage = r1.getResponseMessage();
+            /*
+            THIS IS MOSTLY USED FOR TESTING USING ONLY ONE RM, THIS WILL ALSO CALL FOR MISSING SERVERS
+             */
             alertMistakes(r1);
-
         }else if(responseCount == 2){
             //2 responses
-            if(!r1.getResponseMessage().equals(r2.getResponseMessage())){
-                //not equal + 1 not on time, => server recover from the last time
-                System.err.println(r1.getResponseMessage());
-                System.err.println(r2.getResponseMessage());
-                returnMessage = r1.getResponseMessage();
-                System.out.println(responseCount + " received " + " 1 delayed");
-            }else{
+            if (r1.getResponseMessage().equals(r2.getResponseMessage())) {
                 //both match, confident, alert about the last one
-                System.out.println(r1.getInet());
-                System.out.println(r2.getInet());
                 returnMessage = r1.getResponseMessage();
                 alertMistakes(r1, r2);
+            } else {
+                //not equal + 1 not on time, => server recover from the last time
+                System.err.println("CIM ERROR 1 : MESSAGES DO NOT MATCH AND ONE MISSING");
             }
-        }else{
+        }else if(responseCount == 3){
             //3 responses
             if(r1.getResponseMessage().equals(r2.getResponseMessage())
                     &&r2.getResponseMessage().equals(r3.getResponseMessage())
@@ -208,7 +203,11 @@ public class ClientInboundMessage{
 
             }else{
                 //no match in three, server recover from the last time
-                alertMistakes();
+                //todo assuming the first one is good, but this has been assumed not to be reached
+                System.err.println("ALL THREE MESSAGES ARE DIFFERENT");
+                //use the fastest response are the good answer
+                returnMessage = r1.getResponseMessage();
+                alertMistakes(r2, r3);
             }
         }
     }
@@ -219,7 +218,7 @@ public class ClientInboundMessage{
      * @param responses the corrected ones !!!!!
      */
     private void alertMistakes(RmResponse ... responses){
-        System.err.println("SERVER ERROR OCCURRED IN " + (3-responses.length) + " SERVER" + (3-responses.length>1 ? "S" :""));
+        System.err.println("12 SERVER ERROR OCCURRED IN " + (3-responses.length) + " SERVER" + (3-responses.length>1 ? "S" :""));
         new Thread(new FrontEndAlert(responses, sequencerId)).run();
     }
 
@@ -233,13 +232,16 @@ public class ClientInboundMessage{
         synchronized (this.rrLock){
             rmResponseList.add(rmResponse);
 
-//            if(rmResponseList.size()==0){
-//                //first insert response
-//                firstResponseTime = System.currentTimeMillis();
-//                timeOutTime = firstResponseTime + 2 * (firstResponseTime - receiveTime);
-//                System.out.println(timeOutTime-firstResponseTime);
-//            }
-            System.out.println("Message received FE : "+rmResponseList.size());
+            if(rmResponseList.size()==0){
+                //first insert response
+                firstResponseTime = System.currentTimeMillis();
+                long diff = firstResponseTime - receiveTime;
+                //this is number is determined by magic for now
+                //minimum waiting time is set to ensure the waiting time is not too short
+                if(diff < Properties.minTimeDiff) diff = Properties.minTimeDiff;
+                timeOutTime = firstResponseTime + 2 * diff;
+            }
+            System.out.println("10.1/ Message received FE : "+rmResponseList.size());
         }
     }
 }

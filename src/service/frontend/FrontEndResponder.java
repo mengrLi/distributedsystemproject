@@ -6,9 +6,6 @@ import service.domain.RmResponse;
 
 import java.net.DatagramPacket;
 
-/**
- * Created by PT-PC on 2017-12-01.
- */
 @RequiredArgsConstructor
 public class FrontEndResponder implements Runnable {
     private final DatagramPacket request;
@@ -21,7 +18,7 @@ public class FrontEndResponder implements Runnable {
         RmResponse rmResponse = new GsonBuilder().create().fromJson(rmResponseJson, RmResponse.class);
         String msgId = rmResponse.getSequencerId();
 
-        frontEnd.addRmResponseToInboundMessage(msgId, rmResponse);
-        System.err.println("RM message received from " + rmResponse.getInet());
+        frontEnd.addRmResponseToInboundMessageFE(msgId, rmResponse);
+        System.out.println("10 RM message received from " + rmResponse.getInet());
     }
 }

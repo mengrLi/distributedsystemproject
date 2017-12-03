@@ -87,7 +87,7 @@ public class BookingInfo {
                 .append(studentCampusAbrev)
                 .append("-")
                 .append(studentID)
-                .append('-')
+                .append("-")
                 .append(bookingDate.getTimeInMillis())
                 .append("-")
                 .append(roomName)

@@ -24,7 +24,7 @@ public class FrontEndUdpListener implements Runnable {
                 buffer = new byte[100000];
                 request = new DatagramPacket(buffer, buffer.length);
                 socket.receive(request);
-                System.out.println("   ");
+                System.out.println("9 Front end receives RM message");
                 new Thread(new FrontEndResponder(request, frontEnd)).start();
             }
         } catch (IOException e) {

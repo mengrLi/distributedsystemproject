@@ -169,7 +169,7 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
         System.out.println("Front End Udp listener initialized");
     }
 
-    public void addRmResponseToInboundMessage(String msgId, RmResponse rmResponse) {
+    public void addRmResponseToInboundMessageFE(String msgId, RmResponse rmResponse) {
         synchronized (this.getMapLock()){
             messageBook.getInboundMessage(msgId).addRmResponseToInboundMessage(rmResponse);
         }

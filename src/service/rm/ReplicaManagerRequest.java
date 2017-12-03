@@ -23,23 +23,29 @@ public class ReplicaManagerRequest {
         int length = data.length;
         DatagramSocket socket;
         try{
-            System.out.println(replicaManager.getRmName() + " is forwarding client message to " + campus.name);
+            System.out.println("8.6 "+replicaManager.getRmName() + " is forwarding client message to " + campus.name);
             socket = new DatagramSocket();
             //server and rm are in same localhost
             InetAddress address = InetAddress.getByName(Properties.LOCALHOST);
             DatagramPacket request = new DatagramPacket(data, length, address, campus.rmPort);
-            socket.send(request);
-
-            //wait for response
             byte[] buffer = new byte[100000];
             DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
-            socket.receive(reply);
+
+            socket.send(request);
+            socket.setSoTimeout(Properties.maxUdpWaitingTime);
+            //wait for response for 1 sec
+            try{
+                socket.receive(reply);
+            }catch (SocketTimeoutException ste){
+                System.err.println("8.7 "+ replicaManager.getRmName()+" request from " + campus.name + " TIMEOUT");
+                return "Error : server time out";
+            }
             String answer = new String(reply.getData()).trim();
-            System.out.println("RM request got response ---" + answer);
+            System.out.println("8.7 "+ replicaManager.getRmName()+" request got response from " + campus.name);
             return answer;
         } catch (IOException e) {
             e.printStackTrace();
-            return "Error: IO exception at " + ReplicaManagerRequest.class;
+            return "Error : IO exception at " + ReplicaManagerRequest.class;
         }
 
     }

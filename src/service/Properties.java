@@ -1,5 +1,8 @@
 package service;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class Properties {
     public static final String LOCALHOST = "localhost";
 
@@ -23,4 +26,17 @@ public class Properties {
 
 
     public static long timeOutLimit = 1500;
+    public static long minTimeDiff = 300;
+
+
+    public static List<String> inetList = new LinkedList<>();
+    public static int maxUdpWaitingTime = 1000;
+
+    static{
+        inetList.add(Properties.RM_1_INET);
+        inetList.add(Properties.RM_2_INET);
+        inetList.add(Properties.RM_3_INET);
+    }
+
+
 }
