@@ -52,22 +52,22 @@ public class ReplicaManagerListener implements Runnable {
                     }
                 }else if(seqRequest.substring(0,4).equals("both")){
                     //two RMs has no responses or delay
-                    List<String> inetList = Properties.inetList;
-
-                    boolean[] bArray = new boolean[3];
-                    for(int i = 0 ; i < 3 ; ++i) if(bArray[i] = inetList.get(i).equals(replicaManager.getInet())) break;
-                    long seqId = Long.parseLong(seqRequest.split("-")[1]);
-
-                    if(bArray[0]){//RM1 is good
-                        fixDetectedErrors(Properties.RM_2_INET, Properties.RM_2_LISTENING_PORT, seqId);
-                        fixDetectedErrors(Properties.RM_3_INET, Properties.RM_2_LISTENING_PORT, seqId);
-                    }else if(bArray[1]){//RM2 is good
-                        fixDetectedErrors(Properties.RM_1_INET, Properties.RM_1_LISTENING_PORT, seqId);
-                        fixDetectedErrors(Properties.RM_3_INET, Properties.RM_3_LISTENING_PORT, seqId);
-                    }else{//RM3 is good
-                        fixDetectedErrors(Properties.RM_1_INET, Properties.RM_1_LISTENING_PORT, seqId);
-                        fixDetectedErrors(Properties.RM_2_INET, Properties.RM_2_LISTENING_PORT, seqId);
-                    }
+//                    List<String> inetList = Properties.inetList;
+//
+//                    boolean[] bArray = new boolean[3];
+//                    for(int i = 0 ; i < 3 ; ++i) if(bArray[i] = inetList.get(i).equals(replicaManager.getInet())) break;
+//                    long seqId = Long.parseLong(seqRequest.split("-")[1]);
+//
+//                    if(bArray[0]){//RM1 is good
+//                        fixDetectedErrors(Properties.RM_2_INET, Properties.RM_2_LISTENING_PORT, seqId);
+//                        fixDetectedErrors(Properties.RM_3_INET, Properties.RM_2_LISTENING_PORT, seqId);
+//                    }else if(bArray[1]){//RM2 is good
+//                        fixDetectedErrors(Properties.RM_1_INET, Properties.RM_1_LISTENING_PORT, seqId);
+//                        fixDetectedErrors(Properties.RM_3_INET, Properties.RM_3_LISTENING_PORT, seqId);
+//                    }else{//RM3 is good
+//                        fixDetectedErrors(Properties.RM_1_INET, Properties.RM_1_LISTENING_PORT, seqId);
+//                        fixDetectedErrors(Properties.RM_2_INET, Properties.RM_2_LISTENING_PORT, seqId);
+//                    }
 
                 }else if(seqRequest.substring(0,8).equals("sequence")){
                     System.out.println("8.4 Error detected RM received error message");

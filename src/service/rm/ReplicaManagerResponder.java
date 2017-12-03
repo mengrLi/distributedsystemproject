@@ -37,32 +37,33 @@ public class ReplicaManagerResponder implements Runnable {
         clientMessage = internalRequest.getClientRequestJson();
 
         int counter = 0;
-        int releaseAt = 100;
+        int releaseAt = 10000;
         long currNonce = replicaManager.getNonce();
 
         /*
         ISSUE : MANY REQUEST WAITING, NEED TO WAIT 100 TIMES FOR EACH OF THOSE REQUEST. TODO FIX THIS
          */
-        while(currNonce < sequencerId.getIdLong() && counter<releaseAt){
+        while(currNonce < sequencerId.getIdLong()){
             currNonce = replicaManager.getNonce();
             //if nonce smaller than seq ID wait
             //if nonce == seq ID process
             //if nonce > seq ID duplicate
-            System.out.println("8.4 waiting for nonce counter to reach " + internalRequest.getId()
-                    + " - current nonce : " + currNonce);
+//            System.out.println("8.4 waiting for nonce counter to reach " + internalRequest.getId()
+//                    + " - current nonce : " + currNonce);
 //            System.err.println("trial " + counter);
             ++counter;
             //try 100 times, to release block in case of loss of packet
-            if(counter==releaseAt){
-                //put an error in that slot
-                System.err.println("8.4.1 message is lost, empty message added to " + replicaManager);
-                InternalRequest missingMessage = new InternalRequest("missing", "missing message");
-                missingMessage.setSequencerId(String.valueOf(currNonce));
-                replicaManager.putInternalMessage(missingMessage);
-                replicaManager.increaseNonce();
-                System.err.println("8.4.2 " + currNonce + " is released without a message - packet lost");
-            }
+//            if(counter==releaseAt){
+//                //put an error in that slot
+//                System.err.println("8.4.1 message is lost, empty message added to " + replicaManager);
+//                InternalRequest missingMessage = new InternalRequest("missing", "missing message");
+//                missingMessage.setSequencerId(String.valueOf(currNonce));
+//                replicaManager.putInternalMessage(missingMessage);
+//                replicaManager.increaseNonce();
+//                System.err.println("8.4.2 " + currNonce + " is released without a message - packet lost");
+//            }
         }
+        System.err.println("-------------------------------------------------------------------------------------------" + currNonce);
         if(replicaManager.getNonce() > internalRequest.getId()){
             //DUPLICATE MESSAGE!
             System.err.println("8.4 Duplicate Message Received- Message Dropped");

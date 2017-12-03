@@ -215,6 +215,7 @@ public class Server implements Runnable {
     public String bookRoom(Campus campusOfInterest, String roomIdentifier,
                            Calendar date, TimeSlot timeSlot, int studentId) {
         /* Create a bookingID object */
+        System.out.println(11111);
         BookingInfo bookingInfo = new BookingInfo(
                 campusOfInterest.abrev, campus.abrev,
                 studentId, date, roomIdentifier,

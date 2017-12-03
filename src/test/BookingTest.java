@@ -1,0 +1,51 @@
+package test;
+
+import domain.Campus;
+import domain.TimeSlot;
+import lombok.RequiredArgsConstructor;
+import user_v2.ClientV2;
+import user_v2.StudentClientV2;
+
+import java.util.Calendar;
+
+/**
+ * Created by PT-PC on 2017-12-02.
+ */
+public class BookingTest {
+
+
+    public static void main(String[] args) {
+
+
+        for(int i = 1000 ; i < 9999 ; i*=2){
+            for(int j = 0 ; j  <3 ; ++j){
+                new Thread(new bookThread(j,i)).start();
+            }
+        }
+    }
+
+}
+@RequiredArgsConstructor
+class bookThread implements Runnable{
+    private final int campusIndex;
+    private final int id;
+    private static Campus[] campuses = Campus.values();
+    @Override
+    public void run() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(2017, 11, 3, 0,0,0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        Calendar time1 = (Calendar) calendar.clone();
+        time1.set(2017, 11, 3, 8 , 0 ,0);
+        Calendar time2 = (Calendar) calendar.clone();
+        time2.set(2017, 11, 3, 9 ,59,0);
+
+
+        ClientV2 clientV2 = new StudentClientV2(campuses[campusIndex], id);
+        String resposne = clientV2.bookRoom(campuses[0], "1", calendar, new TimeSlot(time1, time2),campuses[campusIndex],  id);
+        System.out.println(campuses[campusIndex].abrev+"s"+id);
+        System.out.println(resposne + "\n");
+    }
+}
+

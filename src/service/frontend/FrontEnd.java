@@ -105,6 +105,8 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
 
     @Override
     public String createRoom(String json){
+        System.out.println(json);
+
         System.out.println("1. Front end receives the client request for room creation " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "create", this);
         return message.process();
@@ -112,6 +114,8 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
 
     @Override
     public String deleteRoom(String json){
+        System.out.println(json);
+
         System.out.println("1. Front end receives the client request for room deletion " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "delete", this);
         return message.process();
@@ -119,6 +123,8 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
 
     @Override
     public String bookRoom(String json){
+        System.out.println(json);
+
         System.out.println("1. Front end receives the client request for room booking " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "book", this);
         return message.process();
@@ -126,6 +132,8 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
 
     @Override
     public String switchRoom(String json){
+        System.out.println(json);
+
         System.out.println("1. Front end receives the client request for room switch " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "switch", this);
         return message.process();
@@ -147,6 +155,8 @@ public class FrontEnd extends CampusServerInterfacePOA implements Runnable{
 
     @Override
     public String cancelBooking(String json){
+        System.out.println(json);
+
         System.out.println("1. Front end receives the client request for room cancellation " + Calendar.getInstance().getTime());
         ClientInboundMessage message = new ClientInboundMessage(json, "cancel", this);
         return message.process();

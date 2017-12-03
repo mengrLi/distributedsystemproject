@@ -45,14 +45,12 @@ public class StudentClientV2 extends ClientV2 {
                 campusOfID,
                 id)
                 .sendRequest(campusInterface);
-        synchronized (LOG_LOCK) {
-            LOG.info("\nStudent " + FULL_ID
+        LOG.info("\nStudent " + FULL_ID
                     + "\nbooking room " + roomNumber
                     + "\nfrom " + timeSlot.getStartTime().getTime()
                     + "\nto " + timeSlot.getEndTime().getTime()
-                    + "\nin " + campusOfInterest.name
-                    + "\n---" + (response.startsWith("Error") ? "FAILED" : "SUCCEEDED"));
-        }
+                    + "\nin " + campusOfInterest.name + "\n---" + (response.startsWith("Error") ? "FAILED" : "SUCCEEDED"));
+
         return response;
     }
 
