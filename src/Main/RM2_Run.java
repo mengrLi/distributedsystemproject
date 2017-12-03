@@ -8,8 +8,7 @@ public class RM2_Run{
         System.out.println("Initializing " + Properties.rm2Name
                 + " at " + Properties.RM_2_INET + ":" + Properties.RM_2_LISTENING_PORT);
 
-        ReplicaManager replicaManager2 = new ReplicaManager(
-                Properties.rm2Name, Properties.RM_2_INET, Properties.RM_2_LISTENING_PORT);
+        ReplicaManager replicaManager2 = new ReplicaManager(Properties.rm2Name, Properties.RM_2_INET, Properties.RM_2_LISTENING_PORT);
 
         new Thread(replicaManager2).start();
 

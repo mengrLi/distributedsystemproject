@@ -25,39 +25,6 @@ public class StartOrbs{
         Sequencer sequencer = Sequencer.ourInstance;
 
 
-        //start replica managers and servers. this part is deliberately coded as this, since at demo, servers
-        //are located on three computers
-
-        //RM1
-//        ReplicaManager replicaManager1 = new ReplicaManager(Properties.rm1Name, Properties.RM_1_INET, Properties.RM_1_LISTENING_PORT);
-//        new Thread(replicaManager1).start();
-//
-
-
-//        //RM2
-        System.out.println("Initializing " + Properties.rm2Name
-                + " at " + Properties.RM_2_INET + ":" + Properties.RM_2_LISTENING_PORT);
-
-        ReplicaManager replicaManager2 = new ReplicaManager(
-                Properties.rm2Name, Properties.RM_2_INET, Properties.RM_2_LISTENING_PORT);
-
-        new Thread(replicaManager2).start();
-
-        System.out.println(Properties.rm2Name + " at " + Properties.RM_2_INET
-                + ":" + Properties.RM_2_LISTENING_PORT + " initialized");
-
-//        //RM3
-//        System.out.println("Initializing " + Properties.rm3Name
-//                + " at " + Properties.RM_3_INET + ":" + Properties.RM_3_LISTENING_PORT);
-//
-//        ReplicaManager replicaManager3 = new ReplicaManager(
-//                Properties.rm3Name, Properties.RM_3_INET, Properties.RM_3_LISTENING_PORT);
-//
-//        new Thread(replicaManager3).start();
-//
-//        System.out.println(Properties.rm3Name + " at " + Properties.RM_3_INET
-//                + ":" + Properties.RM_3_LISTENING_PORT + " initialized");
-
     }
 
     public static void main(String[] args) throws RemoteException, InterruptedException {
