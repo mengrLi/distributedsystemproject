@@ -4,7 +4,7 @@ import service.Properties;
 import service.rm.ReplicaManager;
 
 public class RM1_Run {
-    public static void main(String[] args) {
+    public static void start(){
         System.out.println("Initializing " + Properties.rm1Name
                 + " at " + Properties.RM_1_INET + ":" + Properties.RM_1_LISTENING_PORT);
 
@@ -14,5 +14,9 @@ public class RM1_Run {
 
         System.out.println(Properties.rm1Name + " at " + Properties.RM_1_INET
                 + ":" + Properties.RM_1_LISTENING_PORT + " initialized");
+    }
+
+    public static void main(String[] args) {
+        start();
     }
 }

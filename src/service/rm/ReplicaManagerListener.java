@@ -155,7 +155,7 @@ public class ReplicaManagerListener implements Runnable {
         socket1.setSoTimeout(1500);
 
         String errorConsequence;
-        String messageFromError = new String(reply.getData()).trim();
+
         byte[] errorBytes;
 
         try{
@@ -175,11 +175,13 @@ public class ReplicaManagerListener implements Runnable {
             System.err.println("8.4-Timeout-3 - RM reboot server order sent");
             return;
         }
+        String messageFromError = new String(reply.getData()).trim();
 
         System.out.println("8.5 Checking result received : " + messageFromError);
 
         String[] delimError = messageFromError.split("-");
-        System.out.println("8.5.1 delimError size : " + delimError.length);
+        System.out.println("8.5.1 delimError size : " + delimError.length );
+
         if (!delimError[1].equals(replicaManager.getServerResponse(sequencerId))) {
             //error occurred
 

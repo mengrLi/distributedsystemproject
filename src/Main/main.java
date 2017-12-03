@@ -10,7 +10,7 @@ public class main{
 
     public static void main(String[] args) throws RemoteException, InterruptedException {
         StartOrbs.turnOnServerNew();
-        UserTerminalGUI gui = new UserTerminalGUI();
-
+        RM1_Run.start();
+        new UserTerminalGUI();
     }
 }
