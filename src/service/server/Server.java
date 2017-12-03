@@ -461,8 +461,8 @@ public class Server implements Runnable {
                         if (status) {// booking successful
                             udpRequest = new UdpRequest(
                                     this, cancelRequest, cancelBookingInfo.getCampusOfInterest());
-                            udpResponse = udpRequest.sendRequest();
-                            status = status(udpResponse);
+                            cancelResponse = udpRequest.sendRequest();
+                            status = status(cancelResponse);
                             if (!status) {/*
                             cancel in remote failed, cancel the booking just made in this server
                             this should not be reached, since cancel should always succeed since the existence of the
@@ -471,7 +471,7 @@ public class Server implements Runnable {
                                 synchronized (this.roomLock) {
                                     bookResponse = roomRecords.cancelBooking(BookingInfo.decode(bookResponse));
                                 }
-                            }//else unneeded
+                            }
                         }// else booking failed, cancellation is cancelled
                     } else {//both in remote server
                         udpRequest = new UdpRequest(this, bookRequest, campus);
