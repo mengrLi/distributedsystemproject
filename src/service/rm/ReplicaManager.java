@@ -6,12 +6,17 @@ import domain.Campus;
 import domain.Lock;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import service.Properties;
 import service.domain.InternalRequest;
 import service.server.Server;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 /**
  * upon receive a message front sequencer, get the seqId from it and the method to process
@@ -46,15 +51,34 @@ public class ReplicaManager implements Runnable{
     private int errorCount = 0;
     private final Lock errorCountLock = new Lock();
 
-    public boolean delayTest = false;
-    public boolean errorTest = false;
+    private boolean delayTest = false;
+    private boolean errorTest = false;
     private int testErrorCounter = 0;
     private int testDelayCounter = 0;
 
+    public final Logger log = Logger.getLogger(ReplicaManager.class.toString());
+    private FileHandler fileHandler;
+
     @Override
     public void run() {
+        initLogger();
         initReplicaManager();
         initUdpListenPort();
+    }
+
+    private void initLogger(){
+        try {
+            String dir = "src/log/replica_manager_log/";
+            log.setUseParentHandlers(false);
+            fileHandler = new FileHandler(dir + rmName + ".LOG", Properties.appendLog);
+            log.addHandler(fileHandler);
+            SimpleFormatter formatter = new SimpleFormatter();
+            fileHandler.setFormatter(formatter);
+
+            log.info("\nReplica manager log loaded\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -70,7 +94,7 @@ public class ReplicaManager implements Runnable{
         new Thread(kklServer).start();
     }
 
-    public void restartServers(long nonce, String dvlJson, String kklJson, String wstJson){
+    void restartServers(long nonce, String dvlJson, String kklJson, String wstJson){
         synchronized (errorCountLock){
             this.errorCount = 0;
         }
@@ -96,40 +120,40 @@ public class ReplicaManager implements Runnable{
 
         System.out.println(rmName + " listening udp messages from sequencer");
     }
-    public long getNonce(){
+    long getNonce(){
         synchronized (this.nonceLock){
             return nonce;
         }
     }
-    public void increaseNonce(){
+    void increaseNonce(){
         synchronized ((this.nonceLock)){
             ++nonce;
         }
     }
 
-    public int increaseErrorCount(){
+    void increaseErrorCount(){
         synchronized (this.errorCountLock){
-            return ++errorCount;
+            ++errorCount;
         }
     }
-    public int getErrorCount(){
+    int getErrorCount(){
         synchronized (this.errorCountLock){
             return errorCount;
         }
     }
 
-    public InternalRequest getInternalMessage(long id) {
+    InternalRequest getInternalMessage(long id) {
         synchronized (this.mapLock) {
             return seqRequestMap.get(id);
         }
     }
-    public void putInternalMessage(InternalRequest internalRequest){
+    void putInternalMessage(InternalRequest internalRequest){
         synchronized (this.mapLock){
             seqRequestMap.put(internalRequest.getId(), internalRequest);
             System.out.println("8.3 RM message saved to rm seq map");
         }
     }
-    public void saveResponseMessage(long id, String responseMessage){
+    void saveResponseMessage(long id, String responseMessage){
         synchronized (this.mapLock){
             if(seqRequestMap.get(id).getServerResponse()==null){
                 seqRequestMap.get(id).setServerResponse(responseMessage);
@@ -140,13 +164,13 @@ public class ReplicaManager implements Runnable{
         }
     }
 
-    public String getServerResponse(long sequencerId) {
+    String getServerResponse(long sequencerId) {
         InternalRequest request = seqRequestMap.get(sequencerId);
         if(request == null) return "Not Found";
         return request.getServerResponse();
     }
 
-    public boolean getErrorTest() {
+    boolean getErrorTest() {
 
             if(errorTest) {
                 if (testErrorCounter == 3) {
@@ -161,7 +185,7 @@ public class ReplicaManager implements Runnable{
             return errorTest;
     }
 
-    public boolean getDelayTest() {
+    boolean getDelayTest() {
 
             if(delayTest) {
                 if (testDelayCounter == 3) {
@@ -178,7 +202,7 @@ public class ReplicaManager implements Runnable{
 
     }
 
-    public void loadRequestMap(String mapJson) {
+    void loadRequestMap(String mapJson) {
         Type type = new TypeToken<Map<Long, InternalRequest>>(){}.getType();
         Map<Long, InternalRequest> map = new GsonBuilder().create().fromJson(mapJson, type);
         synchronized (this.mapLock){
@@ -187,10 +211,16 @@ public class ReplicaManager implements Runnable{
         System.out.println("Request map reloaded");
     }
 
-    public String getRecords() {
+    String getRecords() {
         Type type = new TypeToken<Map<Long, InternalRequest>>(){}.getType();
         synchronized (this.mapLock){
             return new GsonBuilder().create().toJson(seqRequestMap, type);
         }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        fileHandler.close();
     }
 }

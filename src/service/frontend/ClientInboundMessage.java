@@ -2,6 +2,7 @@ package service.frontend;
 
 import domain.Lock;
 import domain.SequencerId;
+import jdk.nashorn.internal.ir.ForNode;
 import service.Properties;
 import service.domain.RmResponse;
 import service.domain.InternalRequest;
@@ -96,12 +97,29 @@ public class ClientInboundMessage{
             boolean flag = true;
             while(flag){
                 //hold thread before one of the condition reaches
-                if(System.currentTimeMillis()>timeOutTime || rmResponseList.size()==3) flag = false;
+                int size;
+                synchronized (rrLock){
+                    size = rmResponseList.size();
+                }
+                if(Properties.singlePcTest && size==1){
+                    flag = false;
+                    System.err.println("10. TESTING EARLY-RELEASE");
+                }
+                else if(!Properties.singlePcTest && size==3){
+                    flag = false;
+                    System.out.println("10. All responses received, early-release");
+                }
+                else if(System.currentTimeMillis()>timeOutTime) {
+                    flag = false;
+                    System.err.println("10. TIME OUT, FORCE RELEASE");
+                }
             }
             processReturnData();
         }
         //return when thread finish running
         System.out.println("12/// response to client : " + returnMessage);
+        frontEnd.log.info("Message id : " + sequencerId.getId() + "\n"
+                + "Message detail : " + returnMessage );
         return returnMessage;
     }
 
@@ -120,7 +138,9 @@ public class ClientInboundMessage{
         int length = messageInByte.length;
         DatagramSocket socket;
         try {
-            System.out.println("2. Forwarding request from Front End to Sequencer");
+            String info = "2. Forwarding request from Front End to Sequencer";
+            frontEnd.log.info("\n"+info+"\n");
+            System.out.println(info);
             socket = new DatagramSocket();
             InetAddress address = InetAddress.getByName(Properties.LOCALHOST);
             DatagramPacket request = new DatagramPacket(messageInByte, length, address, Properties.SEQUENCER_LISTENING_PORT);
@@ -131,18 +151,24 @@ public class ClientInboundMessage{
             try{
                 socket.receive(reply);
             }catch (SocketTimeoutException ste){
-                System.err.println("6. Sequencer time out");
+                String error = "6. Sequencer time out";
+                frontEnd.log.severe("\nMessage id : " + sequencerId.getId() + "\n"+error+ "\n");
+                System.err.println(error);
                 returnMessage = "Error : sequencer response timeout";
                 return;
             }
             sequencerId = new SequencerId(new String(reply.getData()).trim());
-            System.out.println("6. Receive sequencer id ");
+            info = "6. Receive sequencer id" ;
+            frontEnd.log.info("\nMessage id : " + sequencerId.getId() + "\nis given to Message:\n"+inboundMessage+"\n\n\n");
+            System.out.println(info);
             synchronized (frontEnd.getMapLock()){
                 frontEnd.getMessageBook().put(sequencerId.getId(), this);
             }
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("6. FE inbound message IO exception");
+            String error = "6. FE inbound message IO exception";
+            frontEnd.log.severe("\nMessage id : " + sequencerId.getId() + "\n"+error+ "\n");
+            System.err.println(error);
             returnMessage = "Error: I/O Exception";
         }
     }
@@ -163,7 +189,9 @@ public class ClientInboundMessage{
             if(responseCount > 1) r2 = rmResponseList.get(1);
             if(responseCount > 2) r3 = rmResponseList.get(2);
         }
-        System.out.println("11 "+responseCount + " Message received for processing");
+        String info = "11 "+responseCount + " Message received for processing";
+        System.out.println(info);
+        frontEnd.log.info(info+ "\n");
 
         if(responseCount == 1){
             //only one gave response, assume that is the good one for now, check the others
@@ -188,18 +216,22 @@ public class ClientInboundMessage{
                     &&r2.getResponseMessage().equals(r3.getResponseMessage())
                     &&r1.getResponseMessage().equals(r3.getResponseMessage())){ //all equal, best case
                 returnMessage = r1.getResponseMessage();
+                frontEnd.log.info("Message Id : " + sequencerId.getId() +"\n" + returnMessage +"\nAll messages match\n");
 
             }else if(r1.getResponseMessage().equals(r2.getResponseMessage())){ //1 and 2 match
                 returnMessage = r1.getResponseMessage();
                 alertMistakes(r1, r2);
+                logError(r3);
 
             }else if(r1.getResponseMessage().equals(r3.getResponseMessage())){ //1 and 3 match
-                returnMessage = r1.getResponseMessage();
+                returnMessage = r3.getResponseMessage();
                 alertMistakes(r1, r3);
+                logError(r2);
 
             }else if(r2.getResponseMessage().equals(r3.getResponseMessage())){ //2 and 3 match
                 returnMessage = r2.getResponseMessage();
                 alertMistakes(r2, r3);
+                logError(r1);
 
             }else{
                 //no match in three, server recover from the last time
@@ -208,12 +240,24 @@ public class ClientInboundMessage{
                 //use the fastest response are the good answer
                 returnMessage = r1.getResponseMessage();
                 alertMistakes(r2, r3);
+                logError(r2);
+                logError(r3);
             }
         }else{
-            System.err.println("CIM ERROR : NO MESSAGE RECEIVED");
+            String error = "CIM ERROR : NO MESSAGE RECEIVED";
+            System.err.println(error);
+            frontEnd.log.severe("\nMessage id : " + sequencerId.getId() + "\n"+error+ "\n");
             returnMessage = DEFAULT_ERROR;
         }
     }
+    private void logError(RmResponse r){
+        String error = "Message Id : " + sequencerId.getId() +"\n" + returnMessage +"\n"
+                +r.getInet()+":"+r.getRmPort() + " contains error :\n" + r.getResponseMessage()+"\n";
+        frontEnd.log.severe(error+ "\n");
+        System.err.println(error);
+    }
+
+
 
     /**
      * Alert mistake has been detected
@@ -221,8 +265,17 @@ public class ClientInboundMessage{
      * @param responses the corrected ones !!!!!
      */
     private void alertMistakes(RmResponse ... responses){
-        System.err.println("12 SERVER ERROR OCCURRED IN " + (3-responses.length) + " SERVER" + (3-responses.length>1 ? "S" :""));
-        new Thread(new FrontEndAlert(responses, sequencerId)).run();
+        String info ;
+        if(Properties.singlePcTest && responses.length==1){
+            info = "12 Testing - 1 response received from RM - good";
+            System.out.println(info);
+            frontEnd.log.info("\nMessage id : " + sequencerId.getId() + "\n"+info+ "\n");
+        }else{
+            info = "12 SERVER ERROR OCCURRED IN " + (3-responses.length) + " SERVER" + (3-responses.length>1 ? "S" :"");
+            frontEnd.log.severe("\nMessage id : " + sequencerId.getId() + "\n"+info+ "\n");
+            System.err.println(info);
+            new Thread(new FrontEndAlert(responses, sequencerId)).run();
+        }
     }
 
     /**
@@ -244,7 +297,9 @@ public class ClientInboundMessage{
                 if(diff < Properties.minTimeDiff) diff = Properties.minTimeDiff;
                 timeOutTime = firstResponseTime + 2 * diff;
             }
-            System.out.println("10.1/ Message received FE : "+rmResponseList.size());
+            String info = "10.1/ Number of Messages received FE : "+rmResponseList.size();
+            frontEnd.log.info("\nMessage id : " + sequencerId.getId() + "\n"+info+ "\n");
+            System.out.println(info);
         }
     }
 }

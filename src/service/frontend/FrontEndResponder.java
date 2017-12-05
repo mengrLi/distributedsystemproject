@@ -18,6 +18,12 @@ public class FrontEndResponder implements Runnable {
         RmResponse rmResponse = new GsonBuilder().create().fromJson(rmResponseJson, RmResponse.class);
         String msgId = rmResponse.getSequencerId();
 
+        String info = "Message Id : " + rmResponse.getSequencerId()
+                +"\nReceived response from " + rmResponse.getInet() +":" +rmResponse.getRmPort()
+                +"\nMessage : " + rmResponse.getResponseMessage();
+
+        frontEnd.log.info(info+ "\n");
+
         frontEnd.addRmResponseToInboundMessageFE(msgId, rmResponse);
         System.out.println("10 RM message received from " + rmResponse.getInet());
     }

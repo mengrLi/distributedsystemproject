@@ -4,6 +4,7 @@ import com.google.gson.GsonBuilder;
 import lombok.RequiredArgsConstructor;
 import service.Properties;
 import service.domain.InternalRequest;
+import service.frontend.FrontEnd;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -41,7 +42,7 @@ public class SequencerUdpListener implements Runnable{
                 internalRequest.setSequencerId(String.valueOf(sequencer.getNonce()));
 
                 //in a new thread send feedback to FE and send request to RM
-                new Thread(new SequencerResponder(socket, request,internalRequest)).start();
+                new Thread(new SequencerResponder(socket, request,internalRequest, sequencer)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -2,6 +2,7 @@ package service.sequencer;
 
 import lombok.RequiredArgsConstructor;
 import service.domain.InternalRequest;
+import service.frontend.FrontEnd;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -12,6 +13,7 @@ public class SequencerResponder implements Runnable{
     private final DatagramSocket socket;
     private final DatagramPacket request;
     private final InternalRequest internalRequest;
+    private final Sequencer sequencer;
 
     @Override
     public void run(){
@@ -24,8 +26,10 @@ public class SequencerResponder implements Runnable{
             byte[] data = internalRequest.getSequencerId().getId().getBytes();
             DatagramPacket response = new DatagramPacket(data, data.length, request.getAddress(), request.getPort());
             socket.send(response);
-
-            System.out.println("5. Sequencer responder replies to FE for seq Id");
+            String info = "5. Sequencer responder replies to FE for seq Id";
+            sequencer.log.info(info+"\nGiven new Id "+ internalRequest.getId()
+                    +"\nto message :"+ internalRequest.getClientRequestJson()+"\n");
+            System.out.println(info);
 
             //tell RM about the new message
             new SequencerUdpRequest(internalRequest).sendRequest();

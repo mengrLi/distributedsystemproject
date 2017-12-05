@@ -9,18 +9,18 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 
 /**
- * Created by PT-PC on 2017-11-30.
+ * RM processing order test
  */
 public class RmTests {
 
     public static void main(String[] args) {
-        InternalRequest internalRequest3 = new InternalRequest("test", "testMessageString3");
+        InternalRequest internalRequest3 = new InternalRequest("orderT1est", "testMessageString3");
         internalRequest3.setSequencerId(String.valueOf(3));
 
-        InternalRequest internalRequest2 = new InternalRequest("test", "testMessageString2");
+        InternalRequest internalRequest2 = new InternalRequest("orderTest", "testMessageString2");
         internalRequest2.setSequencerId(String.valueOf(2));
 
-        InternalRequest internalRequest1 = new InternalRequest("test", "testMessageString1");
+        InternalRequest internalRequest1 = new InternalRequest("orderTest", "testMessageString1");
         internalRequest1.setSequencerId(String.valueOf(1));
 
         try{

@@ -5,7 +5,7 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.reflect.TypeToken;
 import domain.*;
 import lombok.Getter;
-import service.rm.ReplicaManager;
+import service.Properties;
 import service.server.requests.*;
 import service.server.responses.*;
 
@@ -35,6 +35,8 @@ public class Server implements Runnable {
     private final Lock roomLock = new Lock();
     @Getter
     private final Lock logLock = new Lock();
+
+    private FileHandler fileHandler;
 
 
     public Server(Campus campus) {
@@ -69,9 +71,9 @@ public class Server implements Runnable {
     }
     private void initLogger() {
         try {
-            String dir = "src/server_log/";
+            String dir = "src/log/server_log/";
             log.setUseParentHandlers(false);
-            FileHandler fileHandler = new FileHandler(dir + campus.abrev + ".LOG", true);
+            fileHandler = new FileHandler(dir + campus.abrev + ".LOG", Properties.appendLog);
             log.addHandler(fileHandler);
             SimpleFormatter formatter = new SimpleFormatter();
             fileHandler.setFormatter(formatter);
@@ -607,5 +609,11 @@ public class Server implements Runnable {
     }
     public Logger getLogFile(){
         return log;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        fileHandler.close();
     }
 }

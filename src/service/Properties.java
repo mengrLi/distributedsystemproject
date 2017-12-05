@@ -25,12 +25,14 @@ public class Properties {
     public static final int RM_3_LISTENING_PORT = 8893;
 
 
-    public static long timeOutLimit = 100000;
-    public static long minTimeDiff = 40000;
+    public static long timeOutLimit = 10000;
+    public static long minTimeDiff = 4000;
 
 
     public static List<String> inetList = new LinkedList<>();
     public static int maxUdpWaitingTime = 5000;
+    public static boolean singlePcTest;
+    public static boolean appendLog;
 
     static{
         inetList.add(Properties.RM_1_INET);

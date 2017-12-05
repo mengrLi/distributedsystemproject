@@ -2,7 +2,6 @@ package user_v2;
 
 import CampusServerCorba.CampusServerInterface;
 import CampusServerCorba.CampusServerInterfaceHelper;
-import com.sun.corba.se.impl.activation.ORBD;
 import domain.Campus;
 import domain.Lock;
 import domain.Room;
@@ -21,13 +20,13 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 public abstract class ClientV2 implements UserInterface {
-    protected final Campus CAMPUS;
+    final Campus CAMPUS;
     protected final int ID;
-    protected final String FULL_ID;
+    final String FULL_ID;
     protected CampusServerInterface campusInterface;
-    protected final Logger LOG;
+    final Logger LOG;
     private FileHandler fileHandler;
-    protected final Lock LOG_LOCK = new Lock();
+    final Lock LOG_LOCK = new Lock();
 
 
     ClientV2(Campus campus, String type, int id) {
@@ -54,9 +53,9 @@ public abstract class ClientV2 implements UserInterface {
 
     private void initLogger() {
         try {
-            String dir = "src/client_log/";
+            String dir = "src/log/client_log/";
             LOG.setUseParentHandlers(false);
-            fileHandler = new FileHandler(dir + FULL_ID + ".LOG", true);
+            fileHandler = new FileHandler(dir + FULL_ID + ".LOG", Properties.appendLog);
             LOG.addHandler(fileHandler);
             SimpleFormatter simpleFormatter = new SimpleFormatter();
             fileHandler.setFormatter(simpleFormatter);
@@ -83,6 +82,12 @@ public abstract class ClientV2 implements UserInterface {
 
     @Override
     public void closeLogFileHandler() {
+        fileHandler.close();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
         fileHandler.close();
     }
 }

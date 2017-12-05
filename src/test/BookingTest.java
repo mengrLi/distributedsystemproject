@@ -9,21 +9,17 @@ import user_v2.StudentClientV2;
 import java.util.Calendar;
 
 /**
- * Created by PT-PC on 2017-12-02.
+ * Synchronization test for booking same room by 30 students from different campuses
  */
 public class BookingTest {
 
-
     public static void main(String[] args) {
-
-
-        for(int i = 1000 ; i < 9999 ; i*=2){
+        for(int i = 1000 ; i < 9999 ; i+=1000){
             for(int j = 0 ; j  <3 ; ++j){
                 new Thread(new bookThread(j,i)).start();
             }
         }
     }
-
 }
 @RequiredArgsConstructor
 class bookThread implements Runnable{

@@ -31,7 +31,7 @@ public class FrontEndAlert implements Runnable {
             //This is the only case that is required to be considered. Normally I would not leave the other two empty
             findTheMissingServer(responses[0], responses[1]);
         }else if(responses.length==1){
-            findTheGoodServer(responses[0]);
+            if(!Properties.singlePcTest) findTheGoodServer(responses[0]);
         }else{
             System.err.println("SHOULD NOT REACH HERE BY REQUIREMENT, " +
                     "IF YES EITHER A DEADLOCK OCCURRED " +

@@ -2,15 +2,15 @@ package Main;
 
 import service.Properties;
 import service.frontend.FrontEnd;
-import service.rm.FailureJudge;
-import service.rm.ReplicaManager;
 import service.sequencer.Sequencer;
 
 import java.rmi.RemoteException;
 
 public class StartOrbs{
 
-    public static void turnOnServerNew() throws RemoteException, InterruptedException {
+    public static void turnOnServerNew(boolean singlePcTest) throws RemoteException, InterruptedException {
+
+        Properties.singlePcTest = singlePcTest;
 
         System.out.println("CORBA initializing at " + Properties.ORB_PORT);
         //start at the last step
@@ -24,11 +24,10 @@ public class StartOrbs{
         //init singleton sequencer
         Sequencer sequencer = Sequencer.ourInstance;
 
-
     }
 
     public static void main(String[] args) throws RemoteException, InterruptedException {
-        turnOnServerNew();
+        turnOnServerNew(true);
     }
 
 
