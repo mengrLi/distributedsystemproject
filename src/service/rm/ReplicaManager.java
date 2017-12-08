@@ -23,16 +23,6 @@ import java.util.logging.SimpleFormatter;
  * send the original request to each server
  */
 
-/*
-
-TODO need  to copy RM's record upon reboot
-
-
-
- */
-
-
-
 
 @RequiredArgsConstructor
 public class ReplicaManager implements Runnable{
@@ -90,31 +80,35 @@ public class ReplicaManager implements Runnable{
         wstServer = new Server(Campus.WESTMOUNT);
 
         new Thread(dvlServer).start();
+        log.info("DDL server thread started\n");
         new Thread(wstServer).start();
+        log.info("WST server thread started\n");
         new Thread(kklServer).start();
+        log.info("KKL server thread started\n");
     }
 
     void restartServers(long nonce, String dvlJson, String kklJson, String wstJson){
         synchronized (errorCountLock){
             this.errorCount = 0;
         }
+        log.severe("ALL SERVERS RESTARTING DUE TO ERROR THRESHOLD REACHED");
         synchronized (this){
             System.out.println("8.8.2 error reset, loading servers");
             this.nonce = nonce;
             this.dvlServer.loadData(dvlJson);
             this.kklServer.loadData(kklJson);
             this.wstServer.loadData(wstJson);
-
-
-            //Server variable in RoomRecord needs to be reset
         }
+        log.severe("ALL SERVERS RELOADED DUE TO ERROR THRESHOLD REACHED");
     }
 
     /**
      * initiate udp port which listens to sequencer
      */
     private void initUdpListenPort() {
-        System.out.println(rmName + " starting udp listening port at " + inet+":"+rmListeningPort);
+        String msg = rmName + " starting udp listening port at " + inet+":"+rmListeningPort;
+        System.out.println(msg);
+        log.info(msg + "\n");
 
         new Thread(new ReplicaManagerListener(this, rmListeningPort)).start();
 
@@ -150,7 +144,9 @@ public class ReplicaManager implements Runnable{
     void putInternalMessage(InternalRequest internalRequest){
         synchronized (this.mapLock){
             seqRequestMap.put(internalRequest.getId(), internalRequest);
-            System.out.println("8.3 RM message saved to rm seq map");
+            String info = "8.3 RM message saved to rm seq map";
+            System.out.println(info);
+            log.info(info+"\n");
         }
     }
     void saveResponseMessage(long id, String responseMessage){
@@ -218,6 +214,10 @@ public class ReplicaManager implements Runnable{
         }
     }
 
+    /**
+     * Release all the locks on file
+     * @throws Throwable idk what it is
+     */
     @Override
     protected void finalize() throws Throwable {
         super.finalize();

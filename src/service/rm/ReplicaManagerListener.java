@@ -38,18 +38,17 @@ public class ReplicaManagerListener implements Runnable {
                 The other cases are not considered (Which is bad...)
                  */
                 System.out.println("8.1 RM receives a message");
+                replicaManager.log.info("8.1 RM receives message :\n" + seqRequest +"\n");
                 if(seqRequest.substring(0,4).equals("miss")){
                     //one RM has error or delay
-                    System.out.println(seqRequest);
+                    System.err.println(seqRequest);
 
                     String[] delim = seqRequest.split("-");
-                    if(delim.length!=6){
-                        System.err.println("THIS SHOULD NOT BE REACHED, INVALID ERROR ALERT MESSAGE");
-                    }else{
-                        //determine and fix the errors
+                    if(delim.length!=6) System.err.println("THIS SHOULD NOT BE REACHED, INVALID ERROR ALERT MESSAGE");
 
-                        fixDetectedErrors(delim[1], Integer.parseInt(delim[2]), Long.parseLong(delim[3]));
-                    }
+                    else fixDetectedErrors(delim[1], Integer.parseInt(delim[2]), Long.parseLong(delim[3]));
+                    //determine and fix the errors
+
                 }else if(seqRequest.substring(0,4).equals("both")){
                     //two RMs has no responses or delay
                     List<String> inetList = Properties.inetList;
@@ -70,18 +69,25 @@ public class ReplicaManagerListener implements Runnable {
                     }
 
                 }else if(seqRequest.substring(0,8).equals("sequence")){
-                    System.out.println("8.4 Error detected RM received error message");
+                    System.out.println("8.4 Error detected RM received error checking message");
 
                     String[] delim = seqRequest.split("-");
                     long id = Long.parseLong(delim[1]);
                     byte[] data = (replicaManager.getErrorCount()+"-"+replicaManager.getServerResponse(id)).getBytes();
-                    DatagramPacket response = new DatagramPacket(data, data.length, rmListenerRequest.getAddress(), rmListenerRequest.getPort());
+                    DatagramPacket response = new DatagramPacket(
+                            data,
+                            data.length,
+                            rmListenerRequest.getAddress(),
+                            rmListenerRequest.getPort()
+                    );
                     RmListenerSocket.send(response);
+                    replicaManager.log.severe("Responding message ID : " + seqRequest
+                            + "\nwith :" + new String(data)+"\n");
 
                 }else if(seqRequest.substring(0,8).equals("increase")) {
                     //both reply from 1 server increase this by 1
                     replicaManager.increaseErrorCount();
-
+                    replicaManager.log.severe("RM increase error count to " + replicaManager.getErrorCount());
                     System.err.println("8.8 Current Error Count is : "+replicaManager.getErrorCount()/2);
 
                 }else if(seqRequest.substring(0,6).equals("reboot")){
@@ -105,6 +111,9 @@ public class ReplicaManagerListener implements Runnable {
                     InternalRequest internalRequest = new GsonBuilder().create().fromJson(seqRequest, InternalRequest.class);
 
                     System.out.println("8.2 RM received seq id " + internalRequest.getId());
+                    replicaManager.log.info("8.2 RM received seq id " + internalRequest.getId()
+                            + "\n" + internalRequest.getClientRequestJson()
+                    );
                     //save to request list, and increase the nonce counter
                     //note: synchronization is done in the getters
                     replicaManager.putInternalMessage(internalRequest);
@@ -118,23 +127,18 @@ public class ReplicaManagerListener implements Runnable {
             e.printStackTrace();
         }
     }
-
-//
-//    public static void Main(String[] args) {
-//        byte[] m = new byte[1000];
-//        System.out.println((new String(m)).trim().equals(""));
-//    }
-
     /**
      * Fix the RM at
      * @param errorRmInet Rm address
      * @param errorRmPort Rm port
      * @param sequencerId Seq Id of the error message
-     * @throws IOException
+     * @throws IOException ioexception
      */
     private void fixDetectedErrors(String errorRmInet, int errorRmPort, long sequencerId) throws IOException{
         //check for error
         System.err.println("8.2 RM received the possible error alert");
+        replicaManager.log.severe("RM received the error alert about " +errorRmInet+":"+errorRmPort
+                + "\nId: " + sequencerId + "\n");
         //immediately, get a image of the server and nonce
         long tempNonce = replicaManager.getNonce();
         String dvl = replicaManager.getDvlServer().toString();
@@ -145,6 +149,8 @@ public class ReplicaManagerListener implements Runnable {
         InetAddress address = InetAddress.getByName(errorRmInet);
 
         System.err.println("8.3 RM send request for error check (8.4 displays on error RM)");
+        replicaManager.log.severe("8.3 send request for error check at " + errorRmInet+":"+errorRmPort
+                + "\nabout ID : " + sequencerId +"\n");
         byte[] message = ("sequence-"+sequencerId).getBytes();
 
         DatagramSocket socket1 = new DatagramSocket();
@@ -173,19 +179,27 @@ public class ReplicaManagerListener implements Runnable {
             packet1 = new DatagramPacket(errorBytes, errorBytes.length, address, errorRmPort);
             socket1.send(packet1);
             System.err.println("8.4-Timeout-3 - RM reboot server order sent");
+
+            replicaManager.log.severe("TIMEOUT FROM " + errorRmInet+":"+errorRmPort
+                    + "\n about ID: "+ sequencerId + "\n RESTART MESSAGE SENT\n");
             return;
         }
         String messageFromError = new String(reply.getData()).trim();
 
         System.out.println("8.5 Checking result received : " + messageFromError);
 
+        replicaManager.log.severe("8.5 Checking result received from "+ errorRmInet+":"+errorRmPort
+                +" about ID :" +sequencerId+"\n" + messageFromError +"\n");
+
         String[] delimError = messageFromError.split("-");
-        System.out.println("8.5.1 delimError size : " + delimError.length );
 
         if (!delimError[1].equals(replicaManager.getServerResponse(sequencerId))) {
             //error occurred
 
             System.err.println("8.6 RM detects error");
+            replicaManager.log.severe("8.6 error detected from message :\n"
+                            +delimError[1]
+                            +"\nreceived from "+ errorRmInet+":"+errorRmPort +" about ID :" +sequencerId+"\n");
             /*
              Each server
             */
@@ -194,6 +208,8 @@ public class ReplicaManagerListener implements Runnable {
             if(currErrorCount<4) {
                 errorConsequence = "increase"; //Increase error count
                 System.err.println("8.7 RM issues Increase error count");
+                replicaManager.log.severe("8.6 RM issues Increase error count "+ errorRmInet+":"+errorRmPort
+                        +" about ID :" +sequencerId+"\n");
             }
             else {
                 errorConsequence = "reboot"
@@ -203,6 +219,8 @@ public class ReplicaManagerListener implements Runnable {
                         +"-/-"+wst
                         +"-/-"+requestMap; //threshold reached, kill it!
                 System.err.println("8.7 RM issues reboot");
+                replicaManager.log.severe("8.7 RM issues reboot "+ errorRmInet+":"+errorRmPort
+                        +" about ID :" +sequencerId+"\n");
             }
             System.err.println("(8.8 displays on the error RM)");
 
@@ -217,6 +235,9 @@ public class ReplicaManagerListener implements Runnable {
         }else{
             //No error
             System.out.println("8.6 RM Error was due to udp delay, servers have given a valid response");
+            replicaManager.log.severe("8.6 RM Error was due to udp delay, servers have given a valid response "
+                    + errorRmInet+":"+errorRmPort
+                    +" about ID :" +sequencerId+"\n");
         }
 
         //close socket afterward
