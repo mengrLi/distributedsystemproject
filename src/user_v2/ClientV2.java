@@ -8,6 +8,7 @@ import domain.Room;
 import org.omg.CORBA.ORB;
 import org.omg.CosNaming.NamingContextExt;
 import org.omg.CosNaming.NamingContextExtHelper;
+import service.Properties;
 import service.remote_interface.UserInterface;
 import service.server.requests.GetTimeSlotByRoomRequest;
 
@@ -19,14 +20,14 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 public abstract class ClientV2 implements UserInterface {
-    protected final Campus CAMPUS;
+    final Campus CAMPUS;
     protected final int ID;
-    protected final String FULL_ID;
+    final String FULL_ID;
     protected CampusServerInterface campusInterface;
-    protected final Logger LOG;
+    final Logger LOG;
     private FileHandler fileHandler;
-    private final String ORB_PORT = "6666";
-    protected final Lock LOG_LOCK = new Lock();
+    final Lock LOG_LOCK = new Lock();
+
 
     ClientV2(Campus campus, String type, int id) {
         this.CAMPUS = campus;
@@ -39,11 +40,11 @@ public abstract class ClientV2 implements UserInterface {
 
     private void setConnection() {
         try {
-            String[] params = {"-ORBInitialPort", ORB_PORT, "-ORBInitialHost", "localhost"};
+            String[] params = {"-ORBInitialPort", Properties.ORB_PORT, "-ORBInitialHost", "localhost"};
             ORB orb = ORB.init(params, null);
             org.omg.CORBA.Object objRef = orb.resolve_initial_references("NameService");
             NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
-            campusInterface = CampusServerInterfaceHelper.narrow(ncRef.resolve_str(CAMPUS.abrev));
+            campusInterface = CampusServerInterfaceHelper.narrow(ncRef.resolve_str(Properties.ORB_SERVER_NAME));
         } catch (Exception e) {
             System.out.println("Hello Client exception: " + e);
             e.printStackTrace();
@@ -52,9 +53,9 @@ public abstract class ClientV2 implements UserInterface {
 
     private void initLogger() {
         try {
-            String dir = "src/client_log/";
+            String dir = "src/log/client_log/";
             LOG.setUseParentHandlers(false);
-            fileHandler = new FileHandler(dir + FULL_ID + ".LOG", true);
+            fileHandler = new FileHandler(dir + FULL_ID + ".LOG", Properties.appendLog);
             LOG.addHandler(fileHandler);
             SimpleFormatter simpleFormatter = new SimpleFormatter();
             fileHandler.setFormatter(simpleFormatter);
@@ -81,6 +82,12 @@ public abstract class ClientV2 implements UserInterface {
 
     @Override
     public void closeLogFileHandler() {
+        fileHandler.close();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
         fileHandler.close();
     }
 }

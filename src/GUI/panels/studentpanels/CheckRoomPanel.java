@@ -38,7 +38,7 @@ class CheckRoomPanel extends JPanel {
         topPanel = new JPanel(new BorderLayout());
 //        campusBox = new JComboBox<>();
 //        setCampusComboBox();
-//        topPanel.add(campusBox, BorderLayout.WEST);
+//        topPanel.addRmResponseToInboundMessageFE(campusBox, BorderLayout.WEST);
 
         datePicker = new DatePicker();
         datePicker.setDateToToday();

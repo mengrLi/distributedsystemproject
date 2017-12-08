@@ -1,11 +1,13 @@
 package domain;
 
+import com.google.gson.annotations.Expose;
+
 import java.util.LinkedList;
 import java.util.List;
 
 public class Administrators{
-    private final List<String> administrators;
-    private final Campus campus;
+    @Expose private final List<String> administrators;
+    @Expose private final Campus campus;
 
     public Administrators(Campus campus){
         this.campus = campus;
@@ -30,5 +32,9 @@ public class Administrators{
             if(id.equals(fullID)) return true;
         }
         return false;
+    }
+
+    public int size(){
+        return administrators.size();
     }
 }

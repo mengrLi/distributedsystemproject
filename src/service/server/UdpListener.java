@@ -15,6 +15,8 @@ public class UdpListener implements Runnable {
     private void udpListening() {
         DatagramSocket socket = null;
         try {
+            System.out.println(server.getCampus().name + " is listening to " + server.getCampus().udpPort
+                    + " for inter-server communications");
             socket = new DatagramSocket(campus.udpPort);
             byte[] buffer;
             DatagramPacket request;
@@ -24,6 +26,7 @@ public class UdpListener implements Runnable {
                 socket.receive(request);
                 new Thread(new UdpResponder(socket, request, server)).start();
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         } finally {

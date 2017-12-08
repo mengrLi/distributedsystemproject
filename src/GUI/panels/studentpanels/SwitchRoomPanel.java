@@ -172,7 +172,7 @@ class SwitchRoomPanel extends JPanel {
                 Message.optionPaneError("Booking ID contains errors", this);
             else {
                 studentIDLabel.setText(gui.getFullID());
-                bookedCampusLabel.setText("Campus: " + Campus.getCampusName(bookingInfo.getCampusOfInterestAbrev()));
+                bookedCampusLabel.setText("Campus: " + Campus.getCampus(bookingInfo.getCampusOfInterestAbrev()));
                 dateLabel.setText("Date: " + bookingInfo.getBookingDate().getTime());
                 startTimeLabel.setText("Start: " +
                         bookingInfo.getBookingStartTime().get(Calendar.HOUR_OF_DAY) +

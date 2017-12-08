@@ -113,19 +113,19 @@ class BookRoomPanel extends JPanel{
             roomBox.removeAllItems();
             timeslotBox.removeAllItems();
 
-            //get the selected date and parse into calendar object
+            //getInboundMessage the selected date and parse into calendar object
             LocalDate date = datePicker.getDate();
             calendar = Calendar.getInstance();
             calendar.set(date.getYear(), date.getMonthValue() - 1, date.getDayOfMonth(),
                     0, 0, 0);
             calendar.set(Calendar.MILLISECOND, 0);
 
-            //get the selected CAMPUS name
+            //getInboundMessage the selected CAMPUS name
             campus = ((CampusBoxItem) campusBox.getSelectedItem()).getCampus();
             //set the CAMPUS of interested in gui
             gui.setCampusOfInterest(campus);
 
-            //get all the available rooms using date and CAMPUS of interested
+            //getInboundMessage all the available rooms using date and CAMPUS of interested
             availableRooms = gui.getClient().getAvailableTimeSlot(calendar, campus);
 
             if (availableRooms == null) {

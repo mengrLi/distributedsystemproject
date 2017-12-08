@@ -1,17 +1,18 @@
 package domain;
 
+import com.google.gson.annotations.Expose;
 import lombok.Getter;
 import service.server.Server;
 
 import java.util.*;
 
 public class StudentBookingRecords{
-    @Getter private final Map<Calendar, Map<Integer, List<String>>> records;
-    private final Campus campus;
+    @Expose @Getter private Map<Calendar, Map<Integer, List<String>>> records;
+    @Expose private final Campus campus;
 
     public StudentBookingRecords(Server server, Campus campus){
         this.campus = campus;
-        this.records = new HashMap<>();
+        this.records = new LinkedHashMap<>();
     }
 
     @Override
@@ -20,7 +21,7 @@ public class StudentBookingRecords{
     }
 
     /**
-     * get or default to 0
+     * getInboundMessage or default to 0
      *
      * @param date
      * @param studentID
@@ -56,7 +57,7 @@ public class StudentBookingRecords{
 
 
         synchronized (this) {
-            Map<Integer, List<String>> week = records.getOrDefault(startOfWeek, new HashMap<>());
+            Map<Integer, List<String>> week = records.getOrDefault(startOfWeek, new LinkedHashMap<>());
             List<String> bookingIdList = week.getOrDefault(studentID, new LinkedList<>());
             if (add) {
                 bookingIdList.add(bookingID);

@@ -1,5 +1,6 @@
 package domain;
 
+@Deprecated
 public class Student{
     private String studentID;
 

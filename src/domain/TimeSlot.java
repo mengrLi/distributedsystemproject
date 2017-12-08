@@ -9,14 +9,19 @@ import java.util.Calendar;
 
 
 public class TimeSlot implements Serializable, Comparable<TimeSlot>{
+    @Expose
     @Getter
     private Calendar startTime;
+    @Expose
     @Getter
     private Calendar endTime;
+    @Expose
     @Getter
     private Integer studentID = null;
+    @Expose
     @Getter
     private Campus studentCampus = null;
+    @Expose
     @Getter
     private String bookingID = null;
 

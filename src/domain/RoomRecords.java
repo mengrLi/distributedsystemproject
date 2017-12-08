@@ -1,5 +1,6 @@
 package domain;
 
+import com.google.gson.annotations.Expose;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import service.server.Server;
@@ -9,22 +10,22 @@ import java.util.*;
 public class RoomRecords{
 //    private final Server server;
 
-    private final Campus campus;
-    private final Server server;
+    @Expose private final Campus campus;
+    private Server server;
 
-    private final Map<Calendar, Map<String, Room>> records;
+    @Expose private final Map<Calendar, Map<String, Room>> records;
 
     public RoomRecords(Server server, Campus campus){
         this.server = server;
         this.campus = campus;
-        records = new HashMap<>();
+        records = new LinkedHashMap<>();
         initRoomsAndTimeSlots();
     }
 
 
     public Map<String, Room> getRecordsOfDate(Calendar date){
         System.out.println("Accessing room availability of " + date.getTime() + " in " + campus.name);
-        return records.getOrDefault(date, new HashMap<>());
+        return records.getOrDefault(date, new LinkedHashMap<>());
     }
 
     public Room getRoomRecordOfDate(Calendar date, String roomIdentifier){
@@ -45,9 +46,9 @@ public class RoomRecords{
 //        List<String> keyList;
 //        while(iterator.hasNext()){
 //            keyList = new LinkedList<>();
-//            keyList.add(iterator.next());
-//            if(iterator.hasNext()) keyList.add(iterator.next());
-//            if(iterator.hasNext()) keyList.add(iterator.next());
+//            keyList.addRmResponseToInboundMessageFE(iterator.next());
+//            if(iterator.hasNext()) keyList.addRmResponseToInboundMessageFE(iterator.next());
+//            if(iterator.hasNext()) keyList.addRmResponseToInboundMessageFE(iterator.next());
 //
 //            RoomCounter roomCounter = new RoomCounter(roomOfDate, keyList);
 //            new Thread(roomCounter);
@@ -70,7 +71,7 @@ public class RoomRecords{
     private List<List<TimeSlot>> modifyRoom(String roomIdentifier, Calendar date, List<TimeSlot> list, boolean add){
         List<List<TimeSlot>> ret;
 
-        Map<String, Room> rooms = this.records.getOrDefault(date, new HashMap<>());
+        Map<String, Room> rooms = this.records.getOrDefault(date, new LinkedHashMap<>());
         Room room = rooms.getOrDefault(roomIdentifier, new Room(roomIdentifier));
 
         if (add) ret = room.addTimeSlots(list);
@@ -101,7 +102,7 @@ public class RoomRecords{
                 if (slot.getStudentID() == null) {
                     String bookingID = bookingInfo.encodeBookingID();
                     slot.setStudentID(
-                            Campus.getCampusName(bookingInfo.getStudentCampusAbrev()),
+                            Campus.getCampus(bookingInfo.getStudentCampusAbrev()),
                             bookingInfo.getStudentID(),
                             bookingID
                     );
@@ -163,6 +164,14 @@ public class RoomRecords{
         return false;
     }
 
+    public void setServer(Server server) {
+        this.server = server;
+    }
+
+    public int getDateCount() {
+        return records.size();
+    }
+
     //TODO there is probably some problems here
     @RequiredArgsConstructor
     private class RoomCounter implements Runnable{
@@ -188,10 +197,10 @@ public class RoomRecords{
 
     public void initRoomsAndTimeSlots(){
         int year = 2017;
-        int month = Calendar.NOVEMBER;
+        int month = Calendar.DECEMBER;
         int minutes = 119;
 
-        for (int day = 1; day <= 30; ++day) {
+        for (int day = 1; day <= 8; ++day) {
             Room room;
             Map<String, Room> rooms;
             String roomName;
@@ -201,13 +210,13 @@ public class RoomRecords{
             calendar.set(year, month, day, 0, 0, 0);
             calendar.set(Calendar.MILLISECOND, 0);
 
-            rooms = new HashMap<>();
+            rooms = new LinkedHashMap<>();
 
-            for(int roomN = 1; roomN < 11; ++roomN){
+            for(int roomN = 1; roomN < 3; ++roomN){
                 roomName = String.valueOf(roomN);
                 room = new Room(roomName);
                 slots = new LinkedList<>();
-                for(int hour = 8; hour < 21; hour += 3){
+                for(int hour = 8; hour < 21; hour += 5){
                     Calendar calendar1, calendar2;
                     calendar1 = (Calendar) calendar.clone();
                     calendar1.add(Calendar.HOUR, hour);

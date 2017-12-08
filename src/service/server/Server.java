@@ -1,74 +1,84 @@
 package service.server;
 
-import CampusServerCorba.CampusServerInterface;
-import CampusServerCorba.CampusServerInterfaceHelper;
-import CampusServerCorba.CampusServerInterfacePOA;
 import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 import com.google.gson.reflect.TypeToken;
 import domain.*;
 import lombok.Getter;
-import org.omg.CORBA.ORB;
-import org.omg.CORBA.ORBPackage.InvalidName;
-import org.omg.CosNaming.NameComponent;
-import org.omg.CosNaming.NamingContextExt;
-import org.omg.CosNaming.NamingContextExtHelper;
-import org.omg.CosNaming.NamingContextPackage.CannotProceed;
-import org.omg.CosNaming.NamingContextPackage.NotFound;
-import org.omg.PortableServer.POA;
-import org.omg.PortableServer.POAHelper;
-import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
-import org.omg.PortableServer.POAPackage.ServantNotActive;
-import org.omg.PortableServer.POAPackage.WrongPolicy;
+import service.Properties;
 import service.server.requests.*;
 import service.server.responses.*;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import java.util.regex.PatternSyntaxException;
 
-public class Server extends CampusServerInterfacePOA implements Runnable {
+public class Server implements Runnable {
+    @Expose
     @Getter
     private final Campus campus;
+    @Expose
     @Getter
-    private final Administrators administrators;
+    private Administrators administrators;
+    @Expose
     @Getter
-    private final RoomRecords roomRecords;
+    private RoomRecords roomRecords;
+    @Expose
     @Getter
-    private final StudentBookingRecords studentBookingRecords;
-    private final Logger log;
+    private StudentBookingRecords studentBookingRecords;
+    private Logger log;
     @Getter
     private final Lock roomLock = new Lock();
     @Getter
     private final Lock logLock = new Lock();
-    private final String[] orbParams;
 
-    public Server(Campus campus, String[] orbParams) {
+    private FileHandler fileHandler;
+
+
+    public Server(Campus campus) {
         this.campus = campus;
+
         administrators = new Administrators(campus);
         log = Logger.getLogger(campus.abrev+ Server.class.getName());
         initLogger();
         roomRecords = new RoomRecords(this, campus);
         studentBookingRecords = new StudentBookingRecords(this, campus);
-        this.orbParams = orbParams;
+    }
+
+    /**
+     * Method for server rebuild from json message
+     * @param serverJson server json representation
+     */
+    public void loadData(String serverJson){
+        System.out.println("8.8.3 loading servers ");
+        //get server data
+        Server temp = new GsonBuilder().enableComplexMapKeySerialization().create().fromJson(serverJson, Server.class);
+        administrators = temp.getAdministrators();
+        roomRecords = temp.roomRecords;
+        roomRecords.setServer(this);
+        studentBookingRecords = temp.getStudentBookingRecords();
+
+        System.out.println(administrators.size() + " administrator imported");
+        System.out.println(roomRecords.getDateCount() + "days of room record imported");
+        System.out.println(studentBookingRecords.getRecords().size() + " student records imported");
+        log.severe("System rebooted");
+
+        System.out.println("8.8.4 Reboot completed");
     }
     private void initLogger() {
         try {
-            String dir = "src/server_log/";
+            String dir = "src/log/server_log/";
             log.setUseParentHandlers(false);
-            FileHandler fileHandler = new FileHandler(dir + campus.abrev + ".LOG", true);
+            fileHandler = new FileHandler(dir + campus.abrev + ".LOG", Properties.appendLog);
             log.addHandler(fileHandler);
             SimpleFormatter formatter = new SimpleFormatter();
             fileHandler.setFormatter(formatter);
-            synchronized (this.logLock) {
-                log.info("\n" + campus.name + " LOG loaded");
-            }
+
+            log.info("\n" + campus.name + " LOG loaded");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -82,53 +92,24 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         synchronized (this.logLock) {
             log.info("\n" + campus.name + " UDP listening port initialized and listening at " + campus.udpPort);
         }
-        initializeORB();
+        ServerRmListener rmListener = new ServerRmListener(this);
+        new Thread(rmListener).start();
+        System.out.println(campus.name + " is ready");
     }
-
-    private void initializeORB() {
-        try {
-            // create and initialize the ORB
-            //get reference to rootpoa &amp; activate the POAManager
-
-            ORB orb = ORB.init(orbParams, null);
-            POA rootPOA = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
-            rootPOA.the_POAManager().activate();
-
-            //get object reference from the servant
-            org.omg.CORBA.Object ref = rootPOA.servant_to_reference(this);
-            CampusServerInterface href = CampusServerInterfaceHelper.narrow(ref);
-
-            org.omg.CORBA.Object objRef = orb.resolve_initial_references("NameService");
-            NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
-
-            NameComponent path[] = ncRef.to_name(campus.abrev);
-            ncRef.rebind(path, href);
-
-            System.out.println(campus.name + " ready");
-            synchronized (this.logLock) {
-                log.info("\n" + campus.name + " ORB initialized and listening"
-                        + "\n" + campus.name + " has been initialized");
-            }
-            while (true) {
-                orb.run();
-            }
-        } catch (InvalidName | AdapterInactive | org.omg.CosNaming.NamingContextPackage.InvalidName
-                | ServantNotActive | WrongPolicy | CannotProceed | NotFound invalidName) {
-            invalidName.printStackTrace();
-        }
-    }
-
     @Override
-    public int getUdpPort() {
-        return campus.udpPort;
+    public String toString(){
+        return new GsonBuilder()
+                .enableComplexMapKeySerialization()
+                .excludeFieldsWithoutExposeAnnotation()
+                .create()
+                .toJson(this, Server.class);
     }
 
-    @Override
     public boolean checkAdminId(String json) {
         CheckAdminIdRequest req = CheckAdminIdRequest.parseRequest(json);
         return checkIDAdmin(req.getFullID());
     }
-    @Override
+
     public String createRoom(String json) {
         CreateRoomRequest req = CreateRoomRequest.parseRequest(json);
         CreateRoomResponse rsp = new CreateRoomResponse(
@@ -136,20 +117,20 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         return rsp.toString();
     }
 
-    @Override
+
     public String deleteRoom(String json) {
         DeleteRoomRequest req = DeleteRoomRequest.parseRequest(json);
         DeleteRoomResponse rsp = new DeleteRoomResponse(
                 deleteRoom(req.getRoomNumber(), req.getDate(), req.getList(), req.getFullID()));
         return rsp.toString();
     }
-    @Override
+
     public String getAvailableTimeSlotCount(String json) {
         GetTimeSlotCountRequest req = GetTimeSlotCountRequest.parseRequest(json);
         GetTimeSlotCountResponse rsp = new GetTimeSlotCountResponse(getAvailableTimeSlot(req.getDate()));
         return rsp.toString();
     }
-    @Override
+
     public String getAvailableTimeSlotByRoom(String json) {
         GetTimeSlotByRoomRequest req = GetTimeSlotByRoomRequest.parseRequest(json);
         GetTimeSlotByRoomResponse rsp = new GetTimeSlotByRoomResponse(
@@ -158,18 +139,18 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         return rsp.toString();
     }
 
-    @Override
+
     public String bookRoom(String json) {
         BookRoomRequest req = BookRoomRequest.parseRequest(json);
         return bookRoom(req.getCampusOfInterest(), req.getRoomNumber(),
                 req.getDate(), req.getTimeSlot(), req.getId());
     }
-    @Override
+
     public String cancelBooking(String json) {
         CancelBookingRequest req = CancelBookingRequest.parseRequest(json);
         return cancelBooking(req.getBookingId(), req.getCampus(), req.getId());
     }
-    @Override
+
     public String switchRoom(String json) {
         SwitchRoomRequest req = SwitchRoomRequest.parseRequest(json);
         SwitchRoomResponse rsp = new SwitchRoomResponse(switchRoom(req.getBookingID(), req.getCampus(), req.getRoomIdentifier(),
@@ -236,6 +217,7 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
     public String bookRoom(Campus campusOfInterest, String roomIdentifier,
                            Calendar date, TimeSlot timeSlot, int studentId) {
         /* Create a bookingID object */
+        System.out.println(11111);
         BookingInfo bookingInfo = new BookingInfo(
                 campusOfInterest.abrev, campus.abrev,
                 studentId, date, roomIdentifier,
@@ -247,12 +229,12 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
         /*
         Step 1 : check if student can book a room at the week indicated, since student always connect to his own
         CAMPUS first.
-        //get the key to the week of interest in student record
+        //getInboundMessage the key to the week of interest in student record
         */
         synchronized (this.roomLock) {
             //check booking record
             int getWeekCount = studentBookingRecords.getWeeklyBookingRecords(date, studentId);
-            System.out.println(getWeekCount);
+            System.out.println(studentId +" has booked "+getWeekCount + " rooms ");
             /*
             Strp 2: if count is less than 3, book the room
             if the room is in the same CAMPUS as student's account, book directly,
@@ -432,7 +414,7 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
      */
     public Map<String, String> switchRoom(String bookingID, Campus campus, String roomIdentifier,
                                           Calendar newDate, TimeSlot timeSlot, int studentID) {
-        Map<String, String> ret = new HashMap<>();
+        Map<String, String> ret = new LinkedHashMap<>();
         BookingInfo cancelBookingInfo = BookingInfo.decode(bookingID);
         if (cancelBookingInfo != null) {
             cancelBookingInfo.setToBook(false);
@@ -482,8 +464,8 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                         if (status) {// booking successful
                             udpRequest = new UdpRequest(
                                     this, cancelRequest, cancelBookingInfo.getCampusOfInterest());
-                            udpResponse = udpRequest.sendRequest();
-                            status = status(udpResponse);
+                            cancelResponse = udpRequest.sendRequest();
+                            status = status(cancelResponse);
                             if (!status) {/*
                             cancel in remote failed, cancel the booking just made in this server
                             this should not be reached, since cancel should always succeed since the existence of the
@@ -492,7 +474,7 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
                                 synchronized (this.roomLock) {
                                     bookResponse = roomRecords.cancelBooking(BookingInfo.decode(bookResponse));
                                 }
-                            }//else unneeded
+                            }
                         }// else booking failed, cancellation is cancelled
                     } else {//both in remote server
                         udpRequest = new UdpRequest(this, bookRequest, campus);
@@ -580,17 +562,19 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
     }
 
     public Map<Campus, Integer> getAvailableTimeSlot(Calendar date) {
-        Map<Campus, Integer> ret = new HashMap<>();
+        Map<Campus, Integer> ret = new LinkedHashMap<>();
         for (Campus campus : Campus.values()) {
             int count = 0;
-            if (this.campus.equals(campus)) {
-                count = roomRecords.getAvailableTimeSlotsCountOfDate(date);
-            } else {
-                String request = "**getInt-" + date.getTimeInMillis();
-                UdpRequest udpRequest = new UdpRequest(this, request, campus);
-                String udpResponse = udpRequest.sendRequest();
-                count = Integer.parseInt(udpResponse);
-            }
+
+//            if (this.campus.equals(campus)) {
+//                count = roomRecords.getAvailableTimeSlotsCountOfDate(date);
+//            } else {
+            //updated for FP
+            String request = "**getInt-" + date.getTimeInMillis();
+            UdpRequest udpRequest = new UdpRequest(this, request, campus);
+            String udpResponse = udpRequest.sendRequest();
+            count = Integer.parseInt(udpResponse);
+//            }
             ret.put(campus, count);
         }
         return ret;
@@ -625,5 +609,11 @@ public class Server extends CampusServerInterfacePOA implements Runnable {
     }
     public Logger getLogFile(){
         return log;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        fileHandler.close();
     }
 }

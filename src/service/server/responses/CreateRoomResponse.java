@@ -11,6 +11,7 @@ public class CreateRoomResponse {
     private final List<List<TimeSlot>> room;
 
     public static List<List<TimeSlot>> parseResponse(String responseMessage) {
+        System.out.println(responseMessage);
         return new GsonBuilder().create().fromJson(responseMessage, CreateRoomResponse.class).room;
     }
 

@@ -2,6 +2,7 @@ package domain;
 
 import com.google.gson.GsonBuilder;
 import com.sun.istack.internal.Nullable;
+import com.sun.org.apache.regexp.internal.RE;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -24,9 +25,10 @@ public class BookingInfo {
 
     @Nullable
     public static BookingInfo decode(String code) {
-        char[] chars = code.toCharArray();
-        for (int i = 0; i < chars.length; ++i) chars[i] -= i;
-        String decode = new String(chars);
+//        char[] chars = code.toCharArray();
+//        for (int i = 0; i < chars.length; ++i) chars[i] -= i;
+//        String decode = new String(chars);
+        String decode = code;
         if (!decode.contains("-")) {
             System.err.println("Invalid booking reference input");
             return null;
@@ -87,7 +89,7 @@ public class BookingInfo {
                 .append(studentCampusAbrev)
                 .append("-")
                 .append(studentID)
-                .append('-')
+                .append("-")
                 .append(bookingDate.getTimeInMillis())
                 .append("-")
                 .append(roomName)
@@ -96,17 +98,18 @@ public class BookingInfo {
                 .append("-")
                 .append(bookingEndTime.getTimeInMillis())
                 .append("-")
-                .append(System.currentTimeMillis());
-        char[] chars = builder.toString().toCharArray();
-        for (int i = 0; i < chars.length; ++i) chars[i] += i;
-        return new String(chars);
+                .append(Math.floor(System.currentTimeMillis()/100000));
+//        char[] chars = builder.toString().toCharArray();
+//        for (int i = 0; i < chars.length; ++i) chars[i] += i;
+//        return new String(chars);
+        return builder.toString();
     }
 
     public Campus getCampusOfInterest() {
-        return Campus.getCampusName(campusOfInterestAbrev);
+        return Campus.getCampus(campusOfInterestAbrev);
     }
 
     public Campus getCampusOfStudent() {
-        return Campus.getCampusName(studentCampusAbrev);
+        return Campus.getCampus(studentCampusAbrev);
     }
 }
